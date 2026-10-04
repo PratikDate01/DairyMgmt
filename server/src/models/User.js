@@ -33,7 +33,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Role is required'],
       enum: {
-        values: ['farmer', 'dairyOwner', 'medicalProvider', 'admin'],
+        values: ['farmer', 'dairyOwner', 'medicalProvider', 'admin', 'veterinarian'],
         message: '{VALUE} is not a valid user role'
       },
       default: 'farmer'

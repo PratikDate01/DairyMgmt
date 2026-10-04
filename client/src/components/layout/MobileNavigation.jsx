@@ -12,7 +12,10 @@ import {
   UserCheck,
   BarChart3,
   Pill,
-  ShoppingBag
+  ShoppingBag,
+  Scan,
+  FileText,
+  Activity
 } from 'lucide-react';
 
 export const MobileNavigation = ({ isOpen, onClose }) => {
@@ -26,6 +29,8 @@ export const MobileNavigation = ({ isOpen, onClose }) => {
       case 'farmer':
         return [
           { label: 'Farmer Dashboard', path: '/farmer/dashboard', icon: LayoutDashboard },
+          { label: 'AI Disease Scanner', path: '/farmer/ai-scanner', icon: Scan },
+          { label: 'Disease Scan History', path: '/farmer/scan-history', icon: FileText },
           { label: 'Milk Collections', path: '/farmer/milk-collections', icon: Milk },
           { label: 'Payments History', path: '/farmer/payments', icon: Wallet },
           { label: 'Reports & Analytics', path: '/farmer/reports', icon: BarChart3 },
@@ -47,21 +52,23 @@ export const MobileNavigation = ({ isOpen, onClose }) => {
           { label: 'Medical Inventory', path: '/medical-provider/inventory', icon: Pill },
           { label: 'Medicine Requests', path: '/medical-provider/medicine-requests', icon: ShoppingBag }
         ];
+      case 'veterinarian':
+        return [
+          { label: 'Veterinarian Console', path: '/veterinarian/dashboard', icon: Stethoscope },
+          { label: 'Disease Cases Queue', path: '/veterinarian/cases', icon: Activity }
+        ];
       case 'admin':
         return [
           { label: 'Admin Dashboard', path: '/admin/dashboard', icon: ShieldAlert },
           { label: 'System Reports', path: '/admin/reports', icon: BarChart3 },
+          { label: 'Veterinarian Queue', path: '/veterinarian/cases', icon: Activity },
           { label: 'Medical Inventory', path: '/medical-provider/inventory', icon: Pill },
           { label: 'Medicine Requests', path: '/medical-provider/medicine-requests', icon: ShoppingBag },
           { label: 'Farmer Medicines Catalog', path: '/farmer/medicines', icon: Pill },
-          { label: 'Farmer Medicine Requests', path: '/farmer/medicine-requests', icon: ShoppingBag },
+          { label: 'Farmer AI Scanner', path: '/farmer/ai-scanner', icon: Scan },
           { label: 'Milk Collection Entry', path: '/dairy-owner/milk-collection', icon: Milk },
           { label: 'Dairy Payments Ledger', path: '/dairy-owner/payments', icon: Wallet },
-          { label: 'Farmer Collections', path: '/farmer/milk-collections', icon: Milk },
-          { label: 'Farmer Payments', path: '/farmer/payments', icon: Wallet },
-          { label: 'Connected Farmers', path: '/dairy-owner/farmers', icon: Users },
-          { label: 'Dairy Connections', path: '/farmer/connections', icon: Users },
-          { label: 'Medical View', path: '/medical-provider/dashboard', icon: Stethoscope }
+          { label: 'Connected Farmers', path: '/dairy-owner/farmers', icon: Users }
         ];
       default:
         return [{ label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard }];
@@ -80,8 +87,8 @@ export const MobileNavigation = ({ isOpen, onClose }) => {
         {/* Header */}
         <div className="p-4 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <span className="text-xl">🥛</span>
-            <span className="font-bold text-slate-900 text-sm">Dairy & Medical</span>
+            <span className="text-xl">🐄</span>
+            <span className="font-bold text-slate-900 text-sm">Gauseva HealthTech</span>
           </div>
           <button onClick={onClose} className="p-1 text-slate-400 hover:text-slate-700 rounded-lg">
             <X className="w-5 h-5" />

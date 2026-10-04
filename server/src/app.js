@@ -8,6 +8,8 @@ import paymentRoutes from './routes/paymentRoutes.js';
 import reportRoutes from './routes/reportRoutes.js';
 import medicineRoutes from './routes/medicineRoutes.js';
 import medicineRequestRoutes from './routes/medicineRequestRoutes.js';
+import diseaseScanRoutes from './routes/diseaseScanRoutes.js';
+import veterinarianRoutes from './routes/veterinarianRoutes.js';
 
 const app = express();
 
@@ -27,13 +29,14 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/medicines', medicineRoutes);
 app.use('/api/medicine-requests', medicineRequestRoutes);
+app.use('/api/disease-scans', diseaseScanRoutes);
+app.use('/api/veterinarian', veterinarianRoutes);
 
 // Health Check Endpoint
-
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'Dairy & Medical Management System API is running',
+    message: 'Gauseva HealthTech API is running',
     timestamp: new Date().toISOString()
   });
 });

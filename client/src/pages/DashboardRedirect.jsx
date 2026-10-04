@@ -24,6 +24,8 @@ export const DashboardRedirect = () => {
       return <Navigate to="/dairy-owner/dashboard" replace />;
     case 'medicalProvider':
       return <Navigate to="/medical-provider/dashboard" replace />;
+    case 'veterinarian':
+      return <Navigate to="/veterinarian/dashboard" replace />;
     case 'admin':
       return <Navigate to="/admin/dashboard" replace />;
     default:

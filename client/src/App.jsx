@@ -8,6 +8,7 @@ import { DashboardRedirect } from './pages/DashboardRedirect';
 import { FarmerDashboard } from './pages/dashboards/FarmerDashboard';
 import { DairyOwnerDashboard } from './pages/dashboards/DairyOwnerDashboard';
 import { MedicalProviderDashboard } from './pages/dashboards/MedicalProviderDashboard';
+import { VeterinarianDashboard } from './pages/dashboards/VeterinarianDashboard';
 import { AdminDashboard } from './pages/dashboards/AdminDashboard';
 import { ConnectedFarmers } from './pages/dairy/ConnectedFarmers';
 import { MilkCollection } from './pages/dairy/MilkCollection';
@@ -19,6 +20,9 @@ import { FarmerPayments } from './pages/farmer/Payments';
 import { FarmerReports } from './pages/farmer/Reports';
 import { FarmerMedicines } from './pages/farmer/Medicines';
 import FarmerMedicineRequests from './pages/farmer/MedicineRequests';
+import { AIDiseaseScanner } from './pages/farmer/AIDiseaseScanner';
+import { ScanHistory } from './pages/farmer/ScanHistory';
+import { PendingCases } from './pages/veterinarian/PendingCases';
 import { AdminReports } from './pages/admin/Reports';
 import { Inventory } from './pages/medical/Inventory';
 import MedicalMedicineRequests from './pages/medical/MedicineRequests';
@@ -122,6 +126,48 @@ export default function App() {
               <ProtectedShell>
                 <RoleRoute allowedRoles={['farmer', 'admin']}>
                   <DairyConnections />
+                </RoleRoute>
+              </ProtectedShell>
+            }
+          />
+          <Route
+            path="/farmer/ai-scanner"
+            element={
+              <ProtectedShell>
+                <RoleRoute allowedRoles={['farmer', 'admin']}>
+                  <AIDiseaseScanner />
+                </RoleRoute>
+              </ProtectedShell>
+            }
+          />
+          <Route
+            path="/farmer/scan-history"
+            element={
+              <ProtectedShell>
+                <RoleRoute allowedRoles={['farmer', 'admin']}>
+                  <ScanHistory />
+                </RoleRoute>
+              </ProtectedShell>
+            }
+          />
+
+          {/* Veterinarian Routes */}
+          <Route
+            path="/veterinarian/dashboard"
+            element={
+              <ProtectedShell>
+                <RoleRoute allowedRoles={['veterinarian', 'admin']}>
+                  <VeterinarianDashboard />
+                </RoleRoute>
+              </ProtectedShell>
+            }
+          />
+          <Route
+            path="/veterinarian/cases"
+            element={
+              <ProtectedShell>
+                <RoleRoute allowedRoles={['veterinarian', 'admin']}>
+                  <PendingCases />
                 </RoleRoute>
               </ProtectedShell>
             }

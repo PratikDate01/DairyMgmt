@@ -142,6 +142,7 @@ export const LoginPage = () => {
     { id: 'farmer', label: 'Farmer', icon: '🌾', desc: 'Manage milk supply & medical requests' },
     { id: 'dairyOwner', label: 'Dairy Owner', icon: '🥛', desc: 'Manage milk intake & farmer payouts' },
     { id: 'medicalProvider', label: 'Medical Provider', icon: '🩺', desc: 'Fulfill veterinary medicine orders' },
+    { id: 'veterinarian', label: 'Veterinarian', icon: '👨‍⚕️', desc: 'Cattle disease screening & case reviews' },
     { id: 'admin', label: 'Admin', icon: '🛡️', desc: 'System management & security' }
   ];
 
@@ -152,10 +153,10 @@ export const LoginPage = () => {
         {/* Brand Header */}
         <div className="text-center mb-6">
           <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl font-bold shadow-xs">
-            🥛
+            🐄
           </div>
-          <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">Dairy & Medical System</h2>
-          <p className="text-xs text-slate-500 mt-1 font-medium">OTP Authentication & User Portal</p>
+          <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">Gauseva HealthTech</h2>
+          <p className="text-xs text-slate-500 mt-1 font-medium">Dairy & Veterinary Medical Portal</p>
         </div>
 
         {/* Mode Switcher Tabs (Only visible on Step 1) */}
