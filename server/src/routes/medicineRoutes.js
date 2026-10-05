@@ -9,7 +9,8 @@ import {
   updateMedicine,
   updateStock,
   updateAvailability,
-  deactivateMedicine
+  deactivateMedicine,
+  processPrescription
 } from '../controllers/medicineController.js';
 import { authMiddleware } from '../middleware/authMiddleware.js';
 import { requireRole } from '../middleware/roleMiddleware.js';
@@ -18,6 +19,9 @@ const router = express.Router();
 
 // Protect all medicine routes with authMiddleware
 router.use(authMiddleware);
+
+// Process Prescription Search (Farmer, Admin)
+router.post('/process-prescription', requireRole('farmer', 'admin'), processPrescription);
 
 // 1. Create Medicine (Medical Provider only)
 router.post('/', requireRole('medicalProvider'), createMedicine);

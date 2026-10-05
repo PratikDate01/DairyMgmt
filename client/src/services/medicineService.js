@@ -145,5 +145,18 @@ export const medicineService = {
       throw new Error(data.message || 'Failed to fetch low stock items');
     }
     return data;
+  },
+
+  async processPrescription(token, payload) {
+    const response = await fetch(`${API_BASE_URL}/process-prescription`, {
+      method: 'POST',
+      headers: getHeaders(token),
+      body: JSON.stringify(payload)
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to process prescription.');
+    }
+    return data;
   }
 };

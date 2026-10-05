@@ -17,12 +17,14 @@ export const RoleRoute = ({ allowedRoles = [], children }) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (!user || !allowedRoles.includes(user.role)) {
+  const activeRole = user?.activeRole || user?.role;
+
+  if (!user || !allowedRoles.includes(activeRole)) {
     return (
       <div className="p-6 text-center bg-red-50 text-red-800 rounded-lg border border-red-200 m-6 max-w-xl mx-auto">
         <h3 className="text-lg font-bold mb-2">403 — Access Denied</h3>
         <p className="text-sm text-red-700">
-          Your role (<strong className="capitalize">{user?.role || 'Unknown'}</strong>) is not authorized to access this portal.
+          Your current active role (<strong className="capitalize">{activeRole || 'Unknown'}</strong>) is not authorized to access this portal.
         </p>
       </div>
     );

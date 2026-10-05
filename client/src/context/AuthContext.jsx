@@ -30,8 +30,8 @@ export const AuthProvider = ({ children }) => {
     initAuth();
   }, []);
 
-  const loginWithOTP = async (phone, otp) => {
-    const data = await authService.verifyOTP(phone, otp);
+  const loginWithOTP = async (identity, otp, role) => {
+    const data = await authService.verifyOTP(identity, otp, role);
     if (data.token && data.user) {
       localStorage.setItem('authToken', data.token);
       setToken(data.token);

@@ -22,6 +22,8 @@ import { FarmerMedicines } from './pages/farmer/Medicines';
 import FarmerMedicineRequests from './pages/farmer/MedicineRequests';
 import { AIDiseaseScanner } from './pages/farmer/AIDiseaseScanner';
 import { ScanHistory } from './pages/farmer/ScanHistory';
+import { FarmerVetRequests } from './pages/farmer/FarmerVetRequests';
+import { MyCattle } from './pages/farmer/MyCattle';
 import { PendingCases } from './pages/veterinarian/PendingCases';
 import { AdminReports } from './pages/admin/Reports';
 import { Inventory } from './pages/medical/Inventory';
@@ -66,6 +68,16 @@ export default function App() {
               <ProtectedShell>
                 <RoleRoute allowedRoles={['farmer', 'admin']}>
                   <FarmerDashboard />
+                </RoleRoute>
+              </ProtectedShell>
+            }
+          />
+          <Route
+            path="/farmer/cattle"
+            element={
+              <ProtectedShell>
+                <RoleRoute allowedRoles={['farmer', 'admin']}>
+                  <MyCattle />
                 </RoleRoute>
               </ProtectedShell>
             }
@@ -134,7 +146,7 @@ export default function App() {
             path="/farmer/ai-scanner"
             element={
               <ProtectedShell>
-                <RoleRoute allowedRoles={['farmer', 'admin']}>
+                <RoleRoute allowedRoles={['farmer']}>
                   <AIDiseaseScanner />
                 </RoleRoute>
               </ProtectedShell>
@@ -146,6 +158,16 @@ export default function App() {
               <ProtectedShell>
                 <RoleRoute allowedRoles={['farmer', 'admin']}>
                   <ScanHistory />
+                </RoleRoute>
+              </ProtectedShell>
+            }
+          />
+          <Route
+            path="/farmer/vet-requests"
+            element={
+              <ProtectedShell>
+                <RoleRoute allowedRoles={['farmer', 'admin']}>
+                  <FarmerVetRequests />
                 </RoleRoute>
               </ProtectedShell>
             }

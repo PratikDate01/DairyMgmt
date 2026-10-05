@@ -7,6 +7,12 @@ const diseaseScanSchema = new mongoose.Schema(
       ref: 'User',
       required: [true, 'Farmer reference is required']
     },
+    cattle: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Cattle',
+      required: [true, 'Cattle reference is required'],
+      index: true
+    },
     animalType: {
       type: String,
       enum: ['cow', 'buffalo', 'goat', 'sheep', 'other'],
@@ -99,6 +105,7 @@ const diseaseScanSchema = new mongoose.Schema(
 );
 
 diseaseScanSchema.index({ farmer: 1, createdAt: -1 });
+diseaseScanSchema.index({ cattle: 1, createdAt: -1 });
 diseaseScanSchema.index({ veterinarianReviewStatus: 1 });
 
 const DiseaseScan = mongoose.model('DiseaseScan', diseaseScanSchema);

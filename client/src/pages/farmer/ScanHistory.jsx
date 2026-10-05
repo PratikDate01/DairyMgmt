@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { diseaseScanService } from '../../services/diseaseScanService';
+import { VeterinarianRecommendations } from '../../components/farmer/VeterinarianRecommendations';
 import {
   FileText,
   Scan,
@@ -136,7 +137,7 @@ export const ScanHistory = () => {
                   />
                   <div>
                     <span className="text-[10px] font-extrabold uppercase text-blue-600 block tracking-wider">
-                      {scan.animalType} ({scan.animalIdTag})
+                      🐄 {scan.cattle?.nameTag || scan.animalIdTag} {scan.cattle?.breed ? `(${scan.cattle.breed})` : ''}
                     </span>
                     <h4 className="text-sm font-bold text-slate-900 line-clamp-1">{scan.detectedCondition}</h4>
                     <div className="flex items-center space-x-2 text-[11px] text-slate-400 mt-0.5">
@@ -181,7 +182,7 @@ export const ScanHistory = () => {
               <div>
                 <h3 className="text-base font-bold text-slate-900">{selectedScan.detectedCondition}</h3>
                 <span className="text-xs text-slate-500">
-                  {selectedScan.animalType.toUpperCase()} ({selectedScan.animalIdTag}) • Scanned on {new Date(selectedScan.createdAt).toLocaleString()}
+                  Cattle: <strong>{selectedScan.cattle?.nameTag || selectedScan.animalIdTag}</strong> {selectedScan.cattle?.breed ? `(${selectedScan.cattle.breed})` : ''} • Scanned on {new Date(selectedScan.createdAt).toLocaleString()}
                 </span>
               </div>
             </div>
@@ -239,6 +240,9 @@ export const ScanHistory = () => {
                 </p>
               )}
             </div>
+
+            {/* Recommended Veterinarians (Phase 20) */}
+            <VeterinarianRecommendations scanId={selectedScan._id} conditionName={selectedScan.detectedCondition} />
 
             <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-900 flex items-center space-x-2">
               <Info className="w-4 h-4 text-amber-600 flex-shrink-0" />

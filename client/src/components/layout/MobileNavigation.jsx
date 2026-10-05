@@ -15,7 +15,8 @@ import {
   ShoppingBag,
   Scan,
   FileText,
-  Activity
+  Activity,
+  HeartPulse
 } from 'lucide-react';
 
 export const MobileNavigation = ({ isOpen, onClose }) => {
@@ -24,13 +25,25 @@ export const MobileNavigation = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
+  const activeRole = user?.activeRole || user?.role;
+
+  const roleLabels = {
+    farmer: 'Farmer',
+    dairyOwner: 'Dairy Owner',
+    medicalProvider: 'Medical Provider',
+    veterinarian: 'Veterinarian',
+    admin: 'Administrator'
+  };
+
   const getNavItems = () => {
-    switch (user?.role) {
+    switch (activeRole) {
       case 'farmer':
         return [
           { label: 'Farmer Dashboard', path: '/farmer/dashboard', icon: LayoutDashboard },
+          { label: 'My Cattle Directory', path: '/farmer/cattle', icon: HeartPulse },
           { label: 'AI Disease Scanner', path: '/farmer/ai-scanner', icon: Scan },
           { label: 'Disease Scan History', path: '/farmer/scan-history', icon: FileText },
+          { label: 'My Vet Requests', path: '/farmer/vet-requests', icon: Stethoscope },
           { label: 'Milk Collections', path: '/farmer/milk-collections', icon: Milk },
           { label: 'Payments History', path: '/farmer/payments', icon: Wallet },
           { label: 'Reports & Analytics', path: '/farmer/reports', icon: BarChart3 },
@@ -61,11 +74,11 @@ export const MobileNavigation = ({ isOpen, onClose }) => {
         return [
           { label: 'Admin Dashboard', path: '/admin/dashboard', icon: ShieldAlert },
           { label: 'System Reports', path: '/admin/reports', icon: BarChart3 },
+          { label: 'Farmer Cattle Directory', path: '/farmer/cattle', icon: HeartPulse },
           { label: 'Veterinarian Queue', path: '/veterinarian/cases', icon: Activity },
           { label: 'Medical Inventory', path: '/medical-provider/inventory', icon: Pill },
           { label: 'Medicine Requests', path: '/medical-provider/medicine-requests', icon: ShoppingBag },
           { label: 'Farmer Medicines Catalog', path: '/farmer/medicines', icon: Pill },
-          { label: 'Farmer AI Scanner', path: '/farmer/ai-scanner', icon: Scan },
           { label: 'Milk Collection Entry', path: '/dairy-owner/milk-collection', icon: Milk },
           { label: 'Dairy Payments Ledger', path: '/dairy-owner/payments', icon: Wallet },
           { label: 'Connected Farmers', path: '/dairy-owner/farmers', icon: Users }
@@ -100,7 +113,7 @@ export const MobileNavigation = ({ isOpen, onClose }) => {
           <p className="text-xs font-bold text-slate-800">{user?.name}</p>
           <div className="flex items-center space-x-1 mt-0.5">
             <UserCheck className="w-3 h-3 text-blue-600" />
-            <span className="text-[11px] font-semibold text-blue-700 capitalize">{user?.role}</span>
+            <span className="text-[11px] font-semibold text-blue-700">{roleLabels[activeRole] || activeRole}</span>
           </div>
         </div>
 

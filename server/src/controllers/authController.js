@@ -10,8 +10,60 @@ const OTP_EXPIRY_MS = 5 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
 
 /**
+ * @route POST /api/auth/check-email
+ * @desc Check if an email/identity exists and return its registered roles
+ */
+export const checkEmail = async (req, res) => {
+  try {
+    const rawInput = req.body.email || req.body.phone || req.body.identity;
+
+    if (!rawInput) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email address or phone number is required'
+      });
+    }
+
+    const normalizedIdentity = normalizeIdentity(rawInput);
+    if (!normalizedIdentity) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a valid email address or 10-digit Indian mobile number'
+      });
+    }
+
+    const user = await User.findOne({
+      $or: [{ phone: normalizedIdentity }, { email: normalizedIdentity }]
+    });
+
+    if (!user) {
+      return res.status(200).json({
+        success: true,
+        exists: false,
+        roles: []
+      });
+    }
+
+    const roles = user.roles && user.roles.length > 0 ? user.roles : [user.role || 'farmer'];
+
+    return res.status(200).json({
+      success: true,
+      exists: true,
+      name: user.name,
+      roles: roles
+    });
+  } catch (error) {
+    console.error(`Check Email Error: ${error.message}`);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error while checking email account'
+    });
+  }
+};
+
+/**
  * @route POST /api/auth/register
- * @desc Register a new user account and send initial OTP
+ * @desc Request registration for a new user account or role. DOES NOT write to User collection until OTP is verified.
  */
 export const register = async (req, res) => {
   try {
@@ -21,7 +73,7 @@ export const register = async (req, res) => {
     if (!name || !rawInput || !role) {
       return res.status(400).json({
         success: false,
-        message: 'Name, phone number or email address, and role are required'
+        message: 'Name, email/phone number, and role are required'
       });
     }
 
@@ -32,8 +84,14 @@ export const register = async (req, res) => {
       });
     }
 
-    const validRoles = ['farmer', 'dairyOwner', 'medicalProvider', 'admin'];
+    const validRoles = ['farmer', 'dairyOwner', 'medicalProvider', 'veterinarian'];
     if (!validRoles.includes(role)) {
+      if (role === 'admin') {
+        return res.status(403).json({
+          success: false,
+          message: 'Admin registration is restricted.'
+        });
+      }
       return res.status(400).json({
         success: false,
         message: 'Invalid user role selected'
@@ -52,25 +110,30 @@ export const register = async (req, res) => {
     const existingUser = await User.findOne({
       $or: [{ phone: normalizedIdentity }, { email: normalizedIdentity }]
     });
+
     if (existingUser) {
-      return res.status(400).json({
-        success: false,
-        message: 'An account with this mobile number or email address already exists. Please log in.'
-      });
+      const currentRoles = existingUser.roles && existingUser.roles.length > 0 ? existingUser.roles : [existingUser.role || 'farmer'];
+
+      if (currentRoles.includes(role)) {
+        return res.status(400).json({
+          success: false,
+          message: `Your account is already registered as a ${getRoleLabel(role)}. Please log in and select your role.`
+        });
+      }
     }
 
-    // Create new user account
-    const userData = {
-      name: name.trim(),
-      phone: normalizedIdentity,
-      role,
-      isActive: true
-    };
-    if (isValidEmail(normalizedIdentity)) {
-      userData.email = normalizedIdentity;
+    // Check resend cooldown on existing active registration OTP
+    const existingOTP = await OTP.findOne({ phone: normalizedIdentity, verified: false });
+    if (existingOTP) {
+      const timeElapsed = Date.now() - existingOTP.lastSentAt.getTime();
+      if (timeElapsed < RESEND_COOLDOWN_MS) {
+        const secondsRemaining = Math.ceil((RESEND_COOLDOWN_MS - timeElapsed) / 1000);
+        return res.status(429).json({
+          success: false,
+          message: `Please wait ${secondsRemaining} seconds before requesting a new OTP`
+        });
+      }
     }
-
-    const newUser = await User.create(userData);
 
     // Invalidate any previous OTPs for this identity
     await OTP.deleteMany({ phone: normalizedIdentity });
@@ -80,13 +143,17 @@ export const register = async (req, res) => {
     const otpHash = hashOTP(plainOTP);
     const expiresAt = new Date(Date.now() + OTP_EXPIRY_MS);
 
+    // Save OTP with pending registration metadata (DO NOT touch User model here!)
     await OTP.create({
       phone: normalizedIdentity,
       otpHash,
       expiresAt,
       attempts: 0,
       lastSentAt: new Date(),
-      verified: false
+      verified: false,
+      isRegistration: true,
+      pendingName: name.trim(),
+      pendingRole: role
     });
 
     const emailProvider = process.env.EMAIL_PROVIDER;
@@ -100,7 +167,6 @@ export const register = async (req, res) => {
       }
 
       if (!recipientEmail) {
-        await User.findByIdAndDelete(newUser._id);
         await OTP.deleteMany({ phone: normalizedIdentity });
         return res.status(400).json({
           success: false,
@@ -116,7 +182,6 @@ export const register = async (req, res) => {
         });
       } catch (deliveryError) {
         console.error(`Register Email Delivery Error: ${deliveryError.message}`);
-        await User.findByIdAndDelete(newUser._id);
         await OTP.deleteMany({ phone: normalizedIdentity });
         return res.status(502).json({
           success: false,
@@ -126,7 +191,7 @@ export const register = async (req, res) => {
 
       return res.status(201).json({
         success: true,
-        message: 'Account registered successfully! OTP sent.'
+        message: 'OTP sent to your email. Verify OTP to complete registration.'
       });
     }
 
@@ -138,7 +203,7 @@ export const register = async (req, res) => {
 
     const responsePayload = {
       success: true,
-      message: 'Account registered successfully! OTP sent.'
+      message: 'OTP sent. Verify OTP to complete registration.'
     };
 
     if (isDev) {
@@ -158,11 +223,12 @@ export const register = async (req, res) => {
 
 /**
  * @route POST /api/auth/request-otp
- * @desc Request a 6-digit OTP for login
+ * @desc Request a 6-digit OTP for login, validating selected active role
  */
 export const requestOTP = async (req, res) => {
   try {
     const rawInput = req.body.phone || req.body.email;
+    const requestedRole = req.body.role;
 
     if (!rawInput) {
       return res.status(400).json({
@@ -179,7 +245,7 @@ export const requestOTP = async (req, res) => {
       });
     }
 
-    // Step 1: Check if user exists in database
+    // Check if user exists
     const user = await User.findOne({
       $or: [{ phone: normalizedIdentity }, { email: normalizedIdentity }]
     });
@@ -190,7 +256,35 @@ export const requestOTP = async (req, res) => {
       });
     }
 
-    // Step 2: Check resend cooldown on existing active OTP
+    if (user.isActive !== true) {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account is inactive. Please contact the administrator.'
+      });
+    }
+
+    const userRoles = user.roles && user.roles.length > 0 ? user.roles : [user.role || 'farmer'];
+
+    let activeRole = requestedRole;
+    if (requestedRole) {
+      if (!userRoles.includes(requestedRole)) {
+        return res.status(403).json({
+          success: false,
+          message: `Your account is not registered for the '${getRoleLabel(requestedRole)}' role.`
+        });
+      }
+    } else {
+      if (userRoles.length === 1) {
+        activeRole = userRoles[0];
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: 'Multiple roles registered. Please select a role before requesting OTP.'
+        });
+      }
+    }
+
+    // Check resend cooldown
     const existingOTP = await OTP.findOne({ phone: normalizedIdentity, verified: false });
     if (existingOTP) {
       const timeElapsed = Date.now() - existingOTP.lastSentAt.getTime();
@@ -203,25 +297,24 @@ export const requestOTP = async (req, res) => {
       }
     }
 
-    // Step 3: Invalidate previous active OTPs for this identity
+    // Invalidate previous active OTPs
     await OTP.deleteMany({ phone: normalizedIdentity });
 
-    // Step 4: Generate new OTP and hash it
+    // Generate new OTP
     const plainOTP = generateOTP();
     const otpHash = hashOTP(plainOTP);
     const expiresAt = new Date(Date.now() + OTP_EXPIRY_MS);
 
-    // Step 5: Save new OTP record
     await OTP.create({
       phone: normalizedIdentity,
       otpHash,
       expiresAt,
       attempts: 0,
       lastSentAt: new Date(),
-      verified: false
+      verified: false,
+      isRegistration: false
     });
 
-    // Step 6: Delivery via Brevo or Dev Fallback
     const emailProvider = process.env.EMAIL_PROVIDER;
 
     if (emailProvider === 'brevo') {
@@ -289,11 +382,11 @@ export const requestOTP = async (req, res) => {
 
 /**
  * @route POST /api/auth/verify-otp
- * @desc Verify OTP, check account status, generate JWT, and return session
+ * @desc Verify OTP, create or update user if registration OTP, generate JWT with activeRole, and return session
  */
 export const verifyOTP = async (req, res) => {
   try {
-    const { phone, email, otp } = req.body;
+    const { phone, email, otp, role } = req.body;
     const rawInput = phone || email;
 
     if (!rawInput || !otp) {
@@ -311,7 +404,6 @@ export const verifyOTP = async (req, res) => {
       });
     }
 
-    // Find active OTP record
     const otpRecord = await OTP.findOne({ phone: normalizedIdentity, verified: false });
     if (!otpRecord) {
       return res.status(400).json({
@@ -320,7 +412,6 @@ export const verifyOTP = async (req, res) => {
       });
     }
 
-    // Check expiration
     if (Date.now() > otpRecord.expiresAt.getTime()) {
       await OTP.deleteMany({ phone: normalizedIdentity });
       return res.status(400).json({
@@ -329,7 +420,6 @@ export const verifyOTP = async (req, res) => {
       });
     }
 
-    // Check attempt limit
     if (otpRecord.attempts >= MAX_ATTEMPTS) {
       await OTP.deleteMany({ phone: normalizedIdentity });
       return res.status(400).json({
@@ -338,7 +428,6 @@ export const verifyOTP = async (req, res) => {
       });
     }
 
-    // Verify OTP Hash
     const isMatch = verifyOTPHash(otp, otpRecord.otpHash);
     if (!isMatch) {
       otpRecord.attempts += 1;
@@ -360,48 +449,105 @@ export const verifyOTP = async (req, res) => {
       });
     }
 
-    // OTP Verified Successfully -> Invalidate OTP record
-    await OTP.deleteMany({ phone: normalizedIdentity });
+    // OTP Verified Successfully!
+    let user = null;
+    let activeRole = role || otpRecord.pendingRole;
 
-    // Fetch User details
-    const user = await User.findOne({
-      $or: [{ phone: normalizedIdentity }, { email: normalizedIdentity }]
-    });
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User account not found'
+    if (otpRecord.isRegistration) {
+      // IF REGISTRATION OTP: Create new User OR append role to existing User NOW
+      let existingUser = await User.findOne({
+        $or: [{ phone: normalizedIdentity }, { email: normalizedIdentity }]
       });
+
+      const pendingRole = otpRecord.pendingRole || 'farmer';
+      const pendingName = otpRecord.pendingName || 'User';
+
+      if (existingUser) {
+        const currentRoles = existingUser.roles && existingUser.roles.length > 0 ? existingUser.roles : [existingUser.role || 'farmer'];
+        existingUser.roles = Array.from(new Set([...currentRoles, pendingRole]));
+        existingUser.role = pendingRole;
+        if (pendingName) existingUser.name = pendingName;
+        user = await existingUser.save();
+      } else {
+        const userData = {
+          name: pendingName,
+          phone: normalizedIdentity,
+          role: pendingRole,
+          roles: [pendingRole],
+          isActive: true
+        };
+        if (isValidEmail(normalizedIdentity)) {
+          userData.email = normalizedIdentity;
+        }
+        user = await User.create(userData);
+      }
+      activeRole = pendingRole;
+    } else {
+      // IF LOGIN OTP: Find existing User
+      user = await User.findOne({
+        $or: [{ phone: normalizedIdentity }, { email: normalizedIdentity }]
+      });
+
+      if (!user) {
+        await OTP.deleteMany({ phone: normalizedIdentity });
+        return res.status(404).json({
+          success: false,
+          message: 'User account not found. Please register first.'
+        });
+      }
     }
 
-    // Check if user account is active
     if (user.isActive !== true) {
+      await OTP.deleteMany({ phone: normalizedIdentity });
       return res.status(403).json({
         success: false,
         message: 'Your account is inactive. Please contact the administrator.'
       });
     }
 
-    // Generate JWT Token
+    const userRoles = user.roles && user.roles.length > 0 ? user.roles : [user.role || 'farmer'];
+    
+    if (!activeRole) {
+      activeRole = userRoles[0];
+    }
+
+    if (!userRoles.includes(activeRole)) {
+      await OTP.deleteMany({ phone: normalizedIdentity });
+      return res.status(403).json({
+        success: false,
+        message: `Your account is not authorized for the '${getRoleLabel(activeRole)}' role.`
+      });
+    }
+
+    // Invalidate OTP record after successful processing
+    await OTP.deleteMany({ phone: normalizedIdentity });
+
     const jwtSecret = process.env.JWT_SECRET || 'dairy_medical_system_super_secret_jwt_key_2026';
     const jwtExpiresIn = process.env.JWT_EXPIRES_IN || '7d';
 
     const token = jwt.sign(
-      { userId: user._id.toString(), role: user.role },
+      {
+        userId: user._id.toString(),
+        role: activeRole,
+        activeRole: activeRole,
+        roles: userRoles
+      },
       jwtSecret,
       { expiresIn: jwtExpiresIn }
     );
 
     return res.status(200).json({
       success: true,
-      message: 'Login successful',
+      message: 'Account verified and logged in successfully',
       token,
       user: {
         id: user._id,
         name: user.name,
         phone: user.phone,
         email: user.email,
-        role: user.role,
+        role: activeRole,
+        activeRole: activeRole,
+        roles: userRoles,
         isActive: user.isActive
       }
     });
@@ -436,6 +582,9 @@ export const getMe = async (req, res) => {
       });
     }
 
+    const userRoles = user.roles && user.roles.length > 0 ? user.roles : [user.role || 'farmer'];
+    const activeRole = req.user.activeRole || req.user.role || userRoles[0];
+
     return res.status(200).json({
       success: true,
       user: {
@@ -443,7 +592,9 @@ export const getMe = async (req, res) => {
         name: user.name,
         phone: user.phone,
         email: user.email,
-        role: user.role,
+        role: activeRole,
+        activeRole: activeRole,
+        roles: userRoles,
         isActive: user.isActive
       }
     });
@@ -455,3 +606,17 @@ export const getMe = async (req, res) => {
     });
   }
 };
+
+/**
+ * Helper to display human-readable role label
+ */
+function getRoleLabel(roleKey) {
+  const map = {
+    farmer: 'Farmer',
+    dairyOwner: 'Dairy Owner',
+    medicalProvider: 'Medical Provider',
+    veterinarian: 'Veterinarian',
+    admin: 'Administrator'
+  };
+  return map[roleKey] || roleKey;
+}

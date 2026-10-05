@@ -17,7 +17,9 @@ export const DashboardRedirect = () => {
     return <Navigate to="/login" replace />;
   }
 
-  switch (user?.role) {
+  const activeRole = user?.activeRole || user?.role;
+
+  switch (activeRole) {
     case 'farmer':
       return <Navigate to="/farmer/dashboard" replace />;
     case 'dairyOwner':

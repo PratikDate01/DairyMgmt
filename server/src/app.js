@@ -10,6 +10,8 @@ import medicineRoutes from './routes/medicineRoutes.js';
 import medicineRequestRoutes from './routes/medicineRequestRoutes.js';
 import diseaseScanRoutes from './routes/diseaseScanRoutes.js';
 import veterinarianRoutes from './routes/veterinarianRoutes.js';
+import cattleRoutes from './routes/cattleRoutes.js';
+import vetRequestRoutes from './routes/vetRequestRoutes.js';
 
 const app = express();
 
@@ -31,6 +33,8 @@ app.use('/api/medicines', medicineRoutes);
 app.use('/api/medicine-requests', medicineRequestRoutes);
 app.use('/api/disease-scans', diseaseScanRoutes);
 app.use('/api/veterinarian', veterinarianRoutes);
+app.use('/api/cattle', cattleRoutes);
+app.use('/api/vet-requests', vetRequestRoutes);
 
 // Health Check Endpoint
 app.get('/api/health', (req, res) => {

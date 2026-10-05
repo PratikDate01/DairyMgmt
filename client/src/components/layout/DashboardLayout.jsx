@@ -22,11 +22,6 @@ export const DashboardLayout = ({ children }) => {
         <main className="flex-1 p-4 md:p-6 max-w-7xl w-full mx-auto">
           {children}
         </main>
-
-        {/* Reusable Dashboard Footer */}
-        <footer className="py-4 px-6 border-t border-slate-200 text-center text-xs text-slate-400 bg-white">
-          Dairy & Medical Management System &copy; 2026 — Diploma Final Year Project
-        </footer>
       </div>
     </div>
   );

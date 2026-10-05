@@ -3,11 +3,12 @@ import { useAuth } from '../../context/AuthContext';
 import { dairyFarmerService } from '../../services/dairyFarmerService';
 import { milkCollectionService } from '../../services/milkCollectionService';
 import { paymentService } from '../../services/paymentService';
+import { cattleService } from '../../services/cattleService';
 import { PageHeader } from '../../components/common/PageHeader';
 import { StatCard } from '../../components/common/StatCard';
 import { SectionCard } from '../../components/common/SectionCard';
 import { EmptyState } from '../../components/common/EmptyState';
-import { Milk, Stethoscope, Wallet, UserCheck, CheckCircle2, Sun, Moon } from 'lucide-react';
+import { Milk, Stethoscope, Wallet, UserCheck, CheckCircle2, Sun, Moon, HeartPulse, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const FarmerDashboard = () => {
@@ -15,22 +16,25 @@ export const FarmerDashboard = () => {
   const [connections, setConnections] = useState([]);
   const [collections, setCollections] = useState([]);
   const [paymentMetrics, setPaymentMetrics] = useState({ totalPaid: 0, totalPending: 0 });
+  const [cattleList, setCattleList] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
       try {
         if (token) {
-          const [connData, collRes, payRes] = await Promise.all([
+          const [connData, collRes, payRes, cattleRes] = await Promise.all([
             dairyFarmerService.getFarmerDairies(token),
             milkCollectionService.getFarmerCollections(token),
-            paymentService.getFarmerPayments(token)
+            paymentService.getFarmerPayments(token),
+            cattleService.getFarmerCattle(token).catch(() => ({ cattle: [] }))
           ]);
           setConnections(connData);
           setCollections(collRes.collections || []);
           if (payRes.metrics) {
             setPaymentMetrics(payRes.metrics);
           }
+          setCattleList(cattleRes.cattle || []);
         }
       } catch (err) {
         console.warn('Failed to fetch farmer dashboard data:', err.message);
@@ -60,16 +64,23 @@ export const FarmerDashboard = () => {
     <div className="space-y-6">
       <PageHeader
         title="Farmer Dashboard"
-        description={`Welcome back, ${user?.name || 'Farmer'}. Manage your dairy connections and view recorded milk collections.`}
+        description={`Welcome back, ${user?.name || 'Farmer'}. Manage your livestock, dairy connections, and view milk collections.`}
         breadcrumbs={['Home', 'Farmer Dashboard']}
         actions={
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Link
-              to="/farmer/milk-collections"
+              to="/farmer/cattle"
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-xs transition flex items-center space-x-1.5"
             >
-              <Milk className="w-4 h-4" />
-              <span>View Collections</span>
+              <HeartPulse className="w-4 h-4" />
+              <span>My Cattle</span>
+            </Link>
+            <Link
+              to="/farmer/milk-collections"
+              className="px-4 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg shadow-xs transition flex items-center space-x-1.5"
+            >
+              <Milk className="w-4 h-4 text-slate-500" />
+              <span>Collections</span>
             </Link>
             <Link
               to="/farmer/payments"
@@ -78,19 +89,19 @@ export const FarmerDashboard = () => {
               <Wallet className="w-4 h-4" />
               <span>Payments</span>
             </Link>
-            <Link
-              to="/farmer/connections"
-              className="px-4 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg shadow-xs transition flex items-center space-x-1.5"
-            >
-              <Milk className="w-4 h-4 text-slate-500" />
-              <span>Dairy Connections</span>
-            </Link>
           </div>
         }
       />
 
       {/* Overview Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          title="My Cattle"
+          value={loading ? 'Loading...' : `${cattleList.length} Head`}
+          icon={HeartPulse}
+          badgeText={cattleList.length > 0 ? `${cattleList.length} Registered` : 'No Cattle Added'}
+          badgeType={cattleList.length > 0 ? 'success' : 'neutral'}
+        />
         <StatCard
           title="Connected Dairy"
           value={loading ? 'Loading...' : activeConnection ? activeConnection.dairyOwner?.name || 'Connected' : 'Not Connected'}
@@ -112,19 +123,13 @@ export const FarmerDashboard = () => {
           badgeText={paymentMetrics.totalPending > 0 ? 'Awaiting Settlement' : 'Settled'}
           badgeType={paymentMetrics.totalPending > 0 ? 'amber' : 'success'}
         />
-        <StatCard
-          title="Medical Requests"
-          value="0 Active"
-          icon={Stethoscope}
-          badgeText="No Pending Orders"
-          badgeType="neutral"
-        />
       </div>
 
       {/* Main Sections */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Profile Card */}
-        <div className="lg:col-span-1">
+        {/* Left Column: Profile & Cattle Summary */}
+        <div className="lg:col-span-1 space-y-6">
+          {/* Profile Card */}
           <SectionCard title="Farmer Profile Summary" subtitle="Your registered identity details">
             <div className="space-y-3 text-sm">
               <div className="flex justify-between py-2 border-b border-slate-100">
@@ -150,8 +155,54 @@ export const FarmerDashboard = () => {
               </div>
             </div>
           </SectionCard>
+
+          {/* My Cattle Summary Section */}
+          <SectionCard
+            title="My Cattle Summary"
+            subtitle="Registered livestock status"
+            action={
+              <Link to="/farmer/cattle" className="text-xs text-blue-600 hover:text-blue-800 font-semibold">
+                View All →
+              </Link>
+            }
+          >
+            {loading ? (
+              <div className="py-6 text-center text-slate-500 text-xs">Loading cattle...</div>
+            ) : cattleList.length === 0 ? (
+              <div className="text-center py-4 space-y-2">
+                <p className="text-xs text-slate-500">No cattle added yet.</p>
+                <Link
+                  to="/farmer/cattle"
+                  className="inline-flex items-center space-x-1 text-xs font-semibold text-blue-600 hover:text-blue-800"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Cattle</span>
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                {cattleList.slice(0, 3).map((item) => (
+                  <div key={item._id} className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between text-xs">
+                    <div className="flex items-center space-x-2.5">
+                      <span className="text-xl">🐄</span>
+                      <div>
+                        <h4 className="font-bold text-slate-800 leading-tight">{item.nameTag}</h4>
+                        <p className="text-[10px] text-slate-500">{item.breed} • {item.gender}</p>
+                      </div>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold capitalize ${
+                      item.healthStatus === 'healthy' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
+                    }`}>
+                      {item.healthStatus.replace('_', ' ')}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </SectionCard>
         </div>
 
+        {/* Right Column: Active Connections & Collections */}
         <div className="lg:col-span-2 space-y-6">
           {/* Active Connection */}
           <SectionCard

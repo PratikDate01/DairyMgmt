@@ -27,6 +27,18 @@ const otpSchema = new mongoose.Schema(
     verified: {
       type: Boolean,
       default: false
+    },
+    isRegistration: {
+      type: Boolean,
+      default: false
+    },
+    pendingName: {
+      type: String,
+      trim: true
+    },
+    pendingRole: {
+      type: String,
+      trim: true
     }
   },
   {

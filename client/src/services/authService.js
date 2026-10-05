@@ -1,13 +1,28 @@
 const API_BASE_URL = 'http://localhost:5000/api/auth';
 
 export const authService = {
-  async register(name, phone, role) {
+  async checkEmail(identity) {
+    const response = await fetch(`${API_BASE_URL}/check-email`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ email: identity, phone: identity })
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to check email');
+    }
+    return data;
+  },
+
+  async register(name, identity, role) {
     const response = await fetch(`${API_BASE_URL}/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ name, phone, role })
+      body: JSON.stringify({ name, phone: identity, email: identity, role })
     });
     const data = await response.json();
     if (!response.ok) {
@@ -16,13 +31,13 @@ export const authService = {
     return data;
   },
 
-  async requestOTP(identity) {
+  async requestOTP(identity, role) {
     const response = await fetch(`${API_BASE_URL}/request-otp`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ phone: identity })
+      body: JSON.stringify({ phone: identity, email: identity, role })
     });
     const data = await response.json();
     if (!response.ok) {
@@ -31,13 +46,13 @@ export const authService = {
     return data;
   },
 
-  async verifyOTP(identity, otp) {
+  async verifyOTP(identity, otp, role) {
     const response = await fetch(`${API_BASE_URL}/verify-otp`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ phone: identity, otp })
+      body: JSON.stringify({ phone: identity, email: identity, otp, role })
     });
     const data = await response.json();
     if (!response.ok) {

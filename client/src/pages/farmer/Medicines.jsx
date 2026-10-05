@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { medicineService } from '../../services/medicineService';
 import { createMedicineRequest } from '../../services/medicineRequestService';
@@ -7,70 +7,124 @@ import { SectionCard } from '../../components/common/SectionCard';
 import { EmptyState } from '../../components/common/EmptyState';
 import {
   Pill,
-  Search,
+  Upload,
+  FileText,
+  CheckCircle2,
+  XCircle,
   RefreshCw,
   AlertCircle,
   Building2,
-  CheckCircle,
   ShoppingBag,
-  X
+  Info,
+  X,
+  ShieldCheck,
+  Search,
+  ArrowRight
 } from 'lucide-react';
-
-const CATEGORY_OPTIONS = [
-  'Antibiotic',
-  'Supplement',
-  'Dewormer',
-  'Antiseptic',
-  'Vaccine',
-  'Pain Relief',
-  'Vitamin',
-  'Other'
-];
 
 export const FarmerMedicines = () => {
   const { token } = useAuth();
 
-  const [search, setSearch] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  // Upload & File State
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [filePreview, setFilePreview] = useState(null);
+  const [fileName, setFileName] = useState('');
+  const [fileSize, setFileSize] = useState('');
 
-  const [medicines, setMedicines] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Processing & Results State
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysisDone, setAnalysisDone] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  // Request Modal State
+  // Identified & Matching Results
+  const [extractedMedicines, setExtractedMedicines] = useState([]);
+  const [matchingMedicines, setMatchingMedicines] = useState([]);
+
+  // Medicine Request Modal State
   const [selectedMedicine, setSelectedMedicine] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [modalError, setModalError] = useState('');
 
-  const fetchCatalog = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError('');
-      const params = {
-        search,
-        category: selectedCategory,
-        page,
-        limit: 12
-      };
-      const res = await medicineService.getAvailableMedicines(token, params);
-      setMedicines(res.medicines || []);
-      setTotalPages(res.totalPages || 1);
-    } catch (err) {
-      setError(err.message || 'Failed to fetch available medicine catalog');
-    } finally {
-      setLoading(false);
+  // Handle Prescription File Selection
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+    if (!allowedTypes.includes(file.type)) {
+      setError('Unsupported file type. Please upload a JPG, PNG, WEBP image or PDF document.');
+      return;
     }
-  }, [token, search, selectedCategory, page]);
 
-  useEffect(() => {
-    fetchCatalog();
-  }, [fetchCatalog]);
+    if (file.size > 10 * 1024 * 1024) {
+      setError('File size exceeds 10MB limit. Please select a smaller file.');
+      return;
+    }
 
+    setError('');
+    setSelectedFile(file);
+    setFileName(file.name);
+    setFileSize((file.size / 1024).toFixed(1) + ' KB');
+    setAnalysisDone(false);
+    setExtractedMedicines([]);
+    setMatchingMedicines([]);
+
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFilePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setFilePreview(null);
+    }
+  };
+
+  const handleClearFile = () => {
+    setSelectedFile(null);
+    setFilePreview(null);
+    setFileName('');
+    setFileSize('');
+    setError('');
+    setAnalysisDone(false);
+    setExtractedMedicines([]);
+    setMatchingMedicines([]);
+  };
+
+  // Submit Prescription to Backend Processing
+  const handleAnalyzePrescription = async (e) => {
+    e.preventDefault();
+    if (!selectedFile) {
+      setError('Please upload a prescription file first.');
+      return;
+    }
+
+    try {
+      setAnalyzing(true);
+      setError('');
+
+      let payloadData = filePreview || fileName;
+      const res = await medicineService.processPrescription(token, {
+        prescriptionData: payloadData,
+        fileName,
+        fileType: selectedFile.type
+      });
+
+      setExtractedMedicines(res.extractedMedicines || []);
+      setMatchingMedicines(res.matchingMedicines || []);
+      setAnalysisDone(true);
+    } catch (err) {
+      console.error('Error analyzing prescription:', err);
+      setError(err.message || 'Failed to process prescription document.');
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
+  // Open Medicine Request Modal
   const openRequestModal = (med) => {
     setSelectedMedicine(med);
     setQuantity(1);
@@ -78,6 +132,7 @@ export const FarmerMedicines = () => {
     setModalError('');
   };
 
+  // Submit Medicine Request (Existing Workflow Integration)
   const handleRequestSubmit = async (e) => {
     e.preventDefault();
     if (!selectedMedicine) return;
@@ -103,9 +158,8 @@ export const FarmerMedicines = () => {
       });
 
       if (res.success) {
-        setSuccessMsg(`Medicine request submitted for ${selectedMedicine.name}. Provider will process your request.`);
+        setSuccessMsg(`Medicine request created for ${selectedMedicine.name}. You can track status in 'My Medicine Requests'.`);
         setSelectedMedicine(null);
-        fetchCatalog();
       }
     } catch (err) {
       setModalError(err.response?.data?.message || err.message || 'Failed to submit request');
@@ -115,177 +169,267 @@ export const FarmerMedicines = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-5xl mx-auto">
+      {/* Top Header */}
       <PageHeader
-        title="Available Medical Directory & Catalog"
-        description="View veterinary medicines and request products directly from registered medical providers."
-        breadcrumbs={['Home', 'Farmer Portal', 'Medicines Catalog']}
+        title="Prescription Medicine Search & Catalog"
+        description="Upload your veterinarian prescription to automatically identify prescribed medicines and find available products from registered medical providers."
+        breadcrumbs={['Home', 'Farmer Portal', 'Prescription Search']}
         actions={
           <div className="flex items-center space-x-2">
-            <button
-              onClick={fetchCatalog}
-              className="px-3 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg shadow-xs transition flex items-center space-x-1.5"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${loading ? 'animate-spin' : ''}`} />
-              <span>Refresh Directory</span>
-            </button>
+            <span className="px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold rounded-lg flex items-center">
+              <ShieldCheck className="w-3.5 h-3.5 mr-1 text-blue-600" /> Prescription Driven
+            </span>
           </div>
         }
       />
 
+      {/* Global Alerts */}
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg flex items-center justify-between">
+        <div className="p-4 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
+            <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
-          <button onClick={() => setError('')} className="text-red-500 hover:text-red-800 font-bold text-xs">
-            Dismiss
-          </button>
+          <button onClick={() => setError('')} className="text-red-700 font-bold text-xs">Dismiss</button>
         </div>
       )}
 
       {successMsg && (
-        <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm rounded-lg flex items-center justify-between">
+        <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-xl flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
             <span>{successMsg}</span>
           </div>
-          <button onClick={() => setSuccessMsg('')} className="text-emerald-600 hover:text-emerald-900 font-bold text-xs">
-            Dismiss
-          </button>
+          <button onClick={() => setSuccessMsg('')} className="text-emerald-800 font-bold text-xs">Dismiss</button>
         </div>
       )}
 
-      {/* Search & Filter Bar */}
-      <div className="p-4 bg-white border border-slate-200 rounded-xl shadow-xs grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="relative sm:col-span-2">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-          <input
-            type="text"
-            placeholder="Search medicine name, generic name, or category..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-            className="w-full pl-9 pr-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-800 outline-none focus:ring-2 focus:ring-blue-500"
-          />
+      {/* Step-by-Step Visual Workflow Tracker */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white p-3 rounded-2xl border border-slate-200 shadow-xs text-xs font-semibold text-center">
+        <div className={`p-2 rounded-xl flex items-center justify-center space-x-1.5 ${selectedFile ? 'bg-blue-50 text-blue-700' : 'bg-slate-50 text-slate-500'}`}>
+          <span className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold">1</span>
+          <span>Upload Prescription</span>
         </div>
-
-        <div>
-          <select
-            value={selectedCategory}
-            onChange={(e) => {
-              setSelectedCategory(e.target.value);
-              setPage(1);
-            }}
-            className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-800 outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">All Categories</option>
-            {CATEGORY_OPTIONS.map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
+        <div className={`p-2 rounded-xl flex items-center justify-center space-x-1.5 ${analyzing ? 'bg-blue-50 text-blue-700 animate-pulse' : analysisDone ? 'bg-blue-50 text-blue-700' : 'bg-slate-50 text-slate-500'}`}>
+          <span className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold">2</span>
+          <span>Analyze Document</span>
+        </div>
+        <div className={`p-2 rounded-xl flex items-center justify-center space-x-1.5 ${extractedMedicines.length > 0 ? 'bg-blue-50 text-blue-700' : 'bg-slate-50 text-slate-500'}`}>
+          <span className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold">3</span>
+          <span>Identify Medicines</span>
+        </div>
+        <div className={`p-2 rounded-xl flex items-center justify-center space-x-1.5 ${matchingMedicines.length > 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-50 text-slate-500'}`}>
+          <span className="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px] font-bold">4</span>
+          <span>Request Available</span>
         </div>
       </div>
 
-      {/* Medicine Grid */}
-      <SectionCard
-        title="Available Medicines & Supplies Catalog"
-        subtitle={`Showing ${medicines.length} in-stock available medicines`}
-      >
-        {loading ? (
-          <div className="py-8 text-center text-slate-500 text-xs">Loading available catalog...</div>
-        ) : medicines.length === 0 ? (
-          <EmptyState
-            title="No Available Medicines Found"
-            description="No in-stock medicines match your search criteria at this time."
-            icon={Pill}
-          />
+      {/* Section 1: Upload Prescription Card */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="flex items-center space-x-2">
+            <div className="p-2 bg-blue-100 text-blue-700 rounded-xl">
+              <FileText className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-slate-900">Upload Veterinary Prescription</h2>
+              <p className="text-xs text-slate-500">Upload doctor's prescription (JPG, PNG, WEBP, or PDF) to scan for prescribed medicines</p>
+            </div>
+          </div>
+        </div>
+
+        {!selectedFile ? (
+          <label className="border-2 border-dashed border-slate-300 hover:border-blue-500 bg-slate-50 hover:bg-blue-50/50 rounded-2xl p-8 flex flex-col items-center justify-center cursor-pointer transition text-center">
+            <div className="w-12 h-12 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center mb-3">
+              <Upload className="w-6 h-6" />
+            </div>
+            <span className="text-xs font-bold text-slate-800 block mb-1">Click to Upload Prescription Document</span>
+            <span className="text-[11px] text-slate-500 block mb-2">Supports JPG, PNG, WEBP, PDF (Max 10MB)</span>
+            <span className="px-3 py-1.5 bg-blue-600 text-white rounded-xl text-xs font-bold shadow-xs hover:bg-blue-700 transition">
+              Browse System File
+            </span>
+            <input
+              type="file"
+              accept="image/*,.pdf"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+          </label>
         ) : (
-          <div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {medicines.map((m) => (
-                <div key={m._id} className="p-4 bg-slate-50/70 border border-slate-200 rounded-xl space-y-3 text-xs flex flex-col justify-between">
-                  <div className="space-y-2">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h4 className="font-bold text-slate-900 text-sm">{m.name}</h4>
-                        {m.genericName && (
-                          <p className="text-[11px] text-slate-400 italic">Generic: {m.genericName}</p>
-                        )}
-                      </div>
-                      <span className="px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-100 font-semibold text-[10px] rounded">
-                        {m.category}
-                      </span>
-                    </div>
-
-                    {m.description && (
-                      <p className="text-slate-600 text-[11px] line-clamp-2">{m.description}</p>
-                    )}
-                  </div>
-
-                  <div className="pt-2 border-t border-slate-200 space-y-3">
-                    <div className="flex items-center justify-between font-mono">
-                      <div>
-                        <span className="text-[10px] text-slate-400 uppercase block font-sans">Price</span>
-                        <span className="font-bold text-emerald-700 text-sm">₹{m.price?.toFixed(2)}</span>
-                        <span className="text-[10px] text-slate-500 font-sans"> / {m.unit}</span>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-[10px] text-slate-400 uppercase block font-sans">Available Stock</span>
-                        <span className="font-bold text-slate-800">{m.stockQuantity} {m.unit}s</span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between text-[11px] bg-white p-2 rounded-lg border border-slate-200">
-                      <div className="flex items-center space-x-1.5 text-slate-600">
-                        <Building2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                        <span className="font-semibold truncate">{m.medicalProvider?.name || 'Medical Provider'}</span>
-                      </div>
-                      <span className="text-[10px] font-mono text-slate-400">{m.medicalProvider?.phone}</span>
-                    </div>
-
-                    <button
-                      onClick={() => openRequestModal(m)}
-                      className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg text-xs shadow-xs transition flex items-center justify-center space-x-1.5"
-                    >
-                      <ShoppingBag className="w-3.5 h-3.5" />
-                      <span>Request Medicine</span>
-                    </button>
-                  </div>
+          <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center space-x-3 min-w-0">
+              {filePreview ? (
+                <img src={filePreview} alt="Prescription preview" className="w-16 h-16 object-cover rounded-xl border border-slate-200 shrink-0" />
+              ) : (
+                <div className="w-16 h-16 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center text-xl shrink-0">
+                  📄
                 </div>
-              ))}
+              )}
+              <div className="min-w-0">
+                <span className="text-xs font-bold text-slate-900 block truncate">{fileName}</span>
+                <span className="text-[11px] text-slate-500 block mt-0.5">Size: {fileSize}</span>
+                <span className="px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-100 text-[10px] font-bold rounded-md inline-block mt-1">
+                  Ready for Analysis
+                </span>
+              </div>
             </div>
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between pt-6 border-t border-slate-200 text-xs">
-                <span className="text-slate-500 font-medium">Page {page} of {totalPages}</span>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    disabled={page === 1}
-                    className="px-3 py-1 bg-slate-100 text-slate-700 font-semibold rounded hover:bg-slate-200 disabled:opacity-50"
-                  >
-                    Previous
-                  </button>
-                  <button
-                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                    disabled={page === totalPages}
-                    className="px-3 py-1 bg-slate-100 text-slate-700 font-semibold rounded hover:bg-slate-200 disabled:opacity-50"
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
-            )}
+            <div className="flex items-center space-x-2 w-full sm:w-auto">
+              <button
+                type="button"
+                onClick={handleClearFile}
+                className="px-3 py-2 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-xl transition"
+              >
+                Change File
+              </button>
+              <button
+                type="button"
+                onClick={handleAnalyzePrescription}
+                disabled={analyzing}
+                className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition disabled:opacity-50 flex items-center justify-center space-x-1.5"
+              >
+                {analyzing ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>Analyzing Prescription...</span>
+                  </>
+                ) : (
+                  <>
+                    <Search className="w-4 h-4" />
+                    <span>Analyze Prescription & Find Medicines</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         )}
-      </SectionCard>
+      </div>
 
-      {/* Medicine Request Modal */}
+      {/* Medical Safety & Disclaimer Notice */}
+      <div className="p-4 bg-amber-50 border border-amber-200 text-amber-950 rounded-2xl flex items-start space-x-3 text-xs">
+        <Info className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+        <div>
+          <span className="font-bold block text-amber-900 mb-0.5">Medical Safety Notice</span>
+          <span>
+            Prescription information is processed to help identify available medicines from registered medical providers. 
+            Always verify the prescription details with a qualified veterinarian or authorized medical provider before requesting or using any medicine.
+          </span>
+        </div>
+      </div>
+
+      {/* Results Section after Analysis */}
+      {analysisDone && (
+        <div className="space-y-6">
+          {/* Identified Medicines Card */}
+          <SectionCard
+            title="Prescription Identified Medicines"
+            subtitle={`System analyzed your prescription and extracted ${extractedMedicines.length} medicine item(s)`}
+          >
+            {extractedMedicines.length === 0 ? (
+              <p className="text-xs text-slate-500 py-4 text-center">No medicine names could be identified from this prescription document.</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                {extractedMedicines.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className={`p-3.5 rounded-xl border flex items-center justify-between text-xs font-semibold ${
+                      item.available
+                        ? 'bg-emerald-50/60 border-emerald-200 text-emerald-950'
+                        : 'bg-amber-50/60 border-amber-200 text-amber-950'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-2 min-w-0 mr-2">
+                      <Pill className={`w-4 h-4 shrink-0 ${item.available ? 'text-emerald-600' : 'text-amber-600'}`} />
+                      <span className="truncate font-bold">{item.name}</span>
+                    </div>
+
+                    {item.available ? (
+                      <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-extrabold rounded-md flex items-center shrink-0">
+                        <CheckCircle2 className="w-3 h-3 mr-1 text-emerald-600" /> Available
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 bg-amber-100 text-amber-800 text-[10px] font-extrabold rounded-md flex items-center shrink-0">
+                        <XCircle className="w-3 h-3 mr-1 text-amber-600" /> Not Currently Available
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </SectionCard>
+
+          {/* Available Matching Medicines Catalog */}
+          <SectionCard
+            title="Matching Available Medicines Catalog"
+            subtitle={`Found ${matchingMedicines.length} in-stock product(s) matching your prescription`}
+          >
+            {matchingMedicines.length === 0 ? (
+              <EmptyState
+                title="No Matching Medicines Available"
+                description="Prescribed medicines are not currently in stock from registered medical providers. You can try again later or check with a local veterinary clinic."
+                icon={Pill}
+              />
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {matchingMedicines.map((m) => (
+                  <div key={m._id} className="p-4 bg-slate-50/70 border border-slate-200 rounded-2xl space-y-3 text-xs flex flex-col justify-between hover:border-blue-300 transition">
+                    <div className="space-y-2">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h4 className="font-bold text-slate-900 text-sm">{m.name}</h4>
+                          {m.genericName && (
+                            <p className="text-[11px] text-slate-400 italic">Generic: {m.genericName}</p>
+                          )}
+                        </div>
+                        <span className="px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-100 font-semibold text-[10px] rounded">
+                          {m.category}
+                        </span>
+                      </div>
+
+                      {m.description && (
+                        <p className="text-slate-600 text-[11px] line-clamp-2">{m.description}</p>
+                      )}
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-200 space-y-3">
+                      <div className="flex items-center justify-between font-mono">
+                        <div>
+                          <span className="text-[10px] text-slate-400 uppercase block font-sans">Unit Price</span>
+                          <span className="font-bold text-emerald-700 text-sm">₹{m.price?.toFixed(2)}</span>
+                          <span className="text-[10px] text-slate-500 font-sans"> / {m.unit}</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-[10px] text-slate-400 uppercase block font-sans">In-Stock</span>
+                          <span className="font-bold text-slate-800">{m.stockQuantity} {m.unit}s</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between text-[11px] bg-white p-2 rounded-xl border border-slate-200">
+                        <div className="flex items-center space-x-1.5 text-slate-600">
+                          <Building2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                          <span className="font-semibold truncate">{m.medicalProvider?.name || 'Medical Provider'}</span>
+                        </div>
+                        <span className="text-[10px] font-mono text-slate-400">{m.medicalProvider?.phone}</span>
+                      </div>
+
+                      <button
+                        onClick={() => openRequestModal(m)}
+                        className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-xs transition flex items-center justify-center space-x-1.5"
+                      >
+                        <ShoppingBag className="w-3.5 h-3.5" />
+                        <span>Request Medicine</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </SectionCard>
+        </div>
+      )}
+
+      {/* Medicine Request Modal (Reusing Existing Medicine Request System) */}
       {selectedMedicine && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-100 space-y-4">

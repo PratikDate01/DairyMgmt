@@ -444,11 +444,12 @@ export const getDashboardSummary = async (req, res) => {
     const { role, id } = req.user;
 
     if (role === 'admin') {
-      const [totalUsers, totalFarmers, totalDairyOwners, totalMedicalProviders] = await Promise.all([
+      const [totalUsers, totalFarmers, totalDairyOwners, totalMedicalProviders, totalVeterinarians] = await Promise.all([
         User.countDocuments(),
         User.countDocuments({ role: 'farmer' }),
         User.countDocuments({ role: 'dairyOwner' }),
-        User.countDocuments({ role: 'medicalProvider' })
+        User.countDocuments({ role: 'medicalProvider' }),
+        User.countDocuments({ role: 'veterinarian' })
       ]);
 
       const milkAgg = await MilkCollection.aggregate([
@@ -485,7 +486,8 @@ export const getDashboardSummary = async (req, res) => {
             totalUsers,
             totalFarmers,
             totalDairyOwners,
-            totalMedicalProviders
+            totalMedicalProviders,
+            totalVeterinarians
           },
           milk: {
             totalQuantity: Math.round(milk.totalQuantity * 10) / 10,
