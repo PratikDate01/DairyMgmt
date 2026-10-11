@@ -9,7 +9,7 @@ import User from '../models/User.js';
  */
 export const createMedicineRequest = async (req, res) => {
   try {
-    const { medicineId, quantity, notes } = req.body;
+    const { medicineId, quantity, notes, vetRequestId } = req.body;
 
     if (!medicineId) {
       return res.status(400).json({ success: false, message: 'Medicine ID is required' });
@@ -66,6 +66,7 @@ export const createMedicineRequest = async (req, res) => {
       farmer: req.user.id,
       medicalProvider,
       medicine: medicine._id,
+      vetRequest: vetRequestId || null,
       medicineNameSnapshot,
       unitPriceSnapshot,
       quantity: parsedQuantity,
@@ -77,7 +78,8 @@ export const createMedicineRequest = async (req, res) => {
 
     const populatedRequest = await MedicineRequest.findById(newRequest._id)
       .populate('medicine', 'name genericName category unit price')
-      .populate('medicalProvider', 'name email phone storeName');
+      .populate('medicalProvider', 'name email phone storeName')
+      .populate('vetRequest', 'symptoms aiCondition riskLevel finalDiagnosis');
 
     return res.status(201).json({
       success: true,

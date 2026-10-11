@@ -314,6 +314,18 @@ export const acceptVetRequest = async (req, res) => {
 
     vetReq.status = 'accepted';
     vetReq.respondedAt = new Date();
+
+    if (!vetReq.clinicalTimeline || vetReq.clinicalTimeline.length === 0) {
+      vetReq.clinicalTimeline = [];
+    }
+    vetReq.clinicalTimeline.push({
+      stage: 'ACCEPTED',
+      title: 'Consultation Request Accepted',
+      notes: `Consultation request accepted by Dr. ${req.user.name || 'Veterinarian'}`,
+      performedBy: req.user.id,
+      timestamp: new Date()
+    });
+
     await vetReq.save();
 
     // Update DiseaseScan timeline
@@ -332,8 +344,8 @@ export const acceptVetRequest = async (req, res) => {
     const updated = await VetRequest.findById(vetReq._id)
       .populate('farmer', 'name phone email')
       .populate('veterinarian', 'name phone email specialization clinicName availability')
-      .populate('cattle', 'nameTag breed gender ageYears imageUrl')
-      .populate('diseaseScan', 'imageUrl detectedCondition confidence symptoms')
+      .populate('cattle', 'nameTag breed gender ageYears imageUrl healthStatus')
+      .populate('diseaseScan', 'imageUrl detectedCondition confidence symptoms recommendations')
       .populate('escalationHistory.veterinarian', 'name phone email specialization clinicName');
 
     return res.status(200).json({
@@ -347,6 +359,280 @@ export const acceptVetRequest = async (req, res) => {
       success: false,
       message: 'Failed to accept consultation request.'
     });
+  }
+};
+
+/**
+ * @desc    Record clinical examination findings
+ * @route   PATCH /api/vet-requests/:id/examination
+ * @access  Private (Veterinarian, Admin)
+ */
+export const saveClinicalExamination = async (req, res) => {
+  try {
+    const { observations = '', physicalSymptoms = '', temperature = '', appetite = '', additionalNotes = '' } = req.body;
+    const vetReq = await VetRequest.findById(req.params.id);
+
+    if (!vetReq) {
+      return res.status(404).json({ success: false, message: 'Veterinarian request record not found.' });
+    }
+
+    if (req.user.role === 'veterinarian' && vetReq.veterinarian.toString() !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Forbidden. You cannot edit clinical records assigned to another veterinarian.' });
+    }
+
+    vetReq.clinicalExamination = {
+      observations: observations.trim(),
+      physicalSymptoms: physicalSymptoms.trim(),
+      temperature: temperature.trim(),
+      appetite: appetite.trim(),
+      additionalNotes: additionalNotes.trim(),
+      examinedAt: new Date()
+    };
+
+    if (['accepted', 'pending'].includes(vetReq.status)) {
+      vetReq.status = 'examination';
+    }
+
+    vetReq.clinicalTimeline.push({
+      stage: 'EXAMINATION',
+      title: 'Clinical Examination Recorded',
+      notes: observations || physicalSymptoms || 'Clinical examination findings saved by veterinarian.',
+      performedBy: req.user.id,
+      timestamp: new Date()
+    });
+
+    await vetReq.save();
+
+    const updated = await VetRequest.findById(vetReq._id)
+      .populate('farmer', 'name phone email')
+      .populate('veterinarian', 'name phone email specialization clinicName availability')
+      .populate('cattle', 'nameTag breed gender ageYears imageUrl healthStatus')
+      .populate('diseaseScan', 'imageUrl detectedCondition confidence symptoms recommendations')
+      .populate('escalationHistory.veterinarian', 'name phone email specialization clinicName');
+
+    return res.status(200).json({
+      success: true,
+      message: 'Clinical examination findings saved successfully.',
+      data: updated
+    });
+  } catch (error) {
+    console.error('Error saving clinical examination:', error);
+    return res.status(500).json({ success: false, message: 'Failed to save clinical examination findings.' });
+  }
+};
+
+/**
+ * @desc    Record Veterinarian Final Diagnosis
+ * @route   PATCH /api/vet-requests/:id/diagnosis
+ * @access  Private (Veterinarian, Admin)
+ */
+export const saveFinalDiagnosis = async (req, res) => {
+  try {
+    const { diagnosis = '', notes = '', severity = 'Moderate', treatmentAdvice = '', additionalAdvice = '' } = req.body;
+
+    if (!diagnosis || !diagnosis.trim()) {
+      return res.status(400).json({ success: false, message: 'Veterinarian final diagnosis is required.' });
+    }
+
+    const vetReq = await VetRequest.findById(req.params.id);
+    if (!vetReq) {
+      return res.status(404).json({ success: false, message: 'Veterinarian request record not found.' });
+    }
+
+    if (req.user.role === 'veterinarian' && vetReq.veterinarian.toString() !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Forbidden. You cannot enter diagnosis for a case assigned to another veterinarian.' });
+    }
+
+    vetReq.finalDiagnosis = {
+      diagnosis: diagnosis.trim(),
+      notes: notes.trim(),
+      severity: severity || 'Moderate',
+      treatmentAdvice: treatmentAdvice.trim(),
+      additionalAdvice: additionalAdvice.trim(),
+      diagnosedAt: new Date()
+    };
+
+    vetReq.status = 'diagnosed';
+
+    vetReq.clinicalTimeline.push({
+      stage: 'DIAGNOSIS',
+      title: 'Veterinarian Final Diagnosis Confirmed',
+      notes: `Final Diagnosis: ${diagnosis.trim()}`,
+      performedBy: req.user.id,
+      timestamp: new Date()
+    });
+
+    await vetReq.save();
+
+    // Sync diagnosis notes to DiseaseScan
+    const scan = await DiseaseScan.findById(vetReq.diseaseScan);
+    if (scan) {
+      scan.veterinarianNotes = notes.trim() || `Final Doctor Diagnosis: ${diagnosis.trim()}`;
+      scan.veterinarianRecommendation = treatmentAdvice.trim() || additionalAdvice.trim() || 'Follow doctor clinical advice.';
+      scan.veterinarianReviewStatus = 'under_review';
+      scan.timeline.push({
+        status: 'VET_DIAGNOSED',
+        notes: `Doctor Final Diagnosis: ${diagnosis.trim()}`,
+        updatedBy: req.user.id,
+        timestamp: new Date()
+      });
+      await scan.save();
+    }
+
+    const updated = await VetRequest.findById(vetReq._id)
+      .populate('farmer', 'name phone email')
+      .populate('veterinarian', 'name phone email specialization clinicName availability')
+      .populate('cattle', 'nameTag breed gender ageYears imageUrl healthStatus')
+      .populate('diseaseScan', 'imageUrl detectedCondition confidence symptoms recommendations')
+      .populate('escalationHistory.veterinarian', 'name phone email specialization clinicName');
+
+    return res.status(200).json({
+      success: true,
+      message: 'Veterinarian final diagnosis saved successfully.',
+      data: updated
+    });
+  } catch (error) {
+    console.error('Error saving final diagnosis:', error);
+    return res.status(500).json({ success: false, message: 'Failed to save final diagnosis.' });
+  }
+};
+
+/**
+ * @desc    Issue / Save Prescription
+ * @route   PATCH /api/vet-requests/:id/prescription
+ * @access  Private (Veterinarian, Admin)
+ */
+export const savePrescription = async (req, res) => {
+  try {
+    const { medicines = [], generalInstructions = '', dietaryAdvice = '' } = req.body;
+    const vetReq = await VetRequest.findById(req.params.id);
+
+    if (!vetReq) {
+      return res.status(404).json({ success: false, message: 'Veterinarian request record not found.' });
+    }
+
+    if (req.user.role === 'veterinarian' && vetReq.veterinarian.toString() !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Forbidden. You cannot create a prescription for a case assigned to another veterinarian.' });
+    }
+
+    const formattedMedicines = medicines
+      .filter(m => m && m.medicineName && m.medicineName.trim())
+      .map(m => ({
+        medicineName: m.medicineName.trim(),
+        dosage: (m.dosage || '').trim(),
+        frequency: (m.frequency || '').trim(),
+        duration: (m.duration || '').trim(),
+        instructions: (m.instructions || '').trim()
+      }));
+
+    vetReq.prescription = {
+      medicines: formattedMedicines,
+      generalInstructions: generalInstructions.trim(),
+      dietaryAdvice: dietaryAdvice.trim(),
+      prescribedAt: new Date()
+    };
+
+    vetReq.status = 'prescription_created';
+
+    vetReq.clinicalTimeline.push({
+      stage: 'PRESCRIPTION',
+      title: 'Prescription Issued',
+      notes: `${formattedMedicines.length} medicine(s) prescribed with treatment instructions.`,
+      performedBy: req.user.id,
+      timestamp: new Date()
+    });
+
+    await vetReq.save();
+
+    const updated = await VetRequest.findById(vetReq._id)
+      .populate('farmer', 'name phone email')
+      .populate('veterinarian', 'name phone email specialization clinicName availability')
+      .populate('cattle', 'nameTag breed gender ageYears imageUrl healthStatus')
+      .populate('diseaseScan', 'imageUrl detectedCondition confidence symptoms recommendations')
+      .populate('escalationHistory.veterinarian', 'name phone email specialization clinicName');
+
+    return res.status(200).json({
+      success: true,
+      message: 'Prescription issued and saved successfully.',
+      data: updated
+    });
+  } catch (error) {
+    console.error('Error saving prescription:', error);
+    return res.status(500).json({ success: false, message: 'Failed to save prescription.' });
+  }
+};
+
+/**
+ * @desc    Save Follow-Up Advice & Complete Case
+ * @route   PATCH /api/vet-requests/:id/follow-up
+ * @access  Private (Veterinarian, Admin)
+ */
+export const saveFollowUpAndComplete = async (req, res) => {
+  try {
+    const { required = false, date = null, instructions = '', notes = '', completeCase = false } = req.body;
+    const vetReq = await VetRequest.findById(req.params.id);
+
+    if (!vetReq) {
+      return res.status(404).json({ success: false, message: 'Veterinarian request record not found.' });
+    }
+
+    if (req.user.role === 'veterinarian' && vetReq.veterinarian.toString() !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Forbidden. You cannot update follow-up advice for a case assigned to another veterinarian.' });
+    }
+
+    const isReq = Boolean(required);
+    vetReq.followUp = {
+      required: isReq,
+      date: date ? new Date(date) : null,
+      instructions: (instructions || '').trim(),
+      notes: (notes || '').trim(),
+      status: isReq ? 'scheduled' : 'not_required'
+    };
+
+    if (completeCase) {
+      vetReq.status = 'completed';
+    }
+
+    vetReq.clinicalTimeline.push({
+      stage: 'FOLLOW_UP',
+      title: completeCase ? 'Clinical Case Completed' : 'Follow-Up Advice Updated',
+      notes: instructions.trim() || notes.trim() || (isReq ? `Follow-up requested for ${new Date(date).toLocaleDateString()}` : 'No follow-up required.'),
+      performedBy: req.user.id,
+      timestamp: new Date()
+    });
+
+    await vetReq.save();
+
+    if (completeCase) {
+      const scan = await DiseaseScan.findById(vetReq.diseaseScan);
+      if (scan) {
+        scan.veterinarianReviewStatus = 'review_completed';
+        scan.followUpRequired = isReq;
+        scan.timeline.push({
+          status: 'VET_REVIEW_COMPLETED',
+          notes: `Clinical case closed by Dr. ${req.user.name || 'Veterinarian'}.`,
+          updatedBy: req.user.id,
+          timestamp: new Date()
+        });
+        await scan.save();
+      }
+    }
+
+    const updated = await VetRequest.findById(vetReq._id)
+      .populate('farmer', 'name phone email')
+      .populate('veterinarian', 'name phone email specialization clinicName availability')
+      .populate('cattle', 'nameTag breed gender ageYears imageUrl healthStatus')
+      .populate('diseaseScan', 'imageUrl detectedCondition confidence symptoms recommendations')
+      .populate('escalationHistory.veterinarian', 'name phone email specialization clinicName');
+
+    return res.status(200).json({
+      success: true,
+      message: completeCase ? 'Clinical case completed and closed successfully.' : 'Follow-up advice saved successfully.',
+      data: updated
+    });
+  } catch (error) {
+    console.error('Error saving follow-up advice:', error);
+    return res.status(500).json({ success: false, message: 'Failed to save follow-up details.' });
   }
 };
 

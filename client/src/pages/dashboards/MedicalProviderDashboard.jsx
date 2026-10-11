@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { medicineService } from '../../services/medicineService';
+import { getProviderRequestsSummary } from '../../services/medicineRequestService';
 import { PageHeader } from '../../components/common/PageHeader';
 import { StatCard } from '../../components/common/StatCard';
 import { SectionCard } from '../../components/common/SectionCard';
 import { EmptyState } from '../../components/common/EmptyState';
-import { Stethoscope, Boxes, CheckCircle2, AlertTriangle, Pill } from 'lucide-react';
+import { Stethoscope, Boxes, CheckCircle2, AlertTriangle, Pill, ShoppingBag, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const MedicalProviderDashboard = () => {
@@ -16,40 +17,63 @@ export const MedicalProviderDashboard = () => {
     outOfStockMedicines: 0,
     lowStockMedicines: 0
   });
+  const [requestsSummary, setRequestsSummary] = useState({
+    total: 0,
+    pending: 0,
+    accepted: 0,
+    packed: 0,
+    ready: 0,
+    completed: 0
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadSummary = async () => {
+    const loadDashboardData = async () => {
       try {
         if (token) {
-          const res = await medicineService.getInventorySummary(token);
-          if (res.summary) {
-            setSummary(res.summary);
+          const [invRes, reqRes] = await Promise.all([
+            medicineService.getInventorySummary(token).catch(() => ({ summary: null })),
+            getProviderRequestsSummary(token).catch(() => ({ summary: null }))
+          ]);
+          if (invRes.summary) {
+            setSummary(invRes.summary);
+          }
+          if (reqRes.summary) {
+            setRequestsSummary(reqRes.summary);
           }
         }
       } catch (err) {
-        console.warn('Failed to fetch medical dashboard inventory summary:', err.message);
+        console.warn('Failed to fetch medical dashboard data:', err.message);
       } finally {
         setLoading(false);
       }
     };
-    loadSummary();
+    loadDashboardData();
   }, [token]);
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Veterinary Medical Console"
-        description={`Welcome, ${user?.name || 'Medical Provider'}. Manage veterinary medicine inventory and fulfill farmer prescription requests.`}
+        description={`Welcome, ${user?.name || 'Medical Store'}. Manage veterinary medicine inventory and fulfill farmer prescription requests.`}
         breadcrumbs={['Home', 'Medical Console']}
         actions={
-          <Link
-            to="/medical-provider/inventory"
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-xs transition flex items-center space-x-1.5"
-          >
-            <Pill className="w-4 h-4" />
-            <span>Manage Inventory</span>
-          </Link>
+          <div className="flex items-center space-x-2">
+            <Link
+              to="/medical-provider/medicine-requests"
+              className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg shadow-xs transition flex items-center space-x-1.5"
+            >
+              <ShoppingBag className="w-4 h-4" />
+              <span>Orders Queue ({requestsSummary.pending})</span>
+            </Link>
+            <Link
+              to="/medical-provider/inventory"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-xs transition flex items-center space-x-1.5"
+            >
+              <Pill className="w-4 h-4" />
+              <span>Manage Inventory</span>
+            </Link>
+          </div>
         }
       />
 
@@ -63,11 +87,11 @@ export const MedicalProviderDashboard = () => {
           badgeType={summary.totalMedicines > 0 ? 'success' : 'neutral'}
         />
         <StatCard
-          title="Available Products"
-          value={loading ? '...' : `${summary.availableMedicines} Items`}
-          icon={CheckCircle2}
-          badgeText="Ready for Supply"
-          badgeType="success"
+          title="Pending Prescription Orders"
+          value={loading ? '...' : `${requestsSummary.pending} Orders`}
+          icon={ShoppingBag}
+          badgeText={requestsSummary.pending > 0 ? 'Awaiting Action' : 'All Orders Processed'}
+          badgeType={requestsSummary.pending > 0 ? 'amber' : 'success'}
         />
         <StatCard
           title="Out of Stock"
@@ -77,11 +101,11 @@ export const MedicalProviderDashboard = () => {
           badgeType={summary.outOfStockMedicines > 0 ? 'red' : 'success'}
         />
         <StatCard
-          title="Low Stock Warning"
-          value={loading ? '...' : `${summary.lowStockMedicines} Items`}
-          icon={AlertTriangle}
-          badgeText={summary.lowStockMedicines > 0 ? 'Stock ≤ 10' : 'Normal'}
-          badgeType={summary.lowStockMedicines > 0 ? 'amber' : 'neutral'}
+          title="Completed Orders"
+          value={loading ? '...' : `${requestsSummary.completed} Fulfilled`}
+          icon={CheckCircle2}
+          badgeText="Total Disbursed"
+          badgeType="success"
         />
       </div>
 
@@ -116,12 +140,33 @@ export const MedicalProviderDashboard = () => {
           </div>
         </SectionCard>
 
-        <SectionCard title="Farmer Medicine Requests (Step 15 Preview)" subtitle="Upcoming order submissions queue">
-          <EmptyState
-            title="No Active Orders Queue"
-            description="Veterinary medicine order submissions requested by farmers will display here in Step 15."
-            icon={Stethoscope}
-          />
+        <SectionCard
+          title="Prescription Fulfillment Orders Queue"
+          subtitle="Farmer medicine requests generated from veterinary prescriptions"
+          action={
+            <Link to="/medical-provider/medicine-requests" className="text-xs text-blue-600 hover:text-blue-800 font-semibold">
+              Fulfill Orders →
+            </Link>
+          }
+        >
+          <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3 text-xs">
+            <div className="flex items-center justify-between py-1 border-b border-slate-200">
+              <span className="text-amber-700 font-semibold">Pending Review</span>
+              <span className="font-mono font-bold text-amber-800">{requestsSummary.pending} Requests</span>
+            </div>
+            <div className="flex items-center justify-between py-1 border-b border-slate-200">
+              <span className="text-blue-700 font-semibold">Accepted / In Packing</span>
+              <span className="font-mono font-bold text-blue-800">{(requestsSummary.accepted || 0) + (requestsSummary.packed || 0)} Requests</span>
+            </div>
+            <div className="flex items-center justify-between py-1 border-b border-slate-200">
+              <span className="text-teal-700 font-semibold">Ready for Pickup</span>
+              <span className="font-mono font-bold text-teal-800">{requestsSummary.ready || 0} Requests</span>
+            </div>
+            <div className="flex items-center justify-between py-1">
+              <span className="text-emerald-700 font-semibold">Completed Orders</span>
+              <span className="font-mono font-bold text-emerald-800">{requestsSummary.completed || 0} Orders</span>
+            </div>
+          </div>
         </SectionCard>
       </div>
     </div>

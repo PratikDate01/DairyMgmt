@@ -16,7 +16,9 @@ import {
   Scan,
   FileText,
   Activity,
-  HeartPulse
+  HeartPulse,
+  Store,
+  MessageSquare
 } from 'lucide-react';
 
 export const Sidebar = () => {
@@ -39,6 +41,7 @@ export const Sidebar = () => {
       case 'farmer':
         return [
           { label: 'Farmer Dashboard', path: '/farmer/dashboard', icon: LayoutDashboard },
+          { label: 'Fodder Marketplace', path: '/farmer/fodder-marketplace', icon: Store },
           { label: 'My Cattle Directory', path: '/farmer/cattle', icon: HeartPulse },
           { label: 'AI Disease Scanner', path: '/farmer/ai-scanner', icon: Scan },
           { label: 'Disease Scan History', path: '/farmer/scan-history', icon: FileText },
@@ -48,7 +51,8 @@ export const Sidebar = () => {
           { label: 'Reports & Analytics', path: '/farmer/reports', icon: BarChart3 },
           { label: 'Medicines Catalog', path: '/farmer/medicines', icon: Pill },
           { label: 'My Medicine Requests', path: '/farmer/medicine-requests', icon: ShoppingBag },
-          { label: 'Dairy Connections', path: '/farmer/connections', icon: Users }
+          { label: 'Dairy Connections', path: '/farmer/connections', icon: Users },
+          { label: 'Complaints & Support', path: '/complaints', icon: MessageSquare }
         ];
       case 'dairyOwner':
         return [
@@ -56,31 +60,37 @@ export const Sidebar = () => {
           { label: 'Milk Collection', path: '/dairy-owner/milk-collection', icon: Milk },
           { label: 'Payment Ledger', path: '/dairy-owner/payments', icon: Wallet },
           { label: 'Reports & Analytics', path: '/dairy-owner/reports', icon: BarChart3 },
-          { label: 'Connected Farmers', path: '/dairy-owner/farmers', icon: Users }
+          { label: 'Connected Farmers', path: '/dairy-owner/farmers', icon: Users },
+          { label: 'Complaints & Support', path: '/complaints', icon: MessageSquare }
         ];
       case 'medicalProvider':
         return [
           { label: 'Medical Console', path: '/medical-provider/dashboard', icon: Stethoscope },
           { label: 'Medical Inventory', path: '/medical-provider/inventory', icon: Pill },
-          { label: 'Medicine Requests', path: '/medical-provider/medicine-requests', icon: ShoppingBag }
+          { label: 'Medicine Requests', path: '/medical-provider/medicine-requests', icon: ShoppingBag },
+          { label: 'Complaints & Support', path: '/complaints', icon: MessageSquare }
         ];
       case 'veterinarian':
         return [
           { label: 'Veterinarian Console', path: '/veterinarian/dashboard', icon: Stethoscope },
-          { label: 'Disease Cases Queue', path: '/veterinarian/cases', icon: Activity }
+          { label: 'Disease Cases Queue', path: '/veterinarian/cases', icon: Activity },
+          { label: 'Complaints & Support', path: '/complaints', icon: MessageSquare }
         ];
       case 'admin':
         return [
           { label: 'Admin Dashboard', path: '/admin/dashboard', icon: ShieldAlert },
+          { label: 'User Directory', path: '/admin/dashboard?tab=users', icon: Users },
+          { label: 'Verifications', path: '/admin/dashboard?tab=verifications', icon: UserCheck },
+          { label: 'Cattle Records', path: '/admin/dashboard?tab=cattle', icon: HeartPulse },
+          { label: 'Veterinary Requests', path: '/admin/dashboard?tab=vet-requests', icon: Activity },
+          { label: 'Medicines Catalog', path: '/admin/dashboard?tab=medicines', icon: Pill },
+          { label: 'Fodder Listings', path: '/admin/dashboard?tab=fodder', icon: Store },
+          { label: 'Complaints', path: '/admin/dashboard?tab=complaints', icon: ShieldAlert },
           { label: 'System Reports', path: '/admin/reports', icon: BarChart3 },
-          { label: 'Farmer Cattle Directory', path: '/farmer/cattle', icon: HeartPulse },
           { label: 'Veterinarian Queue', path: '/veterinarian/cases', icon: Activity },
           { label: 'Medical Inventory', path: '/medical-provider/inventory', icon: Pill },
-          { label: 'Medicine Requests', path: '/medical-provider/medicine-requests', icon: ShoppingBag },
-          { label: 'Farmer Medicines Catalog', path: '/farmer/medicines', icon: Pill },
           { label: 'Milk Collection Entry', path: '/dairy-owner/milk-collection', icon: Milk },
-          { label: 'Dairy Payments Ledger', path: '/dairy-owner/payments', icon: Wallet },
-          { label: 'Connected Farmers', path: '/dairy-owner/farmers', icon: Users }
+          { label: 'Dairy Payments Ledger', path: '/dairy-owner/payments', icon: Wallet }
         ];
       default:
         return [
@@ -118,7 +128,8 @@ export const Sidebar = () => {
         <span className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Main Menu</span>
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = location.pathname === item.path;
+          const currentPathWithSearch = location.pathname + location.search;
+          const isActive = currentPathWithSearch === item.path || (location.pathname === item.path && !item.path.includes('?'));
 
           return (
             <Link

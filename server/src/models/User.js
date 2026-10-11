@@ -69,6 +69,21 @@ const userSchema = new mongoose.Schema(
       type: String,
       trim: true,
       default: 'Regional Veterinary Care Center'
+    },
+    verificationStatus: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending'
+    },
+    verificationNotes: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    licenseNumber: {
+      type: String,
+      trim: true,
+      default: ''
     }
   },
   {

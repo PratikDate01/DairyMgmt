@@ -24,10 +24,12 @@ import { AIDiseaseScanner } from './pages/farmer/AIDiseaseScanner';
 import { ScanHistory } from './pages/farmer/ScanHistory';
 import { FarmerVetRequests } from './pages/farmer/FarmerVetRequests';
 import { MyCattle } from './pages/farmer/MyCattle';
+import { FodderMarketplace } from './pages/farmer/FodderMarketplace';
 import { PendingCases } from './pages/veterinarian/PendingCases';
 import { AdminReports } from './pages/admin/Reports';
 import { Inventory } from './pages/medical/Inventory';
 import MedicalMedicineRequests from './pages/medical/MedicineRequests';
+import { Complaints } from './pages/common/Complaints';
 
 const ProtectedShell = ({ children }) => (
   <ProtectedRoute>
@@ -172,6 +174,16 @@ export default function App() {
               </ProtectedShell>
             }
           />
+          <Route
+            path="/farmer/fodder-marketplace"
+            element={
+              <ProtectedShell>
+                <RoleRoute allowedRoles={['farmer', 'admin']}>
+                  <FodderMarketplace />
+                </RoleRoute>
+              </ProtectedShell>
+            }
+          />
 
           {/* Veterinarian Routes */}
           <Route
@@ -297,6 +309,16 @@ export default function App() {
                 <RoleRoute allowedRoles={['admin']}>
                   <AdminReports />
                 </RoleRoute>
+              </ProtectedShell>
+            }
+          />
+
+          {/* Universal Complaints Support Route (Accessible to all authenticated users) */}
+          <Route
+            path="/complaints"
+            element={
+              <ProtectedShell>
+                <Complaints />
               </ProtectedShell>
             }
           />

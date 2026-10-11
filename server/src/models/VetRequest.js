@@ -45,7 +45,16 @@ const vetRequestSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['pending', 'accepted', 'rejected', 'completed', 'escalated'],
+      enum: [
+        'pending',
+        'accepted',
+        'examination',
+        'diagnosed',
+        'prescription_created',
+        'completed',
+        'rejected',
+        'escalated'
+      ],
       default: 'pending',
       index: true
     },
@@ -54,6 +63,52 @@ const vetRequestSchema = new mongoose.Schema(
       trim: true,
       default: ''
     },
+    clinicalExamination: {
+      observations: { type: String, trim: true, default: '' },
+      physicalSymptoms: { type: String, trim: true, default: '' },
+      temperature: { type: String, trim: true, default: '' },
+      appetite: { type: String, trim: true, default: '' },
+      additionalNotes: { type: String, trim: true, default: '' },
+      examinedAt: { type: Date }
+    },
+    finalDiagnosis: {
+      diagnosis: { type: String, trim: true, default: '' },
+      notes: { type: String, trim: true, default: '' },
+      severity: { type: String, enum: ['Mild', 'Moderate', 'Severe', 'Critical', ''], default: '' },
+      treatmentAdvice: { type: String, trim: true, default: '' },
+      additionalAdvice: { type: String, trim: true, default: '' },
+      diagnosedAt: { type: Date }
+    },
+    prescription: {
+      medicines: [
+        {
+          medicineName: { type: String, trim: true, default: '' },
+          dosage: { type: String, trim: true, default: '' },
+          frequency: { type: String, trim: true, default: '' },
+          duration: { type: String, trim: true, default: '' },
+          instructions: { type: String, trim: true, default: '' }
+        }
+      ],
+      generalInstructions: { type: String, trim: true, default: '' },
+      dietaryAdvice: { type: String, trim: true, default: '' },
+      prescribedAt: { type: Date }
+    },
+    followUp: {
+      required: { type: Boolean, default: false },
+      date: { type: Date },
+      instructions: { type: String, trim: true, default: '' },
+      notes: { type: String, trim: true, default: '' },
+      status: { type: String, enum: ['scheduled', 'completed', 'not_required'], default: 'not_required' }
+    },
+    clinicalTimeline: [
+      {
+        stage: { type: String, required: true },
+        title: { type: String, required: true },
+        notes: { type: String, default: '' },
+        performedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        timestamp: { type: Date, default: Date.now }
+      }
+    ],
     escalationHistory: [
       {
         veterinarian: {

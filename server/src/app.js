@@ -12,6 +12,9 @@ import diseaseScanRoutes from './routes/diseaseScanRoutes.js';
 import veterinarianRoutes from './routes/veterinarianRoutes.js';
 import cattleRoutes from './routes/cattleRoutes.js';
 import vetRequestRoutes from './routes/vetRequestRoutes.js';
+import fodderListingRoutes from './routes/fodderListingRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
+import complaintRoutes from './routes/complaintRoutes.js';
 
 const app = express();
 
@@ -35,6 +38,9 @@ app.use('/api/disease-scans', diseaseScanRoutes);
 app.use('/api/veterinarian', veterinarianRoutes);
 app.use('/api/cattle', cattleRoutes);
 app.use('/api/vet-requests', vetRequestRoutes);
+app.use('/api/fodder-listings', fodderListingRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/complaints', complaintRoutes);
 
 // Health Check Endpoint
 app.get('/api/health', (req, res) => {

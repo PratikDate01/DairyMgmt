@@ -608,6 +608,72 @@ export const getMe = async (req, res) => {
 };
 
 /**
+ * @route POST /api/auth/switch-role
+ * @desc Switch active role for multi-role users and issue new JWT
+ */
+export const switchRole = async (req, res) => {
+  try {
+    const { role } = req.body;
+    if (!role) {
+      return res.status(400).json({ success: false, message: 'Target role is required' });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    if (user.isActive !== true) {
+      return res.status(403).json({ success: false, message: 'Your account is inactive.' });
+    }
+
+    const userRoles = user.roles && user.roles.length > 0 ? user.roles : [user.role || 'farmer'];
+    if (!userRoles.includes(role)) {
+      return res.status(403).json({
+        success: false,
+        message: `Your account is not authorized for the '${getRoleLabel(role)}' role.`
+      });
+    }
+
+    const jwtSecret = process.env.JWT_SECRET || 'dairy_medical_system_super_secret_jwt_key_2026';
+    const jwtExpiresIn = process.env.JWT_EXPIRES_IN || '7d';
+
+    const token = jwt.sign(
+      {
+        userId: user._id.toString(),
+        role: role,
+        activeRole: role,
+        roles: userRoles
+      },
+      jwtSecret,
+      { expiresIn: jwtExpiresIn }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: `Active role switched to ${getRoleLabel(role)}`,
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        phone: user.phone,
+        email: user.email,
+        role: role,
+        activeRole: role,
+        roles: userRoles,
+        isActive: user.isActive
+      }
+    });
+  } catch (error) {
+    console.error(`SwitchRole Error: ${error.message}`);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error while switching role'
+    });
+  }
+};
+
+/**
  * Helper to display human-readable role label
  */
 function getRoleLabel(roleKey) {
@@ -620,3 +686,4 @@ function getRoleLabel(roleKey) {
   };
   return map[roleKey] || roleKey;
 }
+

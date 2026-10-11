@@ -1,8 +1,25 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Menu, LogOut } from 'lucide-react';
+import { Menu, LogOut, UserCheck, ChevronDown, RefreshCw } from 'lucide-react';
 
 export const Header = ({ onMobileMenuToggle }) => {
-  const { user, logout } = useAuth();
+  const { user, switchRole, logout } = useAuth();
+  const navigate = useNavigate();
+  const [switching, setSwitching] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const roleLabels = {
+    farmer: 'Farmer',
+    dairyOwner: 'Dairy Owner',
+    medicalProvider: 'Medical Store',
+    veterinarian: 'Veterinarian',
+    admin: 'Administrator'
+  };
+
+  const activeRole = user?.activeRole || user?.role;
+  const userRoles = user?.roles && user.roles.length > 0 ? user.roles : [activeRole];
+  const hasMultipleRoles = userRoles.length > 1;
 
   // Helper for initials
   const getInitials = (name) => {
@@ -10,6 +27,23 @@ export const Header = ({ onMobileMenuToggle }) => {
     const parts = name.trim().split(' ');
     if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
     return name.slice(0, 2).toUpperCase();
+  };
+
+  const handleRoleSwitch = async (newRole) => {
+    if (newRole === activeRole) {
+      setDropdownOpen(false);
+      return;
+    }
+    try {
+      setSwitching(true);
+      await switchRole(newRole);
+      setDropdownOpen(false);
+      navigate('/dashboard');
+    } catch (err) {
+      console.error('Failed to switch role:', err);
+    } finally {
+      setSwitching(false);
+    }
   };
 
   return (
@@ -27,21 +61,66 @@ export const Header = ({ onMobileMenuToggle }) => {
         <div>
           <span className="text-xs font-semibold text-slate-400 block md:inline mr-2">Authenticated System</span>
           <span className="hidden md:inline text-slate-300">|</span>
-          <span className="text-xs font-bold text-blue-600 md:ml-2 capitalize">
-            {user?.role || 'Guest'} Portal
+          <span className="text-xs font-bold text-blue-600 md:ml-2">
+            {roleLabels[activeRole] || activeRole || 'Guest'} Portal
           </span>
         </div>
       </div>
 
-      {/* Right: User Profile & Actions */}
-      <div className="flex items-center space-x-4">
+      {/* Right: Multi-Role Switcher & User Profile */}
+      <div className="flex items-center space-x-3">
+        {/* Multi-role Switcher Dropdown */}
+        {hasMultipleRoles && (
+          <div className="relative">
+            <button
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              disabled={switching}
+              className="flex items-center space-x-1.5 px-2.5 py-1.5 text-xs font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 rounded-lg transition"
+              title="Switch Active Role"
+            >
+              {switching ? (
+                <RefreshCw className="w-3.5 h-3.5 animate-spin text-blue-600" />
+              ) : (
+                <UserCheck className="w-3.5 h-3.5 text-blue-600" />
+              )}
+              <span className="hidden sm:inline">Switch Role:</span>
+              <span className="font-bold">{roleLabels[activeRole] || activeRole}</span>
+              <ChevronDown className="w-3 h-3 text-blue-500" />
+            </button>
+
+            {dropdownOpen && (
+              <div className="absolute right-0 mt-1.5 w-48 bg-white border border-slate-200 rounded-xl shadow-lg py-1.5 z-50 text-xs">
+                <div className="px-3 py-1 text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                  Available Roles
+                </div>
+                {userRoles.map((r) => {
+                  const isCurrent = r === activeRole;
+                  return (
+                    <button
+                      key={r}
+                      onClick={() => handleRoleSwitch(r)}
+                      disabled={switching}
+                      className={`w-full text-left px-3 py-2 flex items-center justify-between hover:bg-slate-50 transition ${
+                        isCurrent ? 'bg-blue-50/70 font-bold text-blue-700' : 'text-slate-700 font-medium'
+                      }`}
+                    >
+                      <span>{roleLabels[r] || r}</span>
+                      {isCurrent && <span className="text-[10px] text-blue-600 font-bold">(Active)</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="flex items-center space-x-3">
           <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 border border-blue-200 font-bold text-xs flex items-center justify-center">
             {getInitials(user?.name)}
           </div>
           <div className="hidden sm:block text-left">
             <span className="text-xs font-bold text-slate-800 block leading-tight">{user?.name}</span>
-            <span className="text-[10px] text-slate-500 font-medium capitalize block">{user?.role}</span>
+            <span className="text-[10px] text-slate-500 font-medium capitalize block">{roleLabels[activeRole] || activeRole}</span>
           </div>
         </div>
 

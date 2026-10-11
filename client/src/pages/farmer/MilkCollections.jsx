@@ -11,14 +11,42 @@ import {
   Building2,
   RefreshCw,
   TrendingUp,
-  AlertCircle
+  AlertCircle,
+  Calendar,
+  History,
+  Filter,
+  Wallet,
+  Clock,
+  CheckCircle2,
+  DollarSign
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export const MilkCollections = () => {
   const { token } = useAuth();
+
+  // Active Tab: 'history' or 'summary'
+  const [activeTab, setActiveTab] = useState('history');
+
+  // Collection History State
   const [collections, setCollections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // History Filter State
+  const [filterSession, setFilterSession] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterDatePreset, setFilterDatePreset] = useState('all');
+  const [filterStartDate, setFilterStartDate] = useState('');
+  const [filterEndDate, setFilterEndDate] = useState('');
+
+  // 10-Day Summary State
+  const [summaryCycle, setSummaryCycle] = useState('current');
+  const [summaryCustomStart, setSummaryCustomStart] = useState('');
+  const [summaryCustomEnd, setSummaryCustomEnd] = useState('');
+  const [summaryData, setSummaryData] = useState(null);
+  const [loadingSummary, setLoadingSummary] = useState(false);
+  const [summaryError, setSummaryError] = useState('');
 
   const fetchCollections = useCallback(async () => {
     try {
@@ -37,17 +65,123 @@ export const MilkCollections = () => {
     fetchCollections();
   }, [fetchCollections]);
 
-  // Aggregate stats
-  const stats = useMemo(() => {
+  // Fetch 10-Day Summary for Authenticated Farmer
+  const fetchTenDaySummary = useCallback(async () => {
+    try {
+      setLoadingSummary(true);
+      setSummaryError('');
+
+      let start = null;
+      let end = null;
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth();
+
+      if (summaryCycle === 'cycle1') {
+        start = new Date(Date.UTC(year, month, 1)).toISOString().split('T')[0];
+        end = new Date(Date.UTC(year, month, 10)).toISOString().split('T')[0];
+      } else if (summaryCycle === 'cycle2') {
+        start = new Date(Date.UTC(year, month, 11)).toISOString().split('T')[0];
+        end = new Date(Date.UTC(year, month, 20)).toISOString().split('T')[0];
+      } else if (summaryCycle === 'cycle3') {
+        const lastDay = new Date(year, month + 1, 0).getDate();
+        start = new Date(Date.UTC(year, month, 21)).toISOString().split('T')[0];
+        end = new Date(Date.UTC(year, month, lastDay)).toISOString().split('T')[0];
+      } else if (summaryCycle === 'last10') {
+        const d10 = new Date(now.getTime() - 9 * 24 * 60 * 60 * 1000);
+        start = d10.toISOString().split('T')[0];
+        end = now.toISOString().split('T')[0];
+      } else if (summaryCycle === 'custom') {
+        if (!summaryCustomStart || !summaryCustomEnd) {
+          setSummaryError('Please provide both start date and end date for custom range.');
+          setLoadingSummary(false);
+          return;
+        }
+        start = summaryCustomStart;
+        end = summaryCustomEnd;
+      }
+
+      const params = {};
+      if (start && end) {
+        params.startDate = start;
+        params.endDate = end;
+      }
+
+      const res = await milkCollectionService.getTenDaySummary(token, params);
+      setSummaryData(res);
+    } catch (err) {
+      console.error('Farmer 10-day summary error:', err);
+      setSummaryError(err.message || 'Failed to generate 10-day milk summary.');
+    } finally {
+      setLoadingSummary(false);
+    }
+  }, [token, summaryCycle, summaryCustomStart, summaryCustomEnd]);
+
+  useEffect(() => {
+    if (activeTab === 'summary') {
+      fetchTenDaySummary();
+    }
+  }, [activeTab, summaryCycle, fetchTenDaySummary]);
+
+  // Filtered Collections
+  const filteredCollections = useMemo(() => {
+    return collections.filter((item) => {
+      if (filterSession !== 'all' && item.session !== filterSession) return false;
+      if (filterStatus !== 'all' && item.paymentStatus !== filterStatus) return false;
+
+      if (!item.collectionDate) return true;
+      const itemDateStr = new Date(item.collectionDate).toISOString().split('T')[0];
+      const now = new Date();
+      const todayStr = now.toISOString().split('T')[0];
+
+      if (filterDatePreset === 'today') {
+        if (itemDateStr !== todayStr) return false;
+      } else if (filterDatePreset === 'last7days') {
+        const d7 = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        if (itemDateStr < d7 || itemDateStr > todayStr) return false;
+      } else if (filterDatePreset === 'last10days') {
+        const d10 = new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        if (itemDateStr < d10 || itemDateStr > todayStr) return false;
+      } else if (filterDatePreset === 'thisMonth') {
+        const mStart = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1)).toISOString().split('T')[0];
+        if (itemDateStr < mStart || itemDateStr > todayStr) return false;
+      } else if (filterDatePreset === 'custom') {
+        if (filterStartDate && itemDateStr < filterStartDate) return false;
+        if (filterEndDate && itemDateStr > filterEndDate) return false;
+      }
+
+      return true;
+    });
+  }, [
+    collections,
+    filterSession,
+    filterStatus,
+    filterDatePreset,
+    filterStartDate,
+    filterEndDate
+  ]);
+
+  // Aggregate stats across all collections
+  const overallStats = useMemo(() => {
     const totalQty = collections.reduce((sum, item) => sum + (item.quantityLiters || 0), 0);
     const totalAmt = collections.reduce((sum, item) => sum + (item.totalAmount || 0), 0);
-    const avgFat = collections.length > 0
-      ? collections.reduce((sum, item) => sum + (item.fatPercentage || 0), 0) / collections.length
-      : 0;
+    const settledAmt = collections
+      .filter((c) => c.paymentStatus === 'settled')
+      .reduce((sum, c) => sum + (c.totalAmount || 0), 0);
+    const unpaidAmt = collections
+      .filter((c) => c.paymentStatus !== 'settled')
+      .reduce((sum, c) => sum + (c.totalAmount || 0), 0);
+    const avgFat =
+      collections.length > 0
+        ? collections.reduce((sum, item) => sum + (item.fatPercentage || 0), 0) /
+          collections.length
+        : 0;
 
     return {
       totalQty: Math.round(totalQty * 10) / 10,
       totalAmt: Math.round(totalAmt * 100) / 100,
+      settledAmt: Math.round(settledAmt * 100) / 100,
+      unpaidAmt: Math.round(unpaidAmt * 100) / 100,
       avgFat: Math.round(avgFat * 10) / 10,
       count: collections.length
     };
@@ -57,14 +191,36 @@ export const MilkCollections = () => {
     <div className="space-y-6">
       <PageHeader
         title="My Milk Collections"
-        description="View your recorded daily milk collections, fat percentages, and total earnings."
+        description="Inspect daily milk collections, fat percentages, rate payouts, and 10-day billing summaries recorded by your dairy."
         breadcrumbs={['Home', 'Farmer Portal', 'Milk Collections']}
+        actions={
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => {
+                fetchCollections();
+                if (activeTab === 'summary') fetchTenDaySummary();
+              }}
+              disabled={loading}
+              className="p-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-600 rounded-lg shadow-xs transition"
+              title="Refresh Collections"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            </button>
+            <Link
+              to="/farmer/payments"
+              className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg shadow-xs transition flex items-center space-x-1.5"
+            >
+              <Wallet className="w-4 h-4" />
+              <span>Payments Ledger</span>
+            </Link>
+          </div>
+        }
       />
 
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg flex items-center justify-between">
+        <div className="p-4 bg-red-50 border border-red-200 text-red-700 text-xs sm:text-sm rounded-xl flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
+            <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
             <span>{error}</span>
           </div>
           <button
@@ -77,7 +233,7 @@ export const MilkCollections = () => {
       )}
 
       {/* Overview Stat Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="p-4 bg-white border border-slate-200 rounded-xl shadow-2xs flex items-center space-x-3">
           <div className="p-3 bg-blue-50 text-blue-600 rounded-lg shrink-0">
             <Droplets className="w-5 h-5" />
@@ -86,105 +242,297 @@ export const MilkCollections = () => {
             <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
               Total Quantity Supplied
             </span>
-            <span className="text-xl font-bold text-slate-900 font-mono">
-              {stats.totalQty} L
+            <span className="text-xl sm:text-2xl font-bold text-slate-900 font-mono">
+              {overallStats.totalQty} L
+            </span>
+            <span className="text-[10px] text-slate-400 block mt-0.5 font-mono">
+              Avg Fat: {overallStats.avgFat}%
+            </span>
+          </div>
+        </div>
+
+        <div className="p-4 bg-white border border-slate-200 rounded-xl shadow-2xs flex items-center space-x-3">
+          <div className="p-3 bg-blue-50 text-blue-600 rounded-lg shrink-0">
+            <TrendingUp className="w-5 h-5" />
+          </div>
+          <div>
+            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
+              Total Milk Value Recorded
+            </span>
+            <span className="text-xl sm:text-2xl font-bold text-blue-700 font-mono">
+              ₹ {overallStats.totalAmt.toFixed(2)}
+            </span>
+            <span className="text-[10px] text-slate-400 block mt-0.5">
+              Across {overallStats.count} total shifts
             </span>
           </div>
         </div>
 
         <div className="p-4 bg-white border border-slate-200 rounded-xl shadow-2xs flex items-center space-x-3">
           <div className="p-3 bg-emerald-50 text-emerald-600 rounded-lg shrink-0">
-            <TrendingUp className="w-5 h-5" />
+            <CheckCircle2 className="w-5 h-5" />
           </div>
           <div>
             <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
-              Total Amount Earned
+              Settled Milk Funds
             </span>
-            <span className="text-xl font-bold text-emerald-700 font-mono">
-              ₹{stats.totalAmt.toFixed(2)}
+            <span className="text-xl sm:text-2xl font-bold text-emerald-700 font-mono">
+              ₹ {overallStats.settledAmt.toFixed(2)}
+            </span>
+            <span className="text-[10px] text-emerald-600 font-semibold block mt-0.5">
+              Disbursed by Dairy Owner
             </span>
           </div>
         </div>
 
         <div className="p-4 bg-white border border-slate-200 rounded-xl shadow-2xs flex items-center space-x-3">
           <div className="p-3 bg-amber-50 text-amber-600 rounded-lg shrink-0">
-            <Sun className="w-5 h-5" />
+            <Clock className="w-5 h-5" />
           </div>
           <div>
             <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
-              Avg Fat Content
+              Outstanding Unpaid Balance
             </span>
-            <span className="text-xl font-bold text-slate-900 font-mono">
-              {stats.avgFat}%
+            <span
+              className={`text-xl sm:text-2xl font-bold font-mono ${
+                overallStats.unpaidAmt > 0 ? 'text-amber-600' : 'text-slate-900'
+              }`}
+            >
+              ₹ {overallStats.unpaidAmt.toFixed(2)}
+            </span>
+            <span className="text-[10px] text-slate-400 block mt-0.5">
+              Awaiting Settlement
             </span>
           </div>
         </div>
       </div>
 
-      {/* Main Collection History */}
-      <SectionCard
-        title="Recorded Collection Log"
-        subtitle="Historical records recorded by your connected dairy owners"
-        action={
-          <button
-            onClick={fetchCollections}
-            className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded-lg transition"
-            title="Refresh History"
-          >
-            <RefreshCw className="w-4 h-4" />
-          </button>
-        }
-      >
-        {loading ? (
-          <div className="py-8 text-center text-slate-500 text-sm">
-            Loading collection records...
+      {/* Tabs Header */}
+      <div className="flex border-b border-slate-200">
+        <button
+          onClick={() => setActiveTab('history')}
+          className={`py-3 px-5 text-xs sm:text-sm font-semibold border-b-2 transition flex items-center space-x-2 ${
+            activeTab === 'history'
+              ? 'border-blue-600 text-blue-600'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <History className="w-4 h-4" />
+          <span>Recorded Collection Log</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('summary')}
+          className={`py-3 px-5 text-xs sm:text-sm font-semibold border-b-2 transition flex items-center space-x-2 ${
+            activeTab === 'summary'
+              ? 'border-indigo-600 text-indigo-600'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <Calendar className="w-4 h-4" />
+          <span>10-Day Billing Summary</span>
+        </button>
+      </div>
+
+      {/* ============================================================ */}
+      {/* TAB 1: RECORDED COLLECTION LOG */}
+      {/* ============================================================ */}
+      {activeTab === 'history' && (
+        <SectionCard
+          title="Recorded Milk Collection Log"
+          subtitle="Read-only history of milk entries created by your connected dairy owners"
+        >
+          {/* Filter Toolbar */}
+          <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-3 mb-4">
+            <div className="flex items-center space-x-2 text-xs font-bold text-slate-700 uppercase tracking-wider">
+              <Filter className="w-3.5 h-3.5 text-slate-500" />
+              <span>Filter Collections:</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="text-[11px] font-semibold text-slate-600 block mb-1">Shift</label>
+                <select
+                  value={filterSession}
+                  onChange={(e) => setFilterSession(e.target.value)}
+                  className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs"
+                >
+                  <option value="all">All Shifts</option>
+                  <option value="morning">Morning Only</option>
+                  <option value="evening">Evening Only</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-semibold text-slate-600 block mb-1">Payment Status</label>
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs"
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="unpaid">Unpaid Only</option>
+                  <option value="settled">Settled Only</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-semibold text-slate-600 block mb-1">Date Range</label>
+                <select
+                  value={filterDatePreset}
+                  onChange={(e) => setFilterDatePreset(e.target.value)}
+                  className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs"
+                >
+                  <option value="all">All Recorded Dates</option>
+                  <option value="today">Today</option>
+                  <option value="last7days">Last 7 Days</option>
+                  <option value="last10days">Last 10 Days</option>
+                  <option value="thisMonth">This Month</option>
+                  <option value="custom">Custom Date Range</option>
+                </select>
+              </div>
+            </div>
+
+            {filterDatePreset === 'custom' && (
+              <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-200">
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-600 block mb-1">Start Date</label>
+                  <input
+                    type="date"
+                    value={filterStartDate}
+                    onChange={(e) => setFilterStartDate(e.target.value)}
+                    className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-600 block mb-1">End Date</label>
+                  <input
+                    type="date"
+                    value={filterEndDate}
+                    onChange={(e) => setFilterEndDate(e.target.value)}
+                    className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs"
+                  />
+                </div>
+              </div>
+            )}
           </div>
-        ) : collections.length === 0 ? (
-          <EmptyState
-            title="No Milk Collections Recorded Yet"
-            description="When your connected Dairy Owner records your milk collections, they will appear here."
-            icon={Droplets}
-          />
-        ) : (
-          <div>
-            {/* Desktop Table View */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                    <th className="py-3 px-4">Date</th>
-                    <th className="py-3 px-4">Dairy Owner</th>
-                    <th className="py-3 px-4">Shift</th>
-                    <th className="py-3 px-4 text-right">Quantity (L)</th>
-                    <th className="py-3 px-4 text-right">Fat (%)</th>
-                    <th className="py-3 px-4 text-right">Rate (₹/L)</th>
-                    <th className="py-3 px-4 text-right">Total Amount</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
-                  {collections.map((item) => (
-                    <tr key={item._id} className="hover:bg-slate-50/80 transition">
-                      <td className="py-3 px-4 font-mono font-medium text-slate-900">
-                        {new Date(item.collectionDate).toLocaleDateString('en-IN', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric'
-                        })}
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center space-x-2">
-                          <Building2 className="w-4 h-4 text-blue-600 shrink-0" />
-                          <div>
-                            <div className="font-semibold text-slate-900">
-                              {item.dairyOwner?.name || 'Dairy Owner'}
-                            </div>
-                            <div className="text-[10px] text-slate-400 font-mono">
-                              {item.dairyOwner?.phone}
+
+          {loading ? (
+            <div className="py-12 text-center text-slate-500 text-xs">
+              <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-blue-600" />
+              <span>Loading collection records...</span>
+            </div>
+          ) : filteredCollections.length === 0 ? (
+            <EmptyState
+              title="No Milk Collections Recorded Yet"
+              description="When your connected Dairy Owner records your milk collections, they will appear here in real-time."
+              icon={Droplets}
+            />
+          ) : (
+            <div>
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                      <th className="py-3 px-4">Date</th>
+                      <th className="py-3 px-4">Dairy Unit</th>
+                      <th className="py-3 px-4">Shift</th>
+                      <th className="py-3 px-4 text-right">Quantity (L)</th>
+                      <th className="py-3 px-4 text-right">Fat (%)</th>
+                      <th className="py-3 px-4 text-right">Rate (₹/L)</th>
+                      <th className="py-3 px-4 text-right">Total Amount</th>
+                      <th className="py-3 px-4 text-center">Payment Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
+                    {filteredCollections.map((item) => (
+                      <tr key={item._id} className="hover:bg-slate-50/80 transition">
+                        <td className="py-3 px-4 font-mono font-medium text-slate-900">
+                          {new Date(item.collectionDate).toLocaleDateString('en-IN', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                          })}
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center space-x-2">
+                            <Building2 className="w-4 h-4 text-blue-600 shrink-0" />
+                            <div>
+                              <div className="font-semibold text-slate-900">
+                                {item.dairyOwner?.name || 'Dairy Owner'}
+                              </div>
+                              <div className="text-[10px] text-slate-400 font-mono">
+                                {item.dairyOwner?.phone}
+                              </div>
                             </div>
                           </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                              item.session === 'morning'
+                                ? 'bg-amber-100 text-amber-800'
+                                : 'bg-indigo-100 text-indigo-800'
+                            }`}
+                          >
+                            {item.session === 'morning' ? (
+                              <Sun className="w-3 h-3 mr-1 text-amber-600" />
+                            ) : (
+                              <Moon className="w-3 h-3 mr-1 text-indigo-600" />
+                            )}
+                            {item.session}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-right font-mono font-semibold text-slate-900">
+                          {item.quantityLiters} L
+                        </td>
+                        <td className="py-3 px-4 text-right font-mono text-slate-700">
+                          {item.fatPercentage}%
+                        </td>
+                        <td className="py-3 px-4 text-right font-mono text-slate-700">
+                          ₹{item.ratePerLiter}
+                        </td>
+                        <td className="py-3 px-4 text-right font-mono font-bold text-emerald-700 text-sm">
+                          ₹{item.totalAmount?.toFixed(2)}
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <span
+                            className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase ${
+                              item.paymentStatus === 'settled'
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-amber-100 text-amber-800'
+                            }`}
+                          >
+                            {item.paymentStatus === 'settled' ? 'Settled' : 'Unpaid'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden space-y-3">
+                {filteredCollections.map((item) => (
+                  <div
+                    key={item._id}
+                    className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Building2 className="w-4 h-4 text-blue-600 shrink-0" />
+                        <div>
+                          <h4 className="text-sm font-bold text-slate-900">
+                            {item.dairyOwner?.name || 'Dairy Owner'}
+                          </h4>
+                          <p className="text-xs text-slate-500 font-mono">
+                            {item.dairyOwner?.phone}
+                          </p>
                         </div>
-                      </td>
-                      <td className="py-3 px-4">
+                      </div>
+                      <div className="flex items-center space-x-1.5">
                         <span
                           className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
                             item.session === 'morning'
@@ -192,95 +540,331 @@ export const MilkCollections = () => {
                               : 'bg-indigo-100 text-indigo-800'
                           }`}
                         >
-                          {item.session === 'morning' ? (
-                            <Sun className="w-3 h-3 mr-1 text-amber-600" />
-                          ) : (
-                            <Moon className="w-3 h-3 mr-1 text-indigo-600" />
-                          )}
                           {item.session}
                         </span>
-                      </td>
-                      <td className="py-3 px-4 text-right font-mono font-semibold text-slate-900">
-                        {item.quantityLiters} L
-                      </td>
-                      <td className="py-3 px-4 text-right font-mono text-slate-700">
-                        {item.fatPercentage}%
-                      </td>
-                      <td className="py-3 px-4 text-right font-mono text-slate-700">
-                        ₹{item.ratePerLiter}
-                      </td>
-                      <td className="py-3 px-4 text-right font-mono font-bold text-emerald-700 text-sm">
-                        ₹{item.totalAmount?.toFixed(2)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Mobile Card List View */}
-            <div className="md:hidden space-y-3">
-              {collections.map((item) => (
-                <div
-                  key={item._id}
-                  className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <Building2 className="w-4 h-4 text-blue-600 shrink-0" />
-                      <div>
-                        <h4 className="text-sm font-bold text-slate-900">
-                          {item.dairyOwner?.name || 'Dairy Owner'}
-                        </h4>
-                        <p className="text-xs text-slate-500 font-mono">
-                          {item.dairyOwner?.phone}
-                        </p>
+                        <span
+                          className={`px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase ${
+                            item.paymentStatus === 'settled'
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-amber-100 text-amber-800'
+                          }`}
+                        >
+                          {item.paymentStatus === 'settled' ? 'Settled' : 'Unpaid'}
+                        </span>
                       </div>
                     </div>
-                    <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                        item.session === 'morning'
-                          ? 'bg-amber-100 text-amber-800'
-                          : 'bg-indigo-100 text-indigo-800'
-                      }`}
-                    >
-                      {item.session}
-                    </span>
+
+                    <div className="grid grid-cols-3 gap-2 py-2 border-y border-slate-200 text-center text-xs">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block uppercase">Qty</span>
+                        <span className="font-mono font-bold text-slate-800">{item.quantityLiters} L</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 block uppercase">Fat</span>
+                        <span className="font-mono font-semibold text-slate-800">{item.fatPercentage}%</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 block uppercase">Rate</span>
+                        <span className="font-mono text-slate-800">₹{item.ratePerLiter}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="text-[11px] text-slate-500 font-mono">
+                        {new Date(item.collectionDate).toLocaleDateString('en-IN', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric'
+                        })}
+                      </span>
+                      <span className="text-base font-bold text-emerald-700 font-mono">
+                        ₹{item.totalAmount?.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </SectionCard>
+      )}
+
+      {/* ============================================================ */}
+      {/* TAB 2: TEN-DAY BILLING SUMMARY */}
+      {/* ============================================================ */}
+      {activeTab === 'summary' && (
+        <SectionCard
+          title="My 10-Day Billing Summary"
+          subtitle="Detailed breakdown of milk intake and payout settlement for the selected billing period"
+        >
+          {/* Cycle Selector Toolbar */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4 border-b border-slate-200">
+            <div>
+              <label className="text-xs font-semibold text-slate-700 flex items-center space-x-1 mb-1">
+                <Calendar className="w-3.5 h-3.5 text-indigo-600" />
+                <span>Select 10-Day Billing Cycle:</span>
+              </label>
+              <select
+                value={summaryCycle}
+                onChange={(e) => setSummaryCycle(e.target.value)}
+                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 text-xs sm:text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none"
+              >
+                <option value="current">Current 10-Day Period</option>
+                <option value="cycle1">Cycle 1 (1st - 10th of Month)</option>
+                <option value="cycle2">Cycle 2 (11th - 20th of Month)</option>
+                <option value="cycle3">Cycle 3 (21st - End of Month)</option>
+                <option value="last10">Rolling Last 10 Days</option>
+                <option value="custom">Custom Date Range</option>
+              </select>
+            </div>
+
+            {summaryCycle === 'custom' && (
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-600 block mb-1">Start Date</label>
+                  <input
+                    type="date"
+                    value={summaryCustomStart}
+                    onChange={(e) => setSummaryCustomStart(e.target.value)}
+                    className="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-600 block mb-1">End Date</label>
+                  <input
+                    type="date"
+                    value={summaryCustomEnd}
+                    onChange={(e) => setSummaryCustomEnd(e.target.value)}
+                    className="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {summaryError && (
+            <div className="mt-4 p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg flex items-center space-x-2">
+              <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
+              <span>{summaryError}</span>
+            </div>
+          )}
+
+          {loadingSummary ? (
+            <div className="py-12 text-center text-slate-500 text-xs">
+              <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-indigo-600" />
+              <span>Generating your 10-day billing summary...</span>
+            </div>
+          ) : !summaryData ? (
+            <EmptyState
+              title="No Summary Available"
+              description="Could not generate 10-day summary for the selected period."
+              icon={Calendar}
+            />
+          ) : (
+            <div className="space-y-6 mt-4">
+              {/* Period Header */}
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                <span className="text-slate-600">
+                  Billing Period: <strong className="text-slate-800">{summaryData.period?.startDate}</strong> to{' '}
+                  <strong className="text-slate-800">{summaryData.period?.endDate}</strong>{' '}
+                  <span className="text-indigo-600 font-semibold">({summaryData.period?.cycleName})</span>
+                </span>
+                <span className="text-slate-500 font-mono">
+                  Total Records: {summaryData.summary?.collectionCount} shifts
+                </span>
+              </div>
+
+              {/* KPI Cards distinguishing Recorded vs Paid vs Outstanding */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="p-4 bg-white border border-slate-200 rounded-xl shadow-2xs">
+                  <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
+                    Total Milk Supplied
+                  </span>
+                  <span className="text-2xl font-bold text-slate-900 font-mono block mt-1">
+                    {summaryData.summary?.totalMilkQuantity} L
+                  </span>
+                  <span className="text-[11px] text-slate-500 mt-0.5 block">
+                    Avg Fat: {summaryData.summary?.averageFat}% • Avg Rate: ₹{summaryData.summary?.averageRate}/L
+                  </span>
+                </div>
+
+                <div className="p-4 bg-white border border-slate-200 rounded-xl shadow-2xs">
+                  <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
+                    Milk Amount Recorded
+                  </span>
+                  <span className="text-2xl font-bold text-blue-700 font-mono block mt-1">
+                    ₹ {summaryData.summary?.totalRecordedAmount?.toFixed(2)}
+                  </span>
+                  <span className="text-[11px] text-slate-500 mt-0.5 block">
+                    Gross recorded earnings
+                  </span>
+                </div>
+
+                <div className="p-4 bg-white border border-slate-200 rounded-xl shadow-2xs">
+                  <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
+                    Amount Already Paid
+                  </span>
+                  <span className="text-2xl font-bold text-emerald-700 font-mono block mt-1">
+                    ₹ {summaryData.summary?.amountPaid?.toFixed(2)}
+                  </span>
+                  <span className="text-[11px] text-emerald-600 font-semibold mt-0.5 block">
+                    {summaryData.summary?.settledCount} shifts disbursed
+                  </span>
+                </div>
+
+                <div className="p-4 bg-white border border-slate-200 rounded-xl shadow-2xs">
+                  <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
+                    Outstanding Balance
+                  </span>
+                  <span
+                    className={`text-2xl font-bold font-mono block mt-1 ${
+                      summaryData.summary?.outstandingAmount > 0
+                        ? 'text-amber-600'
+                        : 'text-green-600'
+                    }`}
+                  >
+                    ₹ {summaryData.summary?.outstandingAmount?.toFixed(2)}
+                  </span>
+                  <span className="text-[11px] text-slate-500 mt-0.5 block">
+                    {summaryData.summary?.unpaidCount} shifts pending payout
+                  </span>
+                </div>
+              </div>
+
+              {/* Day-by-day table */}
+              {summaryData.dailyRecords?.length === 0 ? (
+                <EmptyState
+                  title="No Collections Recorded in Period"
+                  description="No morning or evening milk records exist in the selected 10-day period."
+                  icon={Droplets}
+                />
+              ) : (
+                <div>
+                  <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">
+                    Daily Shift Entries ({summaryData.dailyRecords?.length} Days)
+                  </h4>
+
+                  {/* Desktop Table */}
+                  <div className="hidden lg:block overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                          <th className="py-2.5 px-3">Date</th>
+                          <th className="py-2.5 px-3">Morning Shift</th>
+                          <th className="py-2.5 px-3">Evening Shift</th>
+                          <th className="py-2.5 px-3 text-right">Daily Total Qty</th>
+                          <th className="py-2.5 px-3 text-right">Daily Total Amount</th>
+                          <th className="py-2.5 px-3 text-center">Settlement Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
+                        {summaryData.dailyRecords.map((d) => (
+                          <tr key={d.date} className="hover:bg-slate-50/70 transition">
+                            <td className="py-2.5 px-3 font-mono font-bold text-slate-900">
+                              {new Date(d.date).toLocaleDateString('en-IN', {
+                                day: 'numeric',
+                                month: 'short',
+                                weekday: 'short'
+                              })}
+                            </td>
+                            <td className="py-2.5 px-3">
+                              {d.morning ? (
+                                <div className="font-mono text-[11px]">
+                                  <span className="font-bold text-amber-900">☀️ {d.morning.quantityLiters} L</span>{' '}
+                                  <span className="text-slate-500">
+                                    (Fat: {d.morning.fatPercentage}% • ₹{d.morning.ratePerLiter}/L) = ₹{d.morning.totalAmount?.toFixed(2)}
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="text-slate-400 text-[11px]">—</span>
+                              )}
+                            </td>
+                            <td className="py-2.5 px-3">
+                              {d.evening ? (
+                                <div className="font-mono text-[11px]">
+                                  <span className="font-bold text-indigo-900">🌙 {d.evening.quantityLiters} L</span>{' '}
+                                  <span className="text-slate-500">
+                                    (Fat: {d.evening.fatPercentage}% • ₹{d.evening.ratePerLiter}/L) = ₹{d.evening.totalAmount?.toFixed(2)}
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="text-slate-400 text-[11px]">—</span>
+                              )}
+                            </td>
+                            <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-900">
+                              {d.dailyTotalQuantity} L
+                            </td>
+                            <td className="py-2.5 px-3 text-right font-mono font-bold text-emerald-700">
+                              ₹{d.dailyTotalAmount?.toFixed(2)}
+                            </td>
+                            <td className="py-2.5 px-3 text-center">
+                              <span
+                                className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase ${
+                                  d.isFullySettled
+                                    ? 'bg-green-100 text-green-800'
+                                    : 'bg-amber-100 text-amber-800'
+                                }`}
+                              >
+                                {d.isFullySettled ? 'Settled' : 'Unpaid'}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2 py-2 border-y border-slate-200 text-center text-xs">
-                    <div>
-                      <span className="text-[10px] text-slate-400 block uppercase">Qty</span>
-                      <span className="font-mono font-bold text-slate-800">{item.quantityLiters} L</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-slate-400 block uppercase">Fat</span>
-                      <span className="font-mono font-semibold text-slate-800">{item.fatPercentage}%</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-slate-400 block uppercase">Rate</span>
-                      <span className="font-mono text-slate-800">₹{item.ratePerLiter}</span>
-                    </div>
-                  </div>
+                  {/* Mobile Card List */}
+                  <div className="lg:hidden space-y-3">
+                    {summaryData.dailyRecords.map((d) => (
+                      <div key={d.date} className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-xs">
+                        <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
+                          <span className="font-mono font-bold text-slate-900">
+                            {new Date(d.date).toLocaleDateString('en-IN', {
+                              day: 'numeric',
+                              month: 'short',
+                              weekday: 'short'
+                            })}
+                          </span>
+                          <span
+                            className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase ${
+                              d.isFullySettled
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-amber-100 text-amber-800'
+                            }`}
+                          >
+                            {d.isFullySettled ? 'Settled' : 'Unpaid'}
+                          </span>
+                        </div>
 
-                  <div className="flex items-center justify-between pt-1">
-                    <span className="text-[11px] text-slate-500 font-mono">
-                      {new Date(item.collectionDate).toLocaleDateString('en-IN', {
-                        day: 'numeric',
-                        month: 'short',
-                        year: 'numeric'
-                      })}
-                    </span>
-                    <span className="text-base font-bold text-emerald-700 font-mono">
-                      ₹{item.totalAmount?.toFixed(2)}
-                    </span>
+                        <div className="space-y-1 font-mono text-[11px]">
+                          {d.morning && (
+                            <div className="flex justify-between text-amber-900">
+                              <span>☀️ Morning: {d.morning.quantityLiters} L</span>
+                              <span className="font-semibold">₹{d.morning.totalAmount?.toFixed(2)}</span>
+                            </div>
+                          )}
+                          {d.evening && (
+                            <div className="flex justify-between text-indigo-900">
+                              <span>🌙 Evening: {d.evening.quantityLiters} L</span>
+                              <span className="font-semibold">₹{d.evening.totalAmount?.toFixed(2)}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex justify-between pt-1 border-t border-slate-200 font-bold">
+                          <span className="text-slate-700">Daily Total: {d.dailyTotalQuantity} L</span>
+                          <span className="text-emerald-700 font-mono">₹{d.dailyTotalAmount?.toFixed(2)}</span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              ))}
+              )}
             </div>
-          </div>
-        )}
-      </SectionCard>
+          )}
+        </SectionCard>
+      )}
     </div>
   );
 };

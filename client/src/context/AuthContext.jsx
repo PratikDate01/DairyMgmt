@@ -40,6 +40,17 @@ export const AuthProvider = ({ children }) => {
     return data;
   };
 
+  const switchRole = async (newRole) => {
+    if (!token) return;
+    const data = await authService.switchRole(token, newRole);
+    if (data.token && data.user) {
+      localStorage.setItem('authToken', data.token);
+      setToken(data.token);
+      setUser(data.user);
+    }
+    return data;
+  };
+
   const logout = () => {
     localStorage.removeItem('authToken');
     setToken(null);
@@ -54,6 +65,7 @@ export const AuthProvider = ({ children }) => {
         isAuthenticated: !!token && !!user,
         loading,
         loginWithOTP,
+        switchRole,
         logout
       }}
     >

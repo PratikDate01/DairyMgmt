@@ -18,16 +18,20 @@ import {
   X
 } from 'lucide-react';
 import { CaseDetailModal } from './CaseDetailModal';
+import { ClinicalWorkspaceModal } from '../../components/veterinarian/ClinicalWorkspaceModal';
 
 export const PendingCases = () => {
   const { token } = useAuth();
   const [activeTab, setActiveTab] = useState('incoming_requests'); // 'incoming_requests' | 'general_queue'
 
-  // Vet Requests state (Phase 21)
+  // Vet Requests state (Phase 21 & Phase 23)
   const [vetRequests, setVetRequests] = useState([]);
   const [loadingRequests, setLoadingRequests] = useState(true);
   const [requestError, setRequestError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+
+  // Clinical Workspace Modal state
+  const [activeWorkspaceReq, setActiveWorkspaceReq] = useState(null);
 
   // General Case Queue state
   const [cases, setCases] = useState([]);
@@ -302,9 +306,18 @@ export const PendingCases = () => {
                             <span>Accept</span>
                           </button>
                         </div>
+                      ) : !isRejected ? (
+                        <button
+                          type="button"
+                          onClick={() => setActiveWorkspaceReq(reqItem)}
+                          className="w-full py-2 px-3 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center justify-center space-x-2"
+                        >
+                          <Stethoscope className="w-4 h-4" />
+                          <span>Open Clinical Workspace</span>
+                        </button>
                       ) : (
-                        <div className="p-2 text-center text-xs font-bold text-slate-600 bg-slate-50 rounded-xl border border-slate-200 capitalize">
-                          Request {reqItem.status}
+                        <div className="p-2 text-center text-xs font-bold text-red-700 bg-red-50 rounded-xl border border-red-200 capitalize">
+                          Request Declined
                         </div>
                       )}
                     </div>
@@ -493,6 +506,17 @@ export const PendingCases = () => {
           caseData={selectedCase}
           onClose={() => setSelectedCase(null)}
           onCaseUpdated={handleCaseUpdated}
+        />
+      )}
+
+      {/* Clinical Case Workspace Modal (Phase 23) */}
+      {activeWorkspaceReq && (
+        <ClinicalWorkspaceModal
+          requestItem={activeWorkspaceReq}
+          onClose={() => setActiveWorkspaceReq(null)}
+          onRequestUpdated={() => {
+            fetchVetRequests();
+          }}
         />
       )}
     </div>

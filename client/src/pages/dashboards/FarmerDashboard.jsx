@@ -8,7 +8,23 @@ import { PageHeader } from '../../components/common/PageHeader';
 import { StatCard } from '../../components/common/StatCard';
 import { SectionCard } from '../../components/common/SectionCard';
 import { EmptyState } from '../../components/common/EmptyState';
-import { Milk, Stethoscope, Wallet, UserCheck, CheckCircle2, Sun, Moon, HeartPulse, Plus } from 'lucide-react';
+import {
+  Milk,
+  Stethoscope,
+  Wallet,
+  UserCheck,
+  CheckCircle2,
+  Sun,
+  Moon,
+  HeartPulse,
+  Plus,
+  Store,
+  Scan,
+  FileText,
+  Pill,
+  MessageSquare,
+  ShoppingBag
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const FarmerDashboard = () => {
@@ -48,26 +64,46 @@ export const FarmerDashboard = () => {
   const activeConnection = connections.find((c) => c.status === 'active');
   const pendingRequests = connections.filter((c) => c.status === 'pending');
 
-  const todayStr = new Date().toISOString().split('T')[0];
-  const todayCollections = collections.filter((c) => {
-    if (!c.collectionDate) return false;
-    const itemDate = new Date(c.collectionDate).toISOString().split('T')[0];
-    return itemDate === todayStr;
-  });
+  const isToday = (dateStr) => {
+    if (!dateStr) return false;
+    const d = new Date(dateStr);
+    const now = new Date();
+    const matchUtc =
+      d.getUTCFullYear() === now.getFullYear() &&
+      d.getUTCMonth() === now.getMonth() &&
+      d.getUTCDate() === now.getDate();
+    const matchLocal =
+      d.getFullYear() === now.getFullYear() &&
+      d.getMonth() === now.getMonth() &&
+      d.getDate() === now.getDate();
+    return matchUtc || matchLocal;
+  };
 
-  const todayQty = todayCollections.reduce(
-    (sum, item) => sum + (item.quantityLiters || 0),
-    0
-  );
+  const todayCollections = collections.filter((c) => isToday(c.collectionDate));
+
+  const todayQty = Math.round(
+    todayCollections.reduce((sum, item) => sum + (item.quantityLiters || 0), 0) * 10
+  ) / 10;
+
+  const todayValue = Math.round(
+    todayCollections.reduce((sum, item) => sum + (item.totalAmount || 0), 0) * 100
+  ) / 100;
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Farmer Dashboard"
-        description={`Welcome back, ${user?.name || 'Farmer'}. Manage your livestock, dairy connections, and view milk collections.`}
+        description={`Welcome back, ${user?.name || 'Farmer'}. Manage your livestock, dairy connections, fodder marketplace, and view milk collections.`}
         breadcrumbs={['Home', 'Farmer Dashboard']}
         actions={
           <div className="flex flex-wrap items-center gap-2">
+            <Link
+              to="/farmer/fodder-marketplace"
+              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-xs transition flex items-center space-x-1.5"
+            >
+              <Store className="w-4 h-4" />
+              <span>Fodder Marketplace</span>
+            </Link>
             <Link
               to="/farmer/cattle"
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-xs transition flex items-center space-x-1.5"
@@ -80,14 +116,14 @@ export const FarmerDashboard = () => {
               className="px-4 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg shadow-xs transition flex items-center space-x-1.5"
             >
               <Milk className="w-4 h-4 text-slate-500" />
-              <span>Collections</span>
+              <span>Milk Collections</span>
             </Link>
             <Link
               to="/farmer/payments"
-              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg shadow-xs transition flex items-center space-x-1.5"
+              className="px-4 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg shadow-xs transition flex items-center space-x-1.5"
             >
-              <Wallet className="w-4 h-4" />
-              <span>Payments</span>
+              <Wallet className="w-4 h-4 text-slate-500" />
+              <span>Payments Ledger</span>
             </Link>
           </div>
         }
@@ -111,9 +147,13 @@ export const FarmerDashboard = () => {
         />
         <StatCard
           title="Milk Collected Today"
-          value={loading ? 'Loading...' : `${todayQty.toFixed(1)} Liters`}
+          value={loading ? 'Loading...' : `${todayQty} Liters`}
           icon={Milk}
-          badgeText={todayCollections.length > 0 ? `${todayCollections.length} Shift Recorded` : 'No Log Today'}
+          badgeText={
+            todayCollections.length > 0
+              ? `₹${todayValue.toFixed(2)} (${todayCollections.length} shifts)`
+              : 'No Log Today'
+          }
           badgeType={todayCollections.length > 0 ? 'success' : 'neutral'}
         />
         <StatCard
@@ -123,6 +163,50 @@ export const FarmerDashboard = () => {
           badgeText={paymentMetrics.totalPending > 0 ? 'Awaiting Settlement' : 'Settled'}
           badgeType={paymentMetrics.totalPending > 0 ? 'amber' : 'success'}
         />
+      </div>
+
+      {/* Livestock Healthcare & Veterinary Services Banner */}
+      <div className="p-4 bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 rounded-2xl text-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <span className="text-[10px] uppercase font-bold tracking-wider text-blue-300 block mb-0.5">
+            Veterinary & Medical Services
+          </span>
+          <h3 className="text-sm font-extrabold tracking-tight">Cattle Disease Screening & Healthcare Consultations</h3>
+          <p className="text-xs text-slate-300 mt-0.5 max-w-xl">
+            Detect symptoms with AI screening, get recommended veterinarians, track clinical cases, and order prescribed medicines.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            to="/farmer/ai-scanner"
+            className="px-3.5 py-2 bg-blue-500 hover:bg-blue-600 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center space-x-1.5"
+          >
+            <Scan className="w-3.5 h-3.5" />
+            <span>AI Health Scanner</span>
+          </Link>
+          <Link
+            to="/farmer/vet-requests"
+            className="px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white font-semibold text-xs rounded-xl border border-white/20 transition flex items-center space-x-1.5"
+          >
+            <Stethoscope className="w-3.5 h-3.5 text-blue-300" />
+            <span>Vet Requests</span>
+          </Link>
+          <Link
+            to="/farmer/medicines"
+            className="px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white font-semibold text-xs rounded-xl border border-white/20 transition flex items-center space-x-1.5"
+          >
+            <Pill className="w-3.5 h-3.5 text-emerald-300" />
+            <span>Medicines</span>
+          </Link>
+          <Link
+            to="/complaints"
+            className="px-3 py-2 bg-white/10 hover:bg-white/20 text-white font-semibold text-xs rounded-xl border border-white/20 transition flex items-center space-x-1.5"
+            title="Log Platform Grievance"
+          >
+            <MessageSquare className="w-3.5 h-3.5 text-amber-300" />
+            <span>Support</span>
+          </Link>
+        </div>
       </div>
 
       {/* Main Sections */}
@@ -261,13 +345,20 @@ export const FarmerDashboard = () => {
                 {collections.slice(0, 4).map((item) => (
                   <div key={item._id} className="p-3 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between text-xs">
                     <div className="flex items-center space-x-2.5">
-                      <div className={`p-2 rounded-lg ${item.session === 'morning' ? 'bg-amber-100 text-amber-800' : 'bg-indigo-100 text-indigo-800'}`}>
+                      <div className={`p-2 rounded-lg shrink-0 ${item.session === 'morning' ? 'bg-amber-100 text-amber-800' : 'bg-indigo-100 text-indigo-800'}`}>
                         {item.session === 'morning' ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
                       </div>
                       <div>
-                        <h4 className="font-bold text-slate-800">{item.dairyOwner?.name || 'Dairy Owner'}</h4>
-                        <p className="text-[10px] text-slate-500 font-mono">
-                          {new Date(item.collectionDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} • Fat: {item.fatPercentage}%
+                        <div className="flex items-center space-x-2">
+                          <h4 className="font-bold text-slate-800">{item.dairyOwner?.name || 'Dairy Owner'}</h4>
+                          <span className={`px-1.5 py-0.2 rounded text-[9px] font-semibold uppercase ${
+                            item.paymentStatus === 'settled' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
+                          }`}>
+                            {item.paymentStatus === 'settled' ? 'Settled' : 'Unpaid'}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-slate-500 font-mono mt-0.5">
+                          {new Date(item.collectionDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} • Fat: {item.fatPercentage}% • ₹{item.ratePerLiter}/L
                         </p>
                       </div>
                     </div>

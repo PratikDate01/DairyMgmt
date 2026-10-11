@@ -108,5 +108,69 @@ export const vetRequestService = {
       throw new Error(data.message || 'Failed to escalate veterinarian request.');
     }
     return data;
+  },
+
+  async saveClinicalExamination(id, examinationData, token) {
+    const response = await fetch(`${API_BASE_URL}/${id}/examination`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(examinationData)
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to save clinical examination findings.');
+    }
+    return data;
+  },
+
+  async saveFinalDiagnosis(id, diagnosisData, token) {
+    const response = await fetch(`${API_BASE_URL}/${id}/diagnosis`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(diagnosisData)
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to save final diagnosis.');
+    }
+    return data;
+  },
+
+  async savePrescription(id, prescriptionData, token) {
+    const response = await fetch(`${API_BASE_URL}/${id}/prescription`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(prescriptionData)
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to save prescription.');
+    }
+    return data;
+  },
+
+  async saveFollowUp(id, followUpData, token) {
+    const response = await fetch(`${API_BASE_URL}/${id}/follow-up`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(followUpData)
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to save follow-up details.');
+    }
+    return data;
   }
 };

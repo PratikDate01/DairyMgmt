@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '../../context/AuthContext';
 import { medicineService } from '../../services/medicineService';
 import { createMedicineRequest } from '../../services/medicineRequestService';
+import { vetRequestService } from '../../services/vetRequestService';
 import { PageHeader } from '../../components/common/PageHeader';
 import { SectionCard } from '../../components/common/SectionCard';
 import { EmptyState } from '../../components/common/EmptyState';
+import { PrescriptionProcurementModal } from '../../components/farmer/PrescriptionProcurementModal';
 import {
   Pill,
   Upload,
@@ -19,13 +19,21 @@ import {
   X,
   ShieldCheck,
   Search,
-  ArrowRight
+  ArrowRight,
+  Stethoscope,
+  ChevronRight
 } from 'lucide-react';
 
 export const FarmerMedicines = () => {
   const { token } = useAuth();
+  const [procurementMode, setProcurementMode] = useState('doctor_prescriptions'); // 'doctor_prescriptions' | 'upload_file'
 
-  // Upload & File State
+  // Recent Doctor Prescriptions (Phase 23 Path A)
+  const [recentRequests, setRecentRequests] = useState([]);
+  const [loadingRequests, setLoadingRequests] = useState(true);
+  const [selectedProcurementReq, setSelectedProcurementReq] = useState(null);
+
+  // Upload & File State (Path B)
   const [selectedFile, setSelectedFile] = useState(null);
   const [filePreview, setFilePreview] = useState(null);
   const [fileName, setFileName] = useState('');
@@ -47,6 +55,23 @@ export const FarmerMedicines = () => {
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [modalError, setModalError] = useState('');
+
+  // Fetch Recent Doctor Consultation Prescriptions
+  const fetchRecentRequests = async () => {
+    setLoadingRequests(true);
+    try {
+      const data = await vetRequestService.getFarmerRequests(token);
+      setRecentRequests(data || []);
+    } catch (err) {
+      console.error('Error loading recent doctor requests:', err);
+    } finally {
+      setLoadingRequests(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRecentRequests();
+  }, [token]);
 
   // Handle Prescription File Selection
   const handleFileChange = (e) => {
@@ -205,25 +230,141 @@ export const FarmerMedicines = () => {
         </div>
       )}
 
-      {/* Step-by-Step Visual Workflow Tracker */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white p-3 rounded-2xl border border-slate-200 shadow-xs text-xs font-semibold text-center">
-        <div className={`p-2 rounded-xl flex items-center justify-center space-x-1.5 ${selectedFile ? 'bg-blue-50 text-blue-700' : 'bg-slate-50 text-slate-500'}`}>
-          <span className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold">1</span>
-          <span>Upload Prescription</span>
-        </div>
-        <div className={`p-2 rounded-xl flex items-center justify-center space-x-1.5 ${analyzing ? 'bg-blue-50 text-blue-700 animate-pulse' : analysisDone ? 'bg-blue-50 text-blue-700' : 'bg-slate-50 text-slate-500'}`}>
-          <span className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold">2</span>
-          <span>Analyze Document</span>
-        </div>
-        <div className={`p-2 rounded-xl flex items-center justify-center space-x-1.5 ${extractedMedicines.length > 0 ? 'bg-blue-50 text-blue-700' : 'bg-slate-50 text-slate-500'}`}>
-          <span className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold">3</span>
-          <span>Identify Medicines</span>
-        </div>
-        <div className={`p-2 rounded-xl flex items-center justify-center space-x-1.5 ${matchingMedicines.length > 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-50 text-slate-500'}`}>
-          <span className="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px] font-bold">4</span>
-          <span>Request Available</span>
-        </div>
+      {/* Mode Switcher Header Tabs */}
+      <div className="flex items-center space-x-2 bg-slate-100 p-1 rounded-xl text-xs font-bold w-fit">
+        <button
+          onClick={() => setProcurementMode('doctor_prescriptions')}
+          className={`px-4 py-2 rounded-lg transition flex items-center space-x-1.5 ${
+            procurementMode === 'doctor_prescriptions'
+              ? 'bg-white text-purple-700 shadow-xs font-extrabold'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <Stethoscope className="w-4 h-4 text-purple-600" />
+          <span>My Doctor Prescriptions (Phase 23)</span>
+          {recentRequests.length > 0 && (
+            <span className="px-2 py-0.5 bg-purple-100 text-purple-800 rounded-full text-[10px] ml-1">
+              {recentRequests.length}
+            </span>
+          )}
+        </button>
+
+        <button
+          onClick={() => setProcurementMode('upload_file')}
+          className={`px-4 py-2 rounded-lg transition flex items-center space-x-1.5 ${
+            procurementMode === 'upload_file'
+              ? 'bg-white text-blue-700 shadow-xs font-extrabold'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <Upload className="w-4 h-4 text-blue-600" />
+          <span>Upload Prescription Document</span>
+        </button>
       </div>
+
+      {/* MODE 1: DOCTOR CONSULTATION PRESCRIPTIONS (Phase 23 Path A) */}
+      {procurementMode === 'doctor_prescriptions' && (
+        <div className="space-y-4">
+          <SectionCard
+            title="Doctor Consultation Prescriptions"
+            subtitle="Select a prescription issued by your veterinarian to find matching medicines and compare medical store listings."
+          >
+            {loadingRequests ? (
+              <div className="py-12 text-center text-slate-500 space-y-2">
+                <RefreshCw className="w-6 h-6 animate-spin mx-auto text-purple-600" />
+                <p>Loading your veterinarian prescriptions...</p>
+              </div>
+            ) : recentRequests.length === 0 ? (
+              <EmptyState
+                title="No Doctor Prescriptions Found"
+                description="You do not have any active veterinarian consultation prescriptions yet. Run an AI Health Scan to request a doctor consultation."
+                icon={Stethoscope}
+                actionLabel="Run AI Health Scan"
+                onAction={() => window.location.href = '/farmer/ai-scanner'}
+              />
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {recentRequests.map((reqItem) => {
+                  const hasRx = Boolean(reqItem.prescription?.medicines?.length > 0 || reqItem.prescription?.generalInstructions);
+
+                  return (
+                    <div
+                      key={reqItem._id}
+                      className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:border-purple-300 transition space-y-4 flex flex-col justify-between"
+                    >
+                      <div className="space-y-3 text-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-extrabold uppercase tracking-wider text-purple-700 bg-purple-50 px-2.5 py-0.5 rounded-md">
+                            🐄 {reqItem.cattle?.nameTag || 'Cattle'}
+                          </span>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 uppercase">
+                            {reqItem.status.replace('_', ' ')}
+                          </span>
+                        </div>
+
+                        <div className="flex items-start space-x-3">
+                          <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold shrink-0">
+                            👨‍⚕️
+                          </div>
+                          <div>
+                            <h4 className="font-extrabold text-slate-900 text-sm">Dr. {reqItem.veterinarian?.name || 'Veterinarian'}</h4>
+                            <p className="text-[11px] text-slate-500">{reqItem.veterinarian?.specialization || 'Veterinary Doctor'}</p>
+                          </div>
+                        </div>
+
+                        <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
+                          <span className="text-[10px] font-bold uppercase text-slate-400">Diagnosis / Condition</span>
+                          <p className="font-bold text-slate-900">
+                            {reqItem.finalDiagnosis?.diagnosis || reqItem.aiCondition}
+                          </p>
+                          {reqItem.prescription?.medicines?.length > 0 && (
+                            <p className="text-purple-700 font-semibold pt-1 border-t border-slate-200/60">
+                              💊 {reqItem.prescription.medicines.length} Prescribed Medicine(s) Listed
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="pt-3 border-t border-slate-100">
+                        <button
+                          onClick={() => setSelectedProcurementReq(reqItem)}
+                          className="w-full py-2.5 px-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl text-xs shadow-xs transition flex items-center justify-center space-x-1.5"
+                        >
+                          <ShoppingBag className="w-4 h-4" />
+                          <span>Find & Compare Prescribed Medicines</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </SectionCard>
+        </div>
+      )}
+
+      {/* MODE 2: UPLOAD PRESCRIPTION FILE (Path B) */}
+      {procurementMode === 'upload_file' && (
+        <div className="space-y-4">
+          {/* Step-by-Step Visual Workflow Tracker */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white p-3 rounded-2xl border border-slate-200 shadow-xs text-xs font-semibold text-center">
+            <div className={`p-2 rounded-xl flex items-center justify-center space-x-1.5 ${selectedFile ? 'bg-blue-50 text-blue-700' : 'bg-slate-50 text-slate-500'}`}>
+              <span className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold">1</span>
+              <span>Upload Document</span>
+            </div>
+            <div className={`p-2 rounded-xl flex items-center justify-center space-x-1.5 ${analyzing ? 'bg-blue-50 text-blue-700 animate-pulse' : analysisDone ? 'bg-blue-50 text-blue-700' : 'bg-slate-50 text-slate-500'}`}>
+              <span className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold">2</span>
+              <span>Analyze File</span>
+            </div>
+            <div className={`p-2 rounded-xl flex items-center justify-center space-x-1.5 ${extractedMedicines.length > 0 ? 'bg-blue-50 text-blue-700' : 'bg-slate-50 text-slate-500'}`}>
+              <span className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold">3</span>
+              <span>Extract Medicines</span>
+            </div>
+            <div className={`p-2 rounded-xl flex items-center justify-center space-x-1.5 ${matchingMedicines.length > 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-50 text-slate-500'}`}>
+              <span className="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px] font-bold">4</span>
+              <span>Request Available</span>
+            </div>
+          </div>
 
       {/* Section 1: Upload Prescription Card */}
       <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
@@ -428,6 +569,8 @@ export const FarmerMedicines = () => {
           </SectionCard>
         </div>
       )}
+        </div>
+      )}
 
       {/* Medicine Request Modal (Reusing Existing Medicine Request System) */}
       {selectedMedicine && (
@@ -517,6 +660,17 @@ export const FarmerMedicines = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Phase 24 Prescription Procurement Modal */}
+      {selectedProcurementReq && (
+        <PrescriptionProcurementModal
+          vetRequestItem={selectedProcurementReq}
+          onClose={() => setSelectedProcurementReq(null)}
+          onOrderSubmitted={() => {
+            fetchRecentRequests();
+          }}
+        />
       )}
     </div>
   );

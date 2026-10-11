@@ -20,6 +20,12 @@ const medicineRequestSchema = new mongoose.Schema(
       required: [true, 'Medicine reference is required'],
       index: true
     },
+    vetRequest: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'VetRequest',
+      default: null,
+      index: true
+    },
     medicineNameSnapshot: {
       type: String,
       required: [true, 'Medicine name snapshot is required'],

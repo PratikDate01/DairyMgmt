@@ -79,13 +79,18 @@ The application strictly defines five distinct user roles stored in the `User` M
 │  - SHA-256 Hashing & Timing-Safe  │    (Dev console fallback if no key)│
 │  - Farmer-Dairy Connections       │  - Admin User Management Summary   │
 │  - Milk Collection & Settlement   │ 🔴 Not Implemented / Future Scope  │
-│  - Cattle Profile Management      │  - SMS Gateway Integration (Twilio)│
-│  - Veterinary Medicine Catalog    │  - Real-time WebSockets / Push     │
-│  - Medicine Request Workflow      │  - Online Payment Gateway (Razorpay│
-│  - AI Disease Scanner             │  - PDF Export / Invoice Printing   │
-│  - Vet Recommendation Engine (100)│  - Video Consultation Call         │
+│  - 10-Day Milk & Payment Summary  │  - SMS Gateway Integration (Twilio)│
+│    (Authoritative Billing Cycles) │  - Real-time WebSockets / Push     │
+│  - Refined Dairy & Farmer Consoles│  - Online Payment Gateway (Razorpay│
+│  - Cattle Profile Management      │  - PDF Export / Invoice Printing   │
+│  - Veterinary Medicine Catalog    │  - Video Consultation Call         │
+│  - Medicine Request Workflow      │                                    │
+│  - AI Disease Scanner             │                                    │
+│  - Vet Recommendation Engine (100)│                                    │
 │  - Vet Request Consultation Flow  │                                    │
 │  - Basic Automated Escalation     │                                    │
+│  - Vet Clinical Case Workflow (23)│                                    │
+│    (Exam ➔ Diagnosis ➔ Rx ➔ Follow)│                                    │
 └───────────────────────────────────┴────────────────────────────────────┘
 ```
 
@@ -303,26 +308,184 @@ DairyMedicalManagement/
 
 ---
 
-## 11. Developer Map: "Where Do I Change X?"
+## 10.5. Phase 26: Dairy Owner & Milk Management Architecture & 10-Day Summary
 
-| If you want to modify... | Target File(s) |
-| :--- | :--- |
-| **Login, Multi-Role Selection & Registration UI** | `client/src/components/LoginPage.jsx` & `server/src/controllers/authController.js` |
-| **Cattle Management UI & API** | `client/src/pages/farmer/CattleManagement.jsx` & `server/src/controllers/cattleController.js` |
-| **AI Disease Analysis Engine** | `server/src/services/aiDiseaseService.js` |
-| **Veterinarian Recommendation Scoring (Max 100)** | `server/src/controllers/diseaseScanController.js` & `VeterinarianRecommendations.jsx` |
-| **Veterinarian Escalation Engine** | `server/src/controllers/vetRequestController.js` & `server/src/models/VetRequest.js` |
-| **Farmer Request Tracker & Referral History UI** | `client/src/pages/farmer/FarmerVetRequests.jsx` & `vetRequestService.js` |
-| **Veterinarian Incoming & Referred Cases Console** | `client/src/pages/veterinarian/PendingCases.jsx` & `CaseDetailModal.jsx` |
-| **Milk Collections & Settlements** | `server/src/controllers/milkCollectionController.js` & `paymentController.js` |
+### Core Workflow
+```
+Dairy Owner ──► Select Connected Farmer ──► Enter Liters, Fat %, Rate & Date
+                      │
+                      ▼
+         Live Amount Preview (Qty × Rate)
+                      │
+                      ▼
+            Authoritative Save Record (HTTP 201)
+            [Unique Index: DairyOwner + Farmer + Date + Session]
+                      │
+                      ▼
+    ┌─────────────────┴──────────────────┐
+    ▼                                    ▼
+Dairy Console Updated            Farmer Dashboard Updated
+- Today's Liters & Gross ₹       - Today's Intake & Shifts
+- Shift Breakdown (☀️ / 🌙)      - Read-Only Collection Log
+- 10-Day Billing Cycle Summary   - 10-Day Billing Cycle Summary
+- Disbursed vs Pending Ledger    - Settled Funds vs Dues
+```
+
+### Key Technical Achievements in Phase 26
+1. **Authoritative 10-Day Billing Cycles (`GET /api/milk-collections/ten-day-summary`):**
+   - Implements standard Indian cooperative dairy billing periods: Cycle 1 (1st–10th), Cycle 2 (11th–20th), Cycle 3 (21st–End), Rolling Last 10 Days, or Custom Range.
+   - Distinctly calculates and isolates:
+     - **Milk Amount Recorded** (Gross value of collections)
+     - **Amount Already Paid** (Settled funds disbursed in payment ledger)
+     - **Outstanding Balance** (Pending dues to be settled)
+   - Groups shift collections day-by-day (Morning vs Evening) with full rate, fat %, quantity, and settlement status breakdown.
+2. **Active Connection Enforcement:**
+   - Dairy Owners can only select and record milk for farmers verified with `status: 'active'`. Unconnected farmers are rejected with `403 Forbidden`.
+3. **Double Entry & Conflict Protection:**
+   - Client pre-check + Mongo compound unique index `{ dairyOwner: 1, farmer: 1, collectionDate: 1, session: 1 }` returning `409 Conflict`.
+4. **Multi-Role & Read-Only Safety:**
+   - Farmers access their collection records in strictly read-only mode (`GET /api/milk-collections/farmer`), with ownership checks preventing access to unrelated users.
+   - Preserves all Phase 6-10 payment ledger mechanics (partial payments, payment receipts, duplicate-settlement protection).
 
 ---
 
-## 12. Project Viva Questions & Answers
+## 11. Phase 27 — Admin Dashboard & Complete System Management
+
+### Overview & Primary Objective
+Phase 27 establishes a unified, authoritative administrative control center that grants authorized Administrators (`role: 'admin'`) comprehensive visibility and system management across all platform domains without breaking or duplicating any functionality from Phases 1–26.
+
+```
+                         ADMIN CONTROL CENTER (Tabbed Oversight)
+                                           │
+  ┌───────────────┬────────────────┬───────┴────────┬───────────────┬───────────────┐
+  ▼               ▼                ▼                ▼               ▼               ▼
+1. Overview    2. Users        3. Verification  4. Cattle       5. Vet Requests 6. Medicines
+- Real Stats   - Directory     - Vets & Stores  - Across Herds  - Referrals     - Inventory
+- Recent Feeds - Suspend/Act   - Approve/Reject - Health Filter - History Logs  - Store Links
+                                                    │
+  ┌───────────────────────────────┬─────────────────┴───────────────┐
+  ▼                               ▼                                 ▼
+7. Fodder Listings              8. Complaints                     9. Reports
+- Marketplace Moderation        - Dispute Resolution              - Milk Intake Volumes
+- Active / Inactive Toggles     - Open/Progress/Resolved Notes    - Cumulative Settlement
+```
+
+### 10 Core Management Areas
+1. **Farmers**: Comprehensive oversight in User Directory with filterable role tags, contact information, and account activation controls.
+2. **Dairy Owners**: Visibility into processing units, connected farmers count, and financial ledger totals.
+3. **Veterinarians**: Verification lifecycle (`pending`, `approved`, `rejected`) persisting `licenseNumber` and `verificationNotes` to the `User` collection.
+4. **Medical Stores**: Professional review and credential persistence for `medicalProvider` accounts.
+5. **Cattle Records**: System-wide inspection of herd profiles (`nameTag`, `breed`, `gender`, `ageYears`, `healthStatus`, and owner references).
+6. **Veterinary Requests**: Full clinical case auditing including disease scan linkages, assigned veterinarians, clinical stages, and complete chronological `escalationHistory` timeline inspection.
+7. **Medicines**: Real catalog oversight detailing unit pricing, pharmaceutical categories, medical provider ownership, and atomic inventory stock levels (`in_stock`, `low_stock`, `out_of_stock`).
+8. **Fodder Listings**: Administrative moderation allowing deactivation/activation of marketplace listings with server-side validation.
+9. **Complaints**: Lightweight grievance workflow supporting user submission (`POST /api/complaints`, `GET /api/complaints/my`) and administrator management (`GET /api/admin/complaints`, `PATCH /api/admin/complaints/:id`) with persistent status changes and resolution notes.
+10. **Reports**: Dynamic, real-time MongoDB aggregations for user demographics, cumulative milk volume and valuation, gross financial settlements, disbursed payouts, and outstanding balances.
+
+### Status of Features
+- **REAL FUNCTIONALITY:**
+  - Strict RBAC enforcement requiring Bearer token + `requireRole('admin')`.
+  - Non-admins receiving `403 Forbidden` on all privileged endpoints.
+  - Self-deactivation protection preventing administrators from suspending their own accounts.
+  - Sensitive authentication fields (`otpHash`, `otpExpiresAt`, JWT secrets) excluded from admin responses.
+  - Verification decisions (`status`, `notes`, `licenseNumber`) persisted in `User` documents.
+  - Complaint creation, querying, status updating, and admin resolution notes persisted in `Complaint` documents.
+  - Fodder listing moderation (`active` ↔ `inactive`) with persistent updates.
+  - Direct tabs and subviews in `AdminDashboard.jsx` synchronized via URL search parameters.
+- **BASIC/DEMO FUNCTIONALITY:**
+  - Direct complaint logging modal embedded in Admin header for rapid testing alongside user submission flow.
+- **NOT IMPLEMENTED (Out of Scope):**
+  - External payment gateways (preserves internal ledger system).
+  - SMS gateways (OTP is delivered via Brevo Email and logged securely in development).
+  - Background WebSocket/Push notifications.
+  - Complex enterprise ticketing/chat platforms.
+
+---
+
+## 12. Phase 28 — Role Navigation Integration & End-to-End Workflow Consistency
+
+### Overview & Integration Audit
+Phase 28 establishes seamless, end-to-end user navigation and role-based consistency across all five supported personas (`farmer`, `dairyOwner`, `veterinarian`, `medicalProvider`, `admin`). It eliminates isolated page silos, enables instant in-session active role switching for multi-role accounts, exposes user-facing grievances/complaints across all roles, and connects major cross-module workflows.
+
+### Verified Route Inventory & Navigation Map
+
+| Route Path | Component | Allowed Roles | Navigation Location | Real API Backed |
+| :--- | :--- | :--- | :--- | :--- |
+| `/login` | `LoginPage` | Public | Auth Redirect / Logout | Yes (`/api/auth/*`) |
+| `/` & `/dashboard` | `DashboardRedirect` | All Authenticated | Automatic role dispatcher | Yes (checks `activeRole`) |
+| `/farmer/dashboard` | `FarmerDashboard` | `farmer`, `admin` | Sidebar & Mobile Menu | Yes (Livestock, Milk, Payments) |
+| `/farmer/cattle` | `MyCattle` | `farmer`, `admin` | Sidebar, Farmer Dash Quick Link | Yes (`/api/cattle`) |
+| `/farmer/ai-scanner` | `AIDiseaseScanner` | `farmer` | Sidebar, Healthcare Banner | Yes (`/api/disease-scans`) |
+| `/farmer/scan-history` | `ScanHistory` | `farmer`, `admin` | Sidebar, Scanner Footer Link | Yes (`/api/disease-scans/history`) |
+| `/farmer/vet-requests`| `FarmerVetRequests` | `farmer`, `admin` | Sidebar, Healthcare Banner | Yes (`/api/vet-requests/farmer`) |
+| `/farmer/medicines` | `FarmerMedicines` | `farmer`, `admin` | Sidebar, Healthcare Banner | Yes (`/api/medicines`) |
+| `/farmer/medicine-requests` | `FarmerMedicineRequests` | `farmer`, `admin` | Sidebar, Medicines Tab | Yes (`/api/medicine-requests/my`) |
+| `/farmer/fodder-marketplace` | `FodderMarketplace` | `farmer`, `admin` | Sidebar & Farmer Dash Header | Yes (`/api/fodder-listings`) |
+| `/farmer/milk-collections` | `MilkCollections` | `farmer`, `admin` | Sidebar, Farmer Dash Quick Link | Yes (`/api/milk-collections/farmer`) |
+| `/farmer/payments` | `FarmerPayments` | `farmer`, `admin` | Sidebar, Farmer Dash Quick Link | Yes (`/api/payments/farmer`) |
+| `/farmer/reports` | `FarmerReports` | `farmer`, `admin` | Sidebar & Header | Yes (`/api/reports/farmer`) |
+| `/farmer/connections` | `DairyConnections` | `farmer`, `admin` | Sidebar & Connection Card | Yes (`/api/dairy-connections`) |
+| `/dairy-owner/dashboard` | `DairyOwnerDashboard` | `dairyOwner`, `admin` | Sidebar & Mobile Menu | Yes (Collections, Ledgers) |
+| `/dairy-owner/milk-collection` | `MilkCollection` | `dairyOwner`, `admin` | Sidebar & Dairy Dash Action | Yes (`/api/milk-collections`) |
+| `/dairy-owner/payments` | `Payments` | `dairyOwner`, `admin` | Sidebar & Dairy Dash Action | Yes (`/api/payments`) |
+| `/dairy-owner/reports` | `DairyOwnerReports` | `dairyOwner`, `admin` | Sidebar & Dairy Dash Action | Yes (`/api/reports/dairy`) |
+| `/dairy-owner/farmers` | `ConnectedFarmers` | `dairyOwner`, `admin` | Sidebar & Dairy Dash Action | Yes (`/api/dairy-connections`) |
+| `/veterinarian/dashboard` | `VeterinarianDashboard` | `veterinarian`, `admin` | Sidebar & Mobile Menu | Yes (`/api/veterinarian/cases`) |
+| `/veterinarian/cases` | `PendingCases` | `veterinarian`, `admin` | Sidebar & Dashboard Banner | Yes (`/api/veterinarian/cases`) |
+| `/medical-provider/dashboard` | `MedicalProviderDashboard` | `medicalProvider`, `admin`| Sidebar & Mobile Menu | Yes (Inventory & Order Summaries) |
+| `/medical-provider/inventory` | `Inventory` | `medicalProvider`, `admin`| Sidebar & Dash Action | Yes (`/api/medicines`) |
+| `/medical-provider/medicine-requests` | `MedicalMedicineRequests` | `medicalProvider`, `admin`| Sidebar & Orders Queue Action | Yes (`/api/medicine-requests/provider`)|
+| `/admin/dashboard` | `AdminDashboard` | `admin` | Sidebar & Mobile Menu | Yes (`/api/admin/*`) |
+| `/admin/reports` | `AdminReports` | `admin` | Sidebar & Admin Tab Action | Yes (`/api/reports/dashboard-summary`)|
+| `/complaints` | `Complaints` | All Authenticated | Sidebar & Mobile Menu (All Roles) | Yes (`/api/complaints`) |
+
+### Key Technical Achievements in Phase 28
+1. **Interactive In-Session Multi-Role Switching (`POST /api/auth/switch-role`):**
+   - Enables users with multiple registered roles (`user.roles.length > 1`) to switch their `activeRole` with a single click from the application header without having to log out or request new OTPs.
+   - Enforces strict server-side authorization: users cannot switch to a role they do not possess (`403 Forbidden`).
+   - Automatically issues a fresh JWT with updated `role` and `activeRole`, updates `AuthContext` state, and dispatches the user to the corresponding role dashboard.
+2. **Universal User Complaints & Grievance Portal (`/complaints`):**
+   - Accessible to all roles (`farmer`, `dairyOwner`, `veterinarian`, `medicalProvider`, `admin`).
+   - Authenticated users submit platform grievances across 7 categories (`milk_collection`, `payments`, `veterinary`, `medicines`, `fodder`, `account`, `general`).
+   - Displays real-time status badges (`open`, `in_progress`, `resolved`, `closed`), submission date, category, and administrator resolution notes.
+3. **Connected Farmer Healthcare Journey:**
+   - Embedded a prominent "Cattle Healthcare & Veterinary Services" action banner in `FarmerDashboard.jsx`.
+   - Direct shortcuts to AI Disease Scanner, Veterinary Requests, Medicines Catalog, and Support without traversing unrelated menus.
+4. **Connected Medical Provider Fulfillment Queue:**
+   - Replaced static placeholder in `MedicalProviderDashboard.jsx` with real-time summary statistics from `medicineRequestService.getProviderRequestsSummary`.
+   - Direct action button to `Orders Queue` (`/medical-provider/medicine-requests`).
+
+---
+
+## 13. Developer Map: "Where Do I Change X?"
+
+| If you want to modify... | Target File(s) |
+| :--- | :--- |
+| **Multi-Role Switching Engine** | `server/src/controllers/authController.js` (`switchRole`) & `Header.jsx` |
+| **Universal Complaints Portal** | `client/src/pages/common/Complaints.jsx` & `complaintService.js` |
+| **Admin Control Center UI & Tabs** | `client/src/pages/dashboards/AdminDashboard.jsx` & `adminService.js` |
+| **Admin System APIs & Aggregates** | `server/src/controllers/adminController.js` & `server/src/routes/adminRoutes.js` |
+| **Complaints Model & APIs** | `server/src/models/Complaint.js`, `complaintController.js` & `complaintRoutes.js` |
+| **Role Navigation & Menus** | `client/src/components/layout/Sidebar.jsx` & `MobileNavigation.jsx` |
+| **Login & Multi-Role Selection UI** | `client/src/components/LoginPage.jsx` & `authController.js` |
+| **Cattle Management UI & API** | `client/src/pages/farmer/MyCattle.jsx` & `cattleController.js` |
+| **AI Disease Analysis Engine** | `server/src/services/aiDiseaseService.js` |
+| **Veterinarian Recommendation Scoring** | `server/src/controllers/diseaseScanController.js` & `VeterinarianRecommendations.jsx` |
+| **Veterinarian Escalation Engine** | `server/src/controllers/vetRequestController.js` & `server/src/models/VetRequest.js` |
+| **Farmer Request Tracker & Referral History UI** | `client/src/pages/farmer/FarmerVetRequests.jsx` & `vetRequestService.js` |
+| **Veterinarian Cases Queue** | `client/src/pages/veterinarian/PendingCases.jsx` & `CaseDetailModal.jsx` |
+| **Milk Collections, History & 10-Day Summary** | `client/src/pages/dairy/MilkCollection.jsx`, `MilkCollections.jsx` & `milkCollectionController.js` |
+| **Dairy Payments & Settlements Ledger** | `client/src/pages/dairy/Payments.jsx` & `paymentController.js` |
+
+---
+
+## 14. Project Viva Questions & Answers
 
 ### Advanced Phase Questions (10)
-1. **Q: How does the system handle veterinarian escalation when a doctor declines a request?**
-   *A: When a doctor declines, `rejectVetRequest` records the doctor in `escalationHistory`, gathers all attempted doctor IDs, and invokes `findNextEligibleVeterinarian`. The system ranks non-attempted active veterinarians using the Phase 20 scoring algorithm, reassigns the single `VetRequest` document to the top candidate, and sets status back to `pending`.*
+1. **Q: How does in-session multi-role switching work in Phase 28?**
+   *A: A multi-role user selects an authorized role from the Header dropdown. The client calls `POST /api/auth/switch-role`. The backend verifies the user's `roles` array in MongoDB, generates a new JWT with the selected `activeRole`, and updates the client session and navigation state without re-requiring OTP authentication.*
+2. **Q: How does the system prevent unauthorized access when a user switches roles?**
+   *A: The JWT payload encodes `activeRole`. Both frontend `RoleRoute` guards and backend `requireRole` middleware check `req.user.role` (which equals `activeRole`). Routes and APIs belonging to other roles return `403 Forbidden` until the active role is switched.*
 2. **Q: Does escalation create duplicate VetRequest documents in MongoDB?**
    *A: No. Escalation maintains a single `VetRequest` document continuum, updating the `veterinarian` reference and appending past attempts to `escalationHistory`. This preserves original `Cattle`, `DiseaseScan`, and `farmerMessage` references.*
 3. **Q: How are previously attempted veterinarians prevented from being re-selected?**

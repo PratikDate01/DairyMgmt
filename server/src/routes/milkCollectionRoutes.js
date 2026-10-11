@@ -3,7 +3,8 @@ import {
   createCollection,
   getDairyOwnerCollections,
   getFarmerCollections,
-  getFarmerCollectionsForDairy
+  getFarmerCollectionsForDairy,
+  getTenDaySummary
 } from '../controllers/milkCollectionController.js';
 import { authMiddleware } from '../middleware/authMiddleware.js';
 import { requireRole } from '../middleware/roleMiddleware.js';
@@ -12,6 +13,9 @@ const router = express.Router();
 
 // Apply authMiddleware to all milk collection routes
 router.use(authMiddleware);
+
+// 10-Day Summary Endpoint (Dairy Owner, Farmer & Admin)
+router.get('/ten-day-summary', requireRole('dairyOwner', 'farmer', 'admin'), getTenDaySummary);
 
 // Dairy Owner Endpoints
 router.post('/', requireRole('dairyOwner', 'admin'), createCollection);

@@ -74,5 +74,21 @@ export const authService = {
       throw new Error(data.message || 'Session expired');
     }
     return data.user;
+  },
+
+  async switchRole(token, role) {
+    const response = await fetch(`${API_BASE_URL}/switch-role`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ role })
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to switch role');
+    }
+    return data;
   }
 };
