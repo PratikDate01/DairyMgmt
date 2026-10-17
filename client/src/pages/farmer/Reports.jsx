@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { reportService } from '../../services/reportService';
 import { PageHeader } from '../../components/common/PageHeader';
@@ -18,6 +19,7 @@ import {
 } from 'lucide-react';
 
 export const FarmerReports = () => {
+  const { t } = useTranslation(['farmer', 'common']);
   const { token } = useAuth();
 
   // Date Filter State
@@ -79,11 +81,11 @@ export const FarmerReports = () => {
       if (dateMilkRes.records) setDateWiseMilk(dateMilkRes.records);
       if (datePayRes.records) setDateWisePayments(datePayRes.records);
     } catch (err) {
-      setError(err.message || 'Failed to generate personal report analytics');
+      setError(err.message || t('common:error.loadFailed', 'Failed to generate personal report analytics'));
     } finally {
       setLoading(false);
     }
-  }, [token, preset, customStart, customEnd]);
+  }, [token, preset, customStart, customEnd, t]);
 
   useEffect(() => {
     fetchReports();
@@ -92,11 +94,11 @@ export const FarmerReports = () => {
   const handleApplyCustomFilter = (e) => {
     e.preventDefault();
     if (!customStart || !customEnd) {
-      setError('Please select both start and end dates for custom date range');
+      setError(t('farmer:milkCollections.customRange', 'Please select both start and end dates for custom date range'));
       return;
     }
     if (new Date(customStart) > new Date(customEnd)) {
-      setError('Start date cannot be later than end date');
+      setError(t('common:labels.error', 'Start date cannot be later than end date'));
       return;
     }
     fetchReports();
@@ -109,20 +111,20 @@ export const FarmerReports = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Personal Supply & Payment Analytics"
-        description="View your personal milk supply metrics, historical earnings, and settlement summary."
-        breadcrumbs={['Home', 'Farmer Portal', 'Reports']}
+        title={t('farmer:reportsPage.title', 'Personal Supply & Payment Analytics')}
+        description={t('farmer:reportsPage.subtitle', 'View your personal milk supply metrics, historical earnings, and settlement summary.')}
+        breadcrumbs={[t('common:nav.home', 'Home'), t('common:roles.farmer', 'Farmer Portal'), t('common:nav.reportsAnalytics', 'Reports')]}
         actions={
           <div className="flex items-center space-x-2">
             <span className="px-2.5 py-1 bg-amber-50 text-amber-800 border border-amber-200 text-xs font-semibold rounded-lg flex items-center">
-              <Lock className="w-3.5 h-3.5 mr-1 text-amber-600" /> Read-Only View
+              <Lock className="w-3.5 h-3.5 mr-1 text-amber-600" /> {t('farmer:reportsPage.readOnlyNotice', 'Read-Only View')}
             </span>
             <button
               onClick={fetchReports}
               className="px-3 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg shadow-xs transition flex items-center space-x-1.5"
             >
               <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${loading ? 'animate-spin' : ''}`} />
-              <span>Refresh</span>
+              <span>{t('common:actions.refresh', 'Refresh')}</span>
             </button>
           </div>
         }
@@ -135,7 +137,7 @@ export const FarmerReports = () => {
             <span>{error}</span>
           </div>
           <button onClick={() => setError('')} className="text-red-500 hover:text-red-800 font-bold text-xs">
-            Dismiss
+            {t('common:actions.dismiss', 'Dismiss')}
           </button>
         </div>
       )}
@@ -145,16 +147,16 @@ export const FarmerReports = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center space-x-2 text-xs font-bold text-slate-700">
             <Calendar className="w-4 h-4 text-blue-600" />
-            <span>Report Time Period:</span>
+            <span>{t('dairyOwner:reportsPage.reportPeriod', 'Report Time Period:')}</span>
           </div>
 
           <div className="flex flex-wrap items-center gap-1.5">
             {[
-              { id: 'today', label: 'Today' },
-              { id: 'last7days', label: 'Last 7 Days' },
-              { id: 'thisMonth', label: 'This Month' },
-              { id: 'lastMonth', label: 'Last Month' },
-              { id: 'custom', label: 'Custom Range' }
+              { id: 'today', label: t('common:filters.today', 'Today') },
+              { id: 'last7days', label: t('common:filters.thisWeek', 'Last 7 Days') },
+              { id: 'thisMonth', label: t('common:filters.thisMonth', 'This Month') },
+              { id: 'lastMonth', label: t('common:filters.lastMonth', 'Last Month') },
+              { id: 'custom', label: t('common:filters.customRange', 'Custom Range') }
             ].map((btn) => (
               <button
                 key={btn.id}
@@ -174,7 +176,7 @@ export const FarmerReports = () => {
         {preset === 'custom' && (
           <form onSubmit={handleApplyCustomFilter} className="flex flex-wrap items-end gap-3 pt-2 border-t border-slate-100">
             <div className="space-y-1">
-              <label className="text-[11px] font-semibold text-slate-600">Start Date</label>
+              <label className="text-[11px] font-semibold text-slate-600">{t('common:filters.from', 'Start Date')}</label>
               <input
                 type="date"
                 value={customStart}
@@ -184,7 +186,7 @@ export const FarmerReports = () => {
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[11px] font-semibold text-slate-600">End Date</label>
+              <label className="text-[11px] font-semibold text-slate-600">{t('common:filters.to', 'End Date')}</label>
               <input
                 type="date"
                 value={customEnd}
@@ -197,7 +199,7 @@ export const FarmerReports = () => {
               type="submit"
               className="py-1.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-lg shadow-xs transition"
             >
-              Apply Filter
+              {t('common:actions.apply', 'Apply Filter')}
             </button>
           </form>
         )}
@@ -206,28 +208,28 @@ export const FarmerReports = () => {
       {/* Overview Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title="Total Milk Supplied"
+          title={t('farmer:reportsPage.totalQuantity', 'Total Milk Supplied')}
           value={loading ? '...' : `${milkSummary.totalMilkQuantity.toFixed(1)} L`}
           icon={Milk}
           badgeText={`${milkSummary.totalCollectionRecords} Entries Logged`}
           badgeType="success"
         />
         <StatCard
-          title="Total Milk Earnings Value"
+          title={t('farmer:reportsPage.totalValue', 'Total Milk Earnings Value')}
           value={loading ? '...' : `₹ ${milkSummary.totalMilkValue.toFixed(2)}`}
           icon={TrendingUp}
           badgeText={`Avg Rate ₹${milkSummary.averageRate}/L`}
           badgeType="neutral"
         />
         <StatCard
-          title="Total Payments Received"
+          title={t('farmer:reportsPage.totalPaid', 'Total Payments Received')}
           value={loading ? '...' : `₹ ${paymentSummary.totalPaidAmount.toFixed(2)}`}
           icon={CheckCircle2}
           badgeText="Disbursed to Account"
           badgeType="success"
         />
         <StatCard
-          title="Outstanding Unsettled Balance"
+          title={t('farmer:reportsPage.totalPending', 'Outstanding Unsettled Balance')}
           value={loading ? '...' : `₹ ${paymentSummary.totalOutstandingAmount.toFixed(2)}`}
           icon={CreditCard}
           badgeText={paymentSummary.totalOutstandingAmount > 0 ? 'Pending Settlement' : 'Clear Balance'}
@@ -236,33 +238,33 @@ export const FarmerReports = () => {
       </div>
 
       {/* Milk Supply Summary */}
-      <SectionCard title="Personal Milk Supply Performance" subtitle="Quality and intake averages">
+      <SectionCard title={t('farmer:reportsPage.title', 'Personal Milk Supply Performance')} subtitle={t('farmer:reportsPage.subtitle', 'Quality and intake averages')}>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-2">
           <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-center">
-            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Total Supplied</span>
+            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">{t('farmer:reportsPage.totalQuantity', 'Total Supplied')}</span>
             <span className="font-mono font-bold text-slate-900 text-base">{milkSummary.totalMilkQuantity} L</span>
           </div>
           <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-center">
-            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Average Shift Supply</span>
+            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">{t('farmer:milk.tenDaySummary', 'Average Shift Supply')}</span>
             <span className="font-mono font-bold text-slate-900 text-base">{milkSummary.averageMilkQuantity} L</span>
           </div>
           <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-center">
-            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Average Fat %</span>
+            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">{t('farmer:reportsPage.averageFat', 'Average Fat %')}</span>
             <span className="font-mono font-bold text-blue-700 text-base">{milkSummary.averageFat}%</span>
           </div>
           <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-center">
-            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Average Rate per Liter</span>
+            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">{t('farmer:reportsPage.averageRate', 'Average Rate per Liter')}</span>
             <span className="font-mono font-bold text-emerald-700 text-base">₹{milkSummary.averageRate}</span>
           </div>
         </div>
       </SectionCard>
 
       {/* Date-Wise Collection History */}
-      <SectionCard title="Daily Supply History" subtitle="Your recorded milk entries aggregated by date">
+      <SectionCard title={t('farmer:reportsPage.timelineTitle', 'Daily Supply History')} subtitle={t('farmer:milkCollections.historyTab', 'Your recorded milk entries aggregated by date')}>
         {loading ? (
-          <div className="py-6 text-center text-slate-500 text-xs">Loading daily history...</div>
+          <div className="py-6 text-center text-slate-500 text-xs">{t('common:actions.loading', 'Loading daily history...')}</div>
         ) : dateWiseMilk.length === 0 ? (
-          <EmptyState title="No Milk Supply Records" description="No milk collection entries recorded for selected date range." icon={Milk} />
+          <EmptyState title={t('farmer:milkCollections.noCollectionsFound', 'No Milk Supply Records')} description={t('farmer:milkCollections.noCollectionsDesc', 'No milk collection entries recorded for selected date range.')} icon={Milk} />
         ) : (
           <div className="space-y-3">
             {dateWiseMilk.map((d) => {
@@ -272,7 +274,7 @@ export const FarmerReports = () => {
                   <div className="flex items-center justify-between">
                     <span className="font-mono font-bold text-slate-900">{d.date}</span>
                     <div className="flex items-center space-x-3 font-mono">
-                      <span className="text-slate-500">Fat: {d.averageFat}%</span>
+                      <span className="text-slate-500">{t('common:labels.fat', 'Fat')}: {d.averageFat}%</span>
                       <span className="text-slate-500">₹{d.averageRate}/L</span>
                       <span className="font-bold text-slate-900">{d.totalLiters} L</span>
                       <span className="font-bold text-emerald-700">₹{d.totalValue.toFixed(2)}</span>
@@ -289,21 +291,21 @@ export const FarmerReports = () => {
       </SectionCard>
 
       {/* Date-Wise Payment History */}
-      <SectionCard title="Payment Statement History" subtitle="Disbursed settlement history aggregated by date">
+      <SectionCard title={t('farmer:paymentsPage.disbursedHistoryTitle', 'Payment Statement History')} subtitle={t('farmer:paymentsPage.disbursedHistorySubtitle', 'Disbursed settlement history aggregated by date')}>
         {loading ? (
-          <div className="py-6 text-center text-slate-500 text-xs">Loading payment statements...</div>
+          <div className="py-6 text-center text-slate-500 text-xs">{t('common:actions.loading', 'Loading payment statements...')}</div>
         ) : dateWisePayments.length === 0 ? (
-          <EmptyState title="No Payment Statements" description="No payment statements issued for selected date range." icon={Wallet} />
+          <EmptyState title={t('farmer:paymentsPage.noPaymentsFound', 'No Payment Statements')} description={t('farmer:paymentsPage.noPaymentsDesc', 'No payment statements issued for selected date range.')} icon={Wallet} />
         ) : (
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                  <th className="py-3 px-4">Date</th>
-                  <th className="py-3 px-4 text-center">Statements</th>
-                  <th className="py-3 px-4 text-right">Gross Total</th>
-                  <th className="py-3 px-4 text-right">Amount Received</th>
-                  <th className="py-3 px-4 text-right">Remaining Balance</th>
+                  <th className="py-3 px-4">{t('common:labels.date', 'Date')}</th>
+                  <th className="py-3 px-4 text-center">{t('farmer:paymentsPage.settlementReceipts', 'Statements')}</th>
+                  <th className="py-3 px-4 text-right">{t('common:labels.grossAmount', 'Gross Total')}</th>
+                  <th className="py-3 px-4 text-right">{t('common:labels.paidAmount', 'Amount Received')}</th>
+                  <th className="py-3 px-4 text-right">{t('common:labels.balance', 'Remaining Balance')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs text-slate-700 font-mono">
@@ -312,7 +314,7 @@ export const FarmerReports = () => {
                     <td className="py-3 px-4 font-bold text-slate-900">{p.date}</td>
                     <td className="py-3 px-4 text-center">
                       <span className="px-2 py-0.5 rounded text-[10px] bg-blue-50 text-blue-700 font-bold border border-blue-100">
-                        {p.paymentCount} Statements
+                        {p.paymentCount} {t('farmer:paymentsPage.settlementReceipts', 'Statements')}
                       </span>
                     </td>
                     <td className="py-3 px-4 text-right font-semibold text-slate-800">₹{p.grossAmount.toFixed(2)}</td>

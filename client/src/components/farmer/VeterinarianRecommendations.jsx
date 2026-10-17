@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { diseaseScanService } from '../../services/diseaseScanService';
 import { vetRequestService } from '../../services/vetRequestService';
+import { getStatusLabel } from '../../i18n/statusMap';
 import {
   Stethoscope,
   CheckCircle,
@@ -17,6 +19,7 @@ import {
 } from 'lucide-react';
 
 export const VeterinarianRecommendations = ({ scanId, conditionName }) => {
+  const { t } = useTranslation(['farmer', 'common']);
   const { token } = useAuth();
   const [recommendations, setRecommendations] = useState([]);
   const [farmerRequests, setFarmerRequests] = useState([]);
@@ -46,7 +49,7 @@ export const VeterinarianRecommendations = ({ scanId, conditionName }) => {
       }
     } catch (err) {
       console.error('Failed to load recommended veterinarians:', err);
-      setError(err.message || 'Unable to load veterinarian recommendations.');
+      setError(err.message || t('farmer:recommendations.noVetsDesc', 'Unable to load veterinarian recommendations.'));
     } finally {
       setLoading(false);
     }
@@ -80,11 +83,11 @@ export const VeterinarianRecommendations = ({ scanId, conditionName }) => {
         token
       );
 
-      setSuccessMsg(res.message || `Consultation request sent successfully to Dr. ${showRequestModal.name}.`);
+      setSuccessMsg(res.message || t('farmer:recommendations.requestSent', `Consultation request sent successfully to Dr. ${showRequestModal.name}.`));
       setShowRequestModal(null);
       fetchRecommendationsAndRequests();
     } catch (err) {
-      setError(err.message || 'Failed to send consultation request.');
+      setError(err.message || t('common:error.saveFailed', 'Failed to send consultation request.'));
     } finally {
       setSubmittingRequest(false);
     }
@@ -108,6 +111,12 @@ export const VeterinarianRecommendations = ({ scanId, conditionName }) => {
       default:
         return 'bg-slate-100 text-slate-700 border-slate-300';
     }
+  };
+
+  const getLocalizedBadge = (badge) => {
+    if (badge === 'Best Match') return t('farmer:recommendations.bestMatch', 'Best Match');
+    if (badge === 'Recommended') return t('farmer:recommendations.recommended', 'Recommended');
+    return badge;
   };
 
   return (
@@ -135,10 +144,15 @@ export const VeterinarianRecommendations = ({ scanId, conditionName }) => {
             <span className="p-2 bg-blue-500/20 rounded-xl text-blue-300">
               <Stethoscope className="w-5 h-5" />
             </span>
-            <h3 className="text-base font-extrabold tracking-tight">Recommended Veterinarians</h3>
+            <h3 className="text-base font-extrabold tracking-tight">
+              {t('farmer:recommendations.title', 'Recommended Veterinarians')}
+            </h3>
           </div>
           <p className="text-xs text-slate-300 mt-1 max-w-xl">
-            Based on preliminary AI screening results for <strong className="text-blue-200">{conditionName || 'your cattle'}</strong>, these registered veterinarians are matched by clinical expertise and availability.
+            {t('farmer:recommendations.subtitle', {
+              condition: conditionName || t('common:labels.cattle', 'your cattle'),
+              defaultValue: `Based on preliminary AI screening results for ${conditionName || 'your cattle'}, these registered veterinarians are matched by clinical expertise and availability.`
+            })}
           </p>
         </div>
 
@@ -148,7 +162,7 @@ export const VeterinarianRecommendations = ({ scanId, conditionName }) => {
           className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-semibold backdrop-sm transition shrink-0 flex items-center space-x-1.5 self-start sm:self-center"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-          <span>Refresh List</span>
+          <span>{t('farmer:recommendations.refreshList', 'Refresh List')}</span>
         </button>
       </div>
 
@@ -156,9 +170,11 @@ export const VeterinarianRecommendations = ({ scanId, conditionName }) => {
       <div className="p-3.5 bg-blue-50/80 border border-blue-200 rounded-xl text-xs text-blue-900 flex items-start space-x-2.5">
         <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
         <div>
-          <span className="font-bold block mb-0.5">Veterinary Matching & Consultation</span>
+          <span className="font-bold block mb-0.5">
+            {t('farmer:recommendations.matchingNoticeTitle', 'Veterinary Matching & Consultation')}
+          </span>
           <span>
-            Based on the preliminary AI screening, these veterinarians may be suitable for consultation. Select a veterinarian to request a professional case review.
+            {t('farmer:recommendations.matchingNoticeBody', 'Based on the preliminary AI screening, these veterinarians may be suitable for consultation. Select a veterinarian to request a professional case review.')}
           </span>
         </div>
       </div>
@@ -167,8 +183,12 @@ export const VeterinarianRecommendations = ({ scanId, conditionName }) => {
       {loading && (
         <div className="p-8 text-center bg-white rounded-2xl border border-slate-200 space-y-2">
           <RefreshCw className="w-6 h-6 animate-spin text-blue-600 mx-auto" />
-          <p className="text-xs font-bold text-slate-700">Finding suitable veterinarians...</p>
-          <p className="text-[11px] text-slate-400">Analyzing expertise, specialization, and availability match</p>
+          <p className="text-xs font-bold text-slate-700">
+            {t('farmer:recommendations.findingVets', 'Finding suitable veterinarians...')}
+          </p>
+          <p className="text-[11px] text-slate-400">
+            {t('farmer:recommendations.findingSubtitle', 'Analyzing expertise, specialization, and availability match')}
+          </p>
         </div>
       )}
 
@@ -178,9 +198,11 @@ export const VeterinarianRecommendations = ({ scanId, conditionName }) => {
           <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto text-xl font-bold">
             👨‍⚕️
           </div>
-          <h4 className="text-sm font-bold text-slate-800">No Registered Veterinarians Found</h4>
+          <h4 className="text-sm font-bold text-slate-800">
+            {t('farmer:recommendations.noVetsFound', 'No Registered Veterinarians Found')}
+          </h4>
           <p className="text-xs text-slate-500 max-w-md mx-auto">
-            No veterinarians are currently registered for recommendation in the system. As new veterinarians register, suitable matches will appear here.
+            {t('farmer:recommendations.noVetsDesc', 'No veterinarians are currently registered for recommendation in the system. As new veterinarians register, suitable matches will appear here.')}
           </p>
         </div>
       )}
@@ -215,7 +237,7 @@ export const VeterinarianRecommendations = ({ scanId, conditionName }) => {
                     </div>
 
                     <span className={`px-2.5 py-1 text-[11px] font-extrabold rounded-lg border ${getBadgeStyle(vet.badge)}`}>
-                      {vet.badge} ({vet.matchScore}%)
+                      {getLocalizedBadge(vet.badge)} ({vet.matchScore}%)
                     </span>
                   </div>
 
@@ -228,14 +250,16 @@ export const VeterinarianRecommendations = ({ scanId, conditionName }) => {
                     <div className="flex items-center text-slate-600 space-x-1.5">
                       <Clock className={`w-3.5 h-3.5 ${vet.availability === 'available' ? 'text-emerald-500' : vet.availability === 'busy' ? 'text-amber-500' : 'text-slate-400'}`} />
                       <span className={`font-semibold capitalize ${vet.availability === 'available' ? 'text-emerald-700' : vet.availability === 'busy' ? 'text-amber-700' : 'text-slate-500'}`}>
-                        Status: {vet.availability}
+                        {t('common:labels.status', 'Status')}: {getStatusLabel(vet.availability, t)}
                       </span>
                     </div>
                   </div>
 
                   {/* Match Reasons */}
                   <div className="space-y-1.5">
-                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">Match Rationale</span>
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
+                      {t('farmer:recommendations.bestMatch', 'Match Rationale')}
+                    </span>
                     <div className="space-y-1">
                       {vet.matchReasons.map((reason, idx) => (
                         <div key={idx} className="flex items-start space-x-1.5 text-xs text-slate-700">
@@ -264,7 +288,7 @@ export const VeterinarianRecommendations = ({ scanId, conditionName }) => {
                     className="py-2 px-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold rounded-xl transition flex items-center justify-center space-x-1"
                   >
                     <UserCheck className="w-3.5 h-3.5 text-slate-500" />
-                    <span>View Profile</span>
+                    <span>{t('common:actions.viewDetails', 'View Profile')}</span>
                   </button>
 
                   {isPending ? (
@@ -274,7 +298,7 @@ export const VeterinarianRecommendations = ({ scanId, conditionName }) => {
                       className="py-2 px-3 bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold rounded-xl flex items-center justify-center space-x-1 cursor-not-allowed"
                     >
                       <Clock className="w-3.5 h-3.5 text-amber-600" />
-                      <span>Request Pending</span>
+                      <span>{t('farmer:recommendations.requestSent', 'Request Pending')}</span>
                     </button>
                   ) : isAccepted ? (
                     <button
@@ -283,7 +307,7 @@ export const VeterinarianRecommendations = ({ scanId, conditionName }) => {
                       className="py-2 px-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-xl flex items-center justify-center space-x-1 cursor-not-allowed"
                     >
                       <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>Accepted</span>
+                      <span>{t('farmer:recommendations.requestAccepted', 'Accepted')}</span>
                     </button>
                   ) : (
                     <button
@@ -292,7 +316,7 @@ export const VeterinarianRecommendations = ({ scanId, conditionName }) => {
                       className="py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center justify-center space-x-1"
                     >
                       <Send className="w-3.5 h-3.5" />
-                      <span>{isRejected ? 'Request Again' : 'Request Vet'}</span>
+                      <span>{isRejected ? t('farmer:recommendations.requestConsultation', 'Request Again') : t('farmer:recommendations.requestConsultation', 'Request Vet')}</span>
                     </button>
                   )}
                 </div>
@@ -304,8 +328,8 @@ export const VeterinarianRecommendations = ({ scanId, conditionName }) => {
 
       {/* VET PROFILE POPUP MODAL */}
       {selectedVet && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-sm">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-sm overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl relative my-auto max-h-[90vh] overflow-y-auto modal-animate">
             <button
               onClick={() => setSelectedVet(null)}
               className="absolute top-4 right-4 p-1.5 text-slate-400 hover:text-slate-700 rounded-xl"
@@ -326,17 +350,19 @@ export const VeterinarianRecommendations = ({ scanId, conditionName }) => {
 
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2 text-xs">
               <div className="flex items-center justify-between">
-                <span className="text-slate-500 font-semibold">Consultation Status:</span>
-                <span className="font-bold text-emerald-700 capitalize">{selectedVet.availability}</span>
+                <span className="text-slate-500 font-semibold">{t('common:labels.status', 'Status')}:</span>
+                <span className="font-bold text-emerald-700 capitalize">{getStatusLabel(selectedVet.availability, t)}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-slate-500 font-semibold">Suitability Score:</span>
+                <span className="text-slate-500 font-semibold">{t('farmer:recommendations.bestMatch', 'Suitability Score')}:</span>
                 <span className="font-bold text-blue-700">{selectedVet.matchScore}% ({selectedVet.matchLevel})</span>
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <span className="text-xs font-bold text-slate-700 block">Areas of Clinical Expertise:</span>
+              <span className="text-xs font-bold text-slate-700 block">
+                {t('farmer:recommendations.specialization', { spec: selectedVet.specialization, defaultValue: 'Areas of Clinical Expertise:' })}
+              </span>
               <div className="flex flex-wrap gap-1.5">
                 {selectedVet.expertise.map((item, idx) => (
                   <span key={idx} className="px-2.5 py-1 bg-blue-50 text-blue-800 font-bold text-xs rounded-lg border border-blue-100">
@@ -351,7 +377,7 @@ export const VeterinarianRecommendations = ({ scanId, conditionName }) => {
                 onClick={() => setSelectedVet(null)}
                 className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition"
               >
-                Close Profile
+                {t('common:actions.close', 'Close Profile')}
               </button>
             </div>
           </div>
@@ -360,8 +386,8 @@ export const VeterinarianRecommendations = ({ scanId, conditionName }) => {
 
       {/* CONFIRMATION & REQUEST CREATION MODAL */}
       {showRequestModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-sm">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-sm overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl relative my-auto max-h-[90vh] overflow-y-auto modal-animate">
             <button
               onClick={() => setShowRequestModal(null)}
               className="absolute top-4 right-4 p-1.5 text-slate-400 hover:text-slate-700 rounded-xl"
@@ -374,29 +400,31 @@ export const VeterinarianRecommendations = ({ scanId, conditionName }) => {
                 🩺
               </div>
               <div>
-                <h3 className="text-base font-bold text-slate-900">Request Veterinarian Review</h3>
+                <h3 className="text-base font-bold text-slate-900">
+                  {t('farmer:recommendations.modalTitle', { name: showRequestModal.name, defaultValue: `Request Veterinarian Review` })}
+                </h3>
                 <span className="text-xs text-slate-500">Dr. {showRequestModal.name} ({showRequestModal.specialization})</span>
               </div>
             </div>
 
             <div className="p-3.5 bg-blue-50 border border-blue-200 rounded-xl text-xs space-y-1 text-blue-950">
               <div className="flex justify-between">
-                <span>Preliminary AI Result:</span>
-                <strong className="font-bold">{conditionName || 'Cattle Health Concern'}</strong>
+                <span>{t('farmer:aiScanner.resultsTitle', 'Preliminary AI Result')}:</span>
+                <strong className="font-bold">{conditionName || t('common:labels.cattle', 'Cattle Health Concern')}</strong>
               </div>
               <p className="text-[11px] text-blue-800 pt-1 border-t border-blue-200/60">
-                You are requesting this licensed veterinarian to review your cattle's health screening report.
+                {t('farmer:recommendations.matchingNoticeBody', 'You are requesting this licensed veterinarian to review your cattle\'s health screening report.')}
               </p>
             </div>
 
             <form onSubmit={handleSendRequest} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Message / Notes for Veterinarian (Optional)
+                  {t('farmer:recommendations.farmerMessageLabel', 'Message / Notes for Veterinarian (Optional)')}
                 </label>
                 <textarea
                   rows="3"
-                  placeholder="Describe observed behavior, symptoms duration, or specific questions for the doctor..."
+                  placeholder={t('farmer:recommendations.farmerMessagePlaceholder', 'Describe observed behavior, symptoms duration, or specific questions for the doctor...')}
                   value={farmerMessage}
                   onChange={(e) => setFarmerMessage(e.target.value)}
                   className="w-full p-3 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
@@ -406,7 +434,7 @@ export const VeterinarianRecommendations = ({ scanId, conditionName }) => {
               <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-900 flex items-start space-x-2">
                 <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                 <span>
-                  The AI screening result is a preliminary assessment. The veterinarian will evaluate your cattle's case and provide professional advice.
+                  {t('farmer:scanHistory.disclaimerBottom', 'The AI screening result is a preliminary assessment. The veterinarian will evaluate your cattle\'s case and provide professional advice.')}
                 </span>
               </div>
 
@@ -416,7 +444,7 @@ export const VeterinarianRecommendations = ({ scanId, conditionName }) => {
                   onClick={() => setShowRequestModal(null)}
                   className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition"
                 >
-                  Cancel
+                  {t('common:actions.cancel', 'Cancel')}
                 </button>
                 <button
                   type="submit"
@@ -424,7 +452,7 @@ export const VeterinarianRecommendations = ({ scanId, conditionName }) => {
                   className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition disabled:opacity-50 flex items-center space-x-1.5"
                 >
                   <Send className={`w-3.5 h-3.5 ${submittingRequest ? 'animate-spin' : ''}`} />
-                  <span>{submittingRequest ? 'Sending Request...' : 'Send Request'}</span>
+                  <span>{submittingRequest ? t('farmer:recommendations.sendingBtn', 'Sending Request...') : t('farmer:recommendations.sendRequestBtn', 'Send Request')}</span>
                 </button>
               </div>
             </form>

@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { getStatusLabel } from '../../i18n/statusMap';
 import { useAuth } from '../../context/AuthContext';
 import { veterinarianService } from '../../services/veterinarianService';
 import {
@@ -15,6 +17,7 @@ import {
 } from 'lucide-react';
 
 export const CaseDetailModal = ({ caseData, onClose, onCaseUpdated }) => {
+  const { t } = useTranslation(['veterinarian', 'common']);
   const { token } = useAuth();
 
   const [notes, setNotes] = useState(caseData.veterinarianNotes || '');
@@ -71,7 +74,7 @@ export const CaseDetailModal = ({ caseData, onClose, onCaseUpdated }) => {
             <Stethoscope className="w-6 h-6" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-slate-900">Clinical Case Review</h2>
+            <h2 className="text-base font-bold text-slate-900">{t('veterinarian:cases.reviewModal', 'Clinical Case Review')}</h2>
             <span className="text-xs text-slate-500">
               Case ID: #{caseData._id?.slice(-8)} • Submitted {new Date(caseData.createdAt).toLocaleString()}
             </span>
@@ -96,7 +99,7 @@ export const CaseDetailModal = ({ caseData, onClose, onCaseUpdated }) => {
           <div className="space-y-4 text-xs">
             {/* Farmer Card */}
             <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
-              <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Farmer Information</span>
+              <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">{t('veterinarian:clinicalWorkspace.farmerInfo', 'Farmer Information')}</span>
               <p className="font-bold text-slate-900 text-sm">{caseData.farmer?.name || 'Farmer'}</p>
               <div className="flex items-center space-x-3 text-slate-600">
                 <span className="flex items-center space-x-1">
@@ -127,44 +130,38 @@ export const CaseDetailModal = ({ caseData, onClose, onCaseUpdated }) => {
 
             {/* AI Screening Result */}
             <div className="p-3.5 bg-blue-50 border border-blue-200 rounded-xl space-y-1">
-              <span className="text-[10px] uppercase font-bold text-blue-600 tracking-wider block">AI Screening Result</span>
+              <span className="text-[10px] uppercase font-bold text-blue-600 tracking-wider block">{t('farmer:aiScanner.resultsTitle', 'AI Screening Result')}</span>
               <p className="font-extrabold text-blue-950">{caseData.detectedCondition}</p>
-              <p className="text-slate-600">Confidence: <strong className="text-blue-700">{caseData.confidence}%</strong></p>
+              <p className="text-slate-600">{t('farmer:aiScanner.confidence', 'Confidence')}: <strong className="text-blue-700">{caseData.confidence}%</strong></p>
               <p className="text-slate-600 pt-1">
-                <strong>Reported Symptoms:</strong> {caseData.symptoms || 'None reported.'}
+                <strong>{t('farmer:scanHistory.symptomsReported', 'Reported Symptoms:')}</strong> {caseData.symptoms || t('farmer:scanHistory.noneSpecified', 'None reported.')}
               </p>
             </div>
           </div>
 
           {/* Right Column: Veterinarian Clinical Form */}
           <form onSubmit={handleSubmitReview} className="space-y-4">
-            <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider">
-              Veterinary Clinical Assessment
-            </h3>
+            <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider">{t('veterinarian:clinicalWorkspace.diagnosisTitle', 'Veterinary Clinical Assessment')}</h3>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Review Status
-              </label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">{t('farmer:vetRequests.requestStatus', 'Review Status')}</label>
               <select
                 value={reviewStatus}
                 onChange={(e) => setReviewStatus(e.target.value)}
                 className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 font-medium focus:ring-2 focus:ring-teal-500 outline-none"
               >
-                <option value="under_review">Under Clinical Review</option>
-                <option value="review_completed">Review Completed (Confirmed)</option>
-                <option value="info_requested">Additional Information Required</option>
-                <option value="closed">Case Closed</option>
+                <option value="under_review">{getStatusLabel('under_review', t)}</option>
+                <option value="review_completed">{getStatusLabel('review_completed', t)}</option>
+                <option value="info_requested">{getStatusLabel('info_requested', t)}</option>
+                <option value="closed">{getStatusLabel('closed', t)}</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Clinical Examination Notes
-              </label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">{t('veterinarian:clinicalWorkspace.observationsNotes', 'Clinical Examination Notes')}</label>
               <textarea
                 rows="3"
-                placeholder="Enter professional clinical observations, diagnosis verification, or notes for the farmer..."
+                placeholder={t('veterinarian:caseDetail.clinicalNotesPlaceholder', 'Enter professional clinical observations, diagnosis verification, or notes for the farmer...')}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 className="w-full p-3 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 focus:ring-2 focus:ring-teal-500 outline-none"
@@ -173,12 +170,10 @@ export const CaseDetailModal = ({ caseData, onClose, onCaseUpdated }) => {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Treatment & Medication Recommendation
-              </label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">{t('veterinarian:clinicalWorkspace.treatmentProtocol', 'Treatment & Medication Recommendation')}</label>
               <textarea
                 rows="3"
-                placeholder="Specify recommended treatment, prescribed medicine, or hygiene protocol..."
+                placeholder={t('veterinarian:caseDetail.treatmentPlaceholder', 'Specify recommended treatment, prescribed medicine, or hygiene protocol...')}
                 value={recommendation}
                 onChange={(e) => setRecommendation(e.target.value)}
                 className="w-full p-3 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 focus:ring-2 focus:ring-teal-500 outline-none"

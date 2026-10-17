@@ -1,12 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { dairyFarmerService } from '../../services/dairyFarmerService';
+import { getStatusLabel } from '../../i18n/statusMap';
 import { PageHeader } from '../../components/common/PageHeader';
 import { SectionCard } from '../../components/common/SectionCard';
 import { EmptyState } from '../../components/common/EmptyState';
 import { Milk, CheckCircle2, XCircle, Clock, UserMinus } from 'lucide-react';
 
 export const DairyConnections = () => {
+  const { t } = useTranslation(['farmer', 'common']);
   const { token } = useAuth();
   const [connections, setConnections] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -37,7 +40,7 @@ export const DairyConnections = () => {
 
     try {
       const res = await dairyFarmerService.acceptConnection(connectionId, token);
-      setSuccessMsg(res.message || 'Dairy connection accepted successfully!');
+      setSuccessMsg(res.message || t('common:labels.success', 'Dairy connection accepted successfully!'));
       await fetchConnections();
     } catch (err) {
       setError(err.message);
@@ -47,14 +50,14 @@ export const DairyConnections = () => {
   };
 
   const handleReject = async (connectionId) => {
-    if (!window.confirm('Reject this dairy connection request?')) return;
+    if (!window.confirm(t('common:dialogs.areYouSure', 'Reject this dairy connection request?'))) return;
     setActionLoading(true);
     setError('');
     setSuccessMsg('');
 
     try {
       const res = await dairyFarmerService.rejectConnection(connectionId, token);
-      setSuccessMsg(res.message || 'Connection request rejected.');
+      setSuccessMsg(res.message || t('common:status.rejected', 'Connection request rejected.'));
       await fetchConnections();
     } catch (err) {
       setError(err.message);
@@ -64,14 +67,14 @@ export const DairyConnections = () => {
   };
 
   const handleDisconnect = async (connectionId) => {
-    if (!window.confirm('Disconnect from this dairy owner?')) return;
+    if (!window.confirm(t('dairyOwner:farmersPage.confirmDisconnect', 'Disconnect from this dairy owner?'))) return;
     setActionLoading(true);
     setError('');
     setSuccessMsg('');
 
     try {
       const res = await dairyFarmerService.disconnectConnection(connectionId, token);
-      setSuccessMsg(res.message || 'Dairy relationship disconnected.');
+      setSuccessMsg(res.message || t('farmer:dairyConnectionsPage.disconnectBtn', 'Dairy relationship disconnected.'));
       await fetchConnections();
     } catch (err) {
       setError(err.message);
@@ -87,36 +90,36 @@ export const DairyConnections = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Dairy Connections"
-        description="View incoming connection requests from dairy owners and manage active dairy relationships."
-        breadcrumbs={['Home', 'Farmer Dashboard', 'Dairy Connections']}
+        title={t('farmer:connections.title', 'Dairy Connections')}
+        description={t('farmer:dairyConnectionsPage.subtitle', 'View incoming connection requests from dairy owners and manage active dairy relationships.')}
+        breadcrumbs={[t('common:nav.home', 'Home'), t('common:roles.farmer', 'Farmer Dashboard'), t('farmer:connections.title', 'Dairy Connections')]}
       />
 
       {error && (
         <div className="p-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg flex justify-between items-center">
           <span>{error}</span>
-          <button onClick={() => setError('')} className="text-red-500 hover:text-red-800 font-bold text-xs">Dismiss</button>
+          <button onClick={() => setError('')} className="text-red-500 hover:text-red-800 font-bold text-xs">{t('common:actions.dismiss', 'Dismiss')}</button>
         </div>
       )}
 
       {successMsg && (
         <div className="p-4 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg flex justify-between items-center">
           <span>{successMsg}</span>
-          <button onClick={() => setSuccessMsg('')} className="text-green-500 hover:text-green-800 font-bold text-xs">Dismiss</button>
+          <button onClick={() => setSuccessMsg('')} className="text-green-500 hover:text-green-800 font-bold text-xs">{t('common:actions.dismiss', 'Dismiss')}</button>
         </div>
       )}
 
       {/* Incoming Requests Section */}
       <SectionCard
-        title={`Incoming Dairy Connection Requests (${pendingRequests.length})`}
-        subtitle="Dairy owners requesting to connect with your farmer profile"
+        title={t('farmer:dairyConnectionsPage.pendingRequests', { count: pendingRequests.length, defaultValue: `Incoming Dairy Connection Requests (${pendingRequests.length})` })}
+        subtitle={t('farmer:dairyConnectionsPage.subtitle', 'Dairy owners requesting to connect with your farmer profile')}
       >
         {loading ? (
-          <div className="py-8 text-center text-slate-500 text-xs">Loading requests...</div>
+          <div className="py-8 text-center text-slate-500 text-xs">{t('common:actions.loading', 'Loading requests...')}</div>
         ) : pendingRequests.length === 0 ? (
           <EmptyState
-            title="No Incoming Connection Requests"
-            description="When a dairy owner sends a connection request to your mobile number, it will appear here for your approval."
+            title={t('farmer:dairyConnectionsPage.noPending', 'No Incoming Connection Requests')}
+            description={t('farmer:connections.noConnections', 'When a dairy owner sends a connection request to your mobile number, it will appear here for your approval.')}
             icon={Clock}
           />
         ) : (
@@ -132,9 +135,9 @@ export const DairyConnections = () => {
                   </div>
                   <div>
                     <h4 className="text-base font-bold text-slate-800">{item.dairyOwner?.name}</h4>
-                    <p className="text-xs text-slate-600 font-mono">Mobile: {item.dairyOwner?.phone}</p>
+                    <p className="text-xs text-slate-600 font-mono">{t('common:labels.phone', 'Mobile')}: {item.dairyOwner?.phone}</p>
                     <span className="text-[10px] font-semibold text-amber-700 uppercase tracking-wider block mt-0.5">
-                      Role: {item.dairyOwner?.role}
+                      {t('common:labels.status', 'Status')}: {getStatusLabel(item.status, t)}
                     </span>
                   </div>
                 </div>
@@ -146,7 +149,7 @@ export const DairyConnections = () => {
                     className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-lg shadow-xs transition disabled:opacity-50 flex items-center space-x-1"
                   >
                     <CheckCircle2 className="w-4 h-4" />
-                    <span>Accept Request</span>
+                    <span>{t('farmer:dairyConnectionsPage.acceptBtn', 'Accept Request')}</span>
                   </button>
 
                   <button
@@ -155,7 +158,7 @@ export const DairyConnections = () => {
                     className="px-3 py-2 bg-slate-200 hover:bg-red-50 hover:text-red-700 text-slate-700 text-xs font-semibold rounded-lg border border-slate-300 transition disabled:opacity-50 flex items-center space-x-1"
                   >
                     <XCircle className="w-4 h-4" />
-                    <span>Reject</span>
+                    <span>{t('farmer:dairyConnectionsPage.rejectBtn', 'Reject')}</span>
                   </button>
                 </div>
               </div>
@@ -166,15 +169,15 @@ export const DairyConnections = () => {
 
       {/* Active Dairy Relationship Section */}
       <SectionCard
-        title={`Active Dairy Connection (${activeConnections.length})`}
-        subtitle="Dairy owner linked for your daily milk collections and payments"
+        title={t('farmer:dairyConnectionsPage.activeDairies', { count: activeConnections.length, defaultValue: `Active Dairy Connection (${activeConnections.length})` })}
+        subtitle={t('farmer:connections.connectedDairy', 'Dairy owner linked for your daily milk collections and payments')}
       >
         {loading ? (
-          <div className="py-8 text-center text-slate-500 text-xs">Loading active connections...</div>
+          <div className="py-8 text-center text-slate-500 text-xs">{t('common:actions.loading', 'Loading active connections...')}</div>
         ) : activeConnections.length === 0 ? (
           <EmptyState
-            title="No Active Dairy Connection"
-            description="You are currently not actively linked with any dairy owner."
+            title={t('farmer:dairyConnectionsPage.noActive', 'No Active Dairy Connection')}
+            description={t('farmer:connections.noConnections', 'You are currently not actively linked with any dairy owner.')}
             icon={Milk}
           />
         ) : (
@@ -192,10 +195,10 @@ export const DairyConnections = () => {
                     <div className="flex items-center space-x-2">
                       <h4 className="text-base font-bold text-slate-900">{item.dairyOwner?.name}</h4>
                       <span className="text-[10px] font-bold px-2 py-0.5 bg-green-100 text-green-800 rounded border border-green-200">
-                        Active Relationship
+                        {t('common:status.active', 'Active Relationship')}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-600 font-mono mt-0.5">Mobile: {item.dairyOwner?.phone}</p>
+                    <p className="text-xs text-slate-600 font-mono mt-0.5">{t('common:labels.phone', 'Mobile')}: {item.dairyOwner?.phone}</p>
                   </div>
                 </div>
 
@@ -205,7 +208,7 @@ export const DairyConnections = () => {
                   className="px-3.5 py-1.5 bg-white hover:bg-red-50 text-slate-600 hover:text-red-600 border border-slate-300 text-xs font-semibold rounded-lg transition flex items-center justify-center space-x-1"
                 >
                   <UserMinus className="w-3.5 h-3.5" />
-                  <span>Disconnect</span>
+                  <span>{t('farmer:dairyConnectionsPage.disconnectBtn', 'Disconnect')}</span>
                 </button>
               </div>
             ))}
@@ -215,7 +218,7 @@ export const DairyConnections = () => {
 
       {/* Past Log */}
       {otherConnections.length > 0 && (
-        <SectionCard title="Past Connections Log" subtitle="History of rejected or disconnected requests">
+        <SectionCard title={t('common:status.all', 'Past Connections Log')} subtitle={t('farmer:dairyConnectionsPage.subtitle', 'History of rejected or disconnected requests')}>
           <div className="space-y-2">
             {otherConnections.map((item) => (
               <div key={item._id} className="p-3 bg-slate-50 border border-slate-100 rounded-lg flex items-center justify-between text-xs">
@@ -224,7 +227,7 @@ export const DairyConnections = () => {
                   <span className="text-slate-400 font-mono ml-2">({item.dairyOwner?.phone})</span>
                 </div>
                 <span className={`px-2 py-0.5 rounded font-semibold text-[10px] uppercase ${item.status === 'rejected' ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-slate-100 text-slate-600 border border-slate-200'}`}>
-                  {item.status}
+                  {getStatusLabel(item.status, t)}
                 </span>
               </div>
             ))}

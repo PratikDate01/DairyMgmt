@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { reportService } from '../../services/reportService';
 import { PageHeader } from '../../components/common/PageHeader';
@@ -17,6 +18,7 @@ import {
 } from 'lucide-react';
 
 export const DairyOwnerReports = () => {
+  const { t } = useTranslation(['dairyOwner', 'common']);
   const { token } = useAuth();
 
   // Date Filter State
@@ -112,16 +114,16 @@ export const DairyOwnerReports = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Reports & Summary Analytics"
-        description="Comprehensive intelligence on milk collection intake, farmer performance, and payment settlements."
-        breadcrumbs={['Home', 'Dairy Console', 'Reports']}
+        title={t('dairyOwner:reports.title', 'Reports & Summary Analytics')}
+        description={t('dairyOwner:reports.subtitle', 'Comprehensive intelligence on milk collection intake, farmer performance, and payment settlements.')}
+        breadcrumbs={[t('common:nav.home', 'Home'), t('common:roles.dairyOwner', 'Dairy Owner'), t('dairyOwner:reports.title', 'Reports')]}
         actions={
           <button
             onClick={fetchReports}
             className="px-3 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg shadow-xs transition flex items-center space-x-1.5"
           >
             <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${loading ? 'animate-spin' : ''}`} />
-            <span>Refresh Analytics</span>
+            <span>{t('dairyOwner:reportsPage.refreshAnalytics', 'Refresh Analytics')}</span>
           </button>
         }
       />
@@ -143,16 +145,16 @@ export const DairyOwnerReports = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center space-x-2 text-xs font-bold text-slate-700">
             <Calendar className="w-4 h-4 text-blue-600" />
-            <span>Report Time Period:</span>
+            <span>{t('dairyOwner:reportsPage.reportPeriod', 'Report Time Period')}:</span>
           </div>
 
           <div className="flex flex-wrap items-center gap-1.5">
             {[
-              { id: 'today', label: 'Today' },
-              { id: 'last7days', label: 'Last 7 Days' },
-              { id: 'thisMonth', label: 'This Month' },
-              { id: 'lastMonth', label: 'Last Month' },
-              { id: 'custom', label: 'Custom Range' }
+              { id: 'today', label: t('common:datePresets.today', 'Today') },
+              { id: 'last7days', label: t('common:datePresets.last7days', 'Last 7 Days') },
+              { id: 'thisMonth', label: t('common:datePresets.thisMonth', 'This Month') },
+              { id: 'lastMonth', label: t('common:datePresets.lastMonth', 'Last Month') },
+              { id: 'custom', label: t('farmer:milkCollections.customRange', 'Custom Range') }
             ].map((btn) => (
               <button
                 key={btn.id}
@@ -172,7 +174,7 @@ export const DairyOwnerReports = () => {
         {preset === 'custom' && (
           <form onSubmit={handleApplyCustomFilter} className="flex flex-wrap items-end gap-3 pt-2 border-t border-slate-100">
             <div className="space-y-1">
-              <label className="text-[11px] font-semibold text-slate-600">Start Date</label>
+              <label className="text-[11px] font-semibold text-slate-600">{t('dairyOwner:reports.startDate', 'Start Date')}</label>
               <input
                 type="date"
                 value={customStart}
@@ -182,7 +184,7 @@ export const DairyOwnerReports = () => {
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[11px] font-semibold text-slate-600">End Date</label>
+              <label className="text-[11px] font-semibold text-slate-600">{t('dairyOwner:reports.endDate', 'End Date')}</label>
               <input
                 type="date"
                 value={customEnd}
@@ -204,56 +206,56 @@ export const DairyOwnerReports = () => {
       {/* High-Level Overview Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title="Total Milk Intake"
+          title={t('dairyOwner:reportsPage.volumeIntake', 'Total Milk Intake')}
           value={loading ? '...' : `${milkSummary.totalMilkQuantity.toFixed(1)} L`}
           icon={Milk}
           badgeText={`${milkSummary.totalCollectionRecords} Intake Logs`}
           badgeType="success"
         />
         <StatCard
-          title="Total Milk Value"
+          title={t('dairyOwner:reportsPage.totalValuation', 'Total Milk Value')}
           value={loading ? '...' : `₹ ${milkSummary.totalMilkValue.toFixed(2)}`}
           icon={TrendingUp}
           badgeText={`Avg Rate ₹${milkSummary.averageRate}/L`}
           badgeType="neutral"
         />
         <StatCard
-          title="Total Disbursed Paid"
+          title={t('dairyOwner:reports.totalDisbursedPaid', 'Total Disbursed Paid')}
           value={loading ? '...' : `₹ ${paymentSummary.totalPaidAmount.toFixed(2)}`}
           icon={Wallet}
           badgeText={`${paymentSummary.paidCount} Paid Settlements`}
           badgeType="success"
         />
         <StatCard
-          title="Pending Outstanding"
+          title={t('dairyOwner:reports.pendingOutstanding', 'Pending Outstanding')}
           value={loading ? '...' : `₹ ${paymentSummary.totalOutstandingAmount.toFixed(2)}`}
           icon={CreditCard}
-          badgeText={paymentSummary.totalOutstandingAmount > 0 ? 'Unsettled Balance' : 'Clear Ledger'}
+          badgeText={paymentSummary.totalOutstandingAmount > 0 ? t('dairyOwner:reports.unsettledBalance', 'Unsettled Balance') : t('dairyOwner:reports.clearLedger', 'Clear Ledger')}
           badgeType={paymentSummary.totalOutstandingAmount > 0 ? 'amber' : 'success'}
         />
       </div>
 
       {/* Milk Collection Analytics */}
-      <SectionCard title="Milk Collection Performance Summary" subtitle="Key metrics on volume, fat content, and rate averages">
+      <SectionCard title={t('dairyOwner:reports.milkPerformanceTitle', 'Milk Collection Performance Summary')} subtitle={t('dairyOwner:reports.milkPerformanceSubtitle', 'Key metrics on volume, fat content, and rate averages')}>
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 py-2">
           <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-center">
-            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Total Volume</span>
+            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">{t('dairyOwner:reports.totalVolume', 'Total Volume')}</span>
             <span className="font-mono font-bold text-slate-900 text-base">{milkSummary.totalMilkQuantity} L</span>
           </div>
           <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-center">
-            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Average Shift Intake</span>
+            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">{t('dairyOwner:reports.averageShiftIntake', 'Average Shift Intake')}</span>
             <span className="font-mono font-bold text-slate-900 text-base">{milkSummary.averageMilkQuantity} L</span>
           </div>
           <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-center">
-            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Average Fat %</span>
+            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">{t('dairyOwner:reports.averageFatPercent', 'Average Fat %')}</span>
             <span className="font-mono font-bold text-blue-700 text-base">{milkSummary.averageFat}%</span>
           </div>
           <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-center">
-            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Average Rate</span>
+            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">{t('dairyOwner:reports.averageRate', 'Average Rate')}</span>
             <span className="font-mono font-bold text-emerald-700 text-base">₹{milkSummary.averageRate}/L</span>
           </div>
           <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-center col-span-2 sm:col-span-1">
-            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Total Valuation</span>
+            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">{t('dairyOwner:reports.totalValuation', 'Total Valuation')}</span>
             <span className="font-mono font-bold text-emerald-700 text-base">₹{milkSummary.totalMilkValue.toFixed(2)}</span>
           </div>
         </div>
@@ -261,15 +263,15 @@ export const DairyOwnerReports = () => {
 
       {/* Farmer Performance Breakdown Table */}
       <SectionCard
-        title="Connected Farmer Performance Summary"
-        subtitle="Individual supplier contributions, valuation, payments, and outstanding balances"
+        title={t('dairyOwner:reports.farmerPerformanceTitle', 'Connected Farmer Performance Summary')}
+        subtitle={t('dairyOwner:reports.farmerPerformanceSubtitle', 'Individual supplier contributions, valuation, payments, and outstanding balances')}
       >
         {loading ? (
-          <div className="py-6 text-center text-slate-500 text-xs">Loading farmer analytics...</div>
+          <div className="py-6 text-center text-slate-500 text-xs">{t('dairyOwner:reports.loadingFarmerAnalytics', 'Loading farmer analytics...')}</div>
         ) : farmerSummaries.length === 0 ? (
           <EmptyState
-            title="No Farmer Activity Found"
-            description="No active connected farmers have recorded collection history in this system."
+            title={t('dairyOwner:reports.noFarmerActivity', 'No Farmer Activity Found')}
+            description={t('dairyOwner:reports.noFarmerActivityDesc', 'No active connected farmers have recorded collection history in this system.')}
             icon={Users}
           />
         ) : (
@@ -278,13 +280,13 @@ export const DairyOwnerReports = () => {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                    <th className="py-3 px-4">Farmer</th>
-                    <th className="py-3 px-4 text-right">Milk Quantity</th>
-                    <th className="py-3 px-4 text-right">Milk Valuation</th>
-                    <th className="py-3 px-4 text-right">Total Paid</th>
-                    <th className="py-3 px-4 text-right">Outstanding</th>
-                    <th className="py-3 px-4 text-center">Collections</th>
-                    <th className="py-3 px-4 text-center">Last Intake Date</th>
+                    <th className="py-3 px-4">{t('common:roles.farmer', 'Farmer')}</th>
+                    <th className="py-3 px-4 text-right">{t('dairyOwner:reports.milkQuantity', 'Milk Quantity')}</th>
+                    <th className="py-3 px-4 text-right">{t('dairyOwner:reports.milkValuation', 'Milk Valuation')}</th>
+                    <th className="py-3 px-4 text-right">{t('dairyOwner:reports.totalPaid', 'Total Paid')}</th>
+                    <th className="py-3 px-4 text-right">{t('dairyOwner:reports.outstanding', 'Outstanding')}</th>
+                    <th className="py-3 px-4 text-center">{t('dairyOwner:reports.collectionsCount', 'Collections')}</th>
+                    <th className="py-3 px-4 text-center">{t('dairyOwner:reports.lastIntakeDate', 'Last Intake Date')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
@@ -336,15 +338,15 @@ export const DairyOwnerReports = () => {
                   </div>
                   <div className="grid grid-cols-3 gap-2 py-2 border-y border-slate-200 text-center font-mono">
                     <div>
-                      <span className="text-[10px] text-slate-400 block uppercase font-sans">Supplied</span>
+                      <span className="text-[10px] text-slate-400 block uppercase font-sans">{t('dairyOwner:reports.supplied', 'Supplied')}</span>
                       <span className="font-bold text-slate-800">{item.totalMilkQuantity} L</span>
                     </div>
                     <div>
-                      <span className="text-[10px] text-slate-400 block uppercase font-sans">Paid</span>
+                      <span className="text-[10px] text-slate-400 block uppercase font-sans">{t('dairyOwner:reports.paid', 'Paid')}</span>
                       <span className="font-bold text-emerald-700">₹{item.totalPaid.toFixed(2)}</span>
                     </div>
                     <div>
-                      <span className="text-[10px] text-slate-400 block uppercase font-sans">Pending</span>
+                      <span className="text-[10px] text-slate-400 block uppercase font-sans">{t('dairyOwner:reports.pending', 'Pending')}</span>
                       <span className="font-bold text-amber-800">₹{item.outstandingAmount.toFixed(2)}</span>
                     </div>
                   </div>
@@ -356,11 +358,11 @@ export const DairyOwnerReports = () => {
       </SectionCard>
 
       {/* Date-Wise Milk Collection History */}
-      <SectionCard title="Date-Wise Milk Collection History" subtitle="Aggregated daily collection metrics">
+      <SectionCard title={t('dairyOwner:reports.dateWiseMilkTitle', 'Date-Wise Milk Collection History')} subtitle={t('dairyOwner:reports.dateWiseMilkSubtitle', 'Aggregated daily collection metrics')}>
         {loading ? (
-          <div className="py-6 text-center text-slate-500 text-xs">Loading date-wise data...</div>
+          <div className="py-6 text-center text-slate-500 text-xs">{t('dairyOwner:reports.loadingDateWise', 'Loading date-wise data...')}</div>
         ) : dateWiseMilk.length === 0 ? (
-          <EmptyState title="No Daily Collection Data" description="No collection logs found for selected period." icon={Milk} />
+          <EmptyState title={t('dairyOwner:reports.noDailyCollection', 'No Daily Collection Data')} description={t('dairyOwner:reports.noDailyCollectionDesc', 'No collection logs found for selected period.')} icon={Milk} />
         ) : (
           <div className="space-y-3">
             {dateWiseMilk.map((d) => {
@@ -393,21 +395,21 @@ export const DairyOwnerReports = () => {
       </SectionCard>
 
       {/* Date-Wise Payment Settlement History */}
-      <SectionCard title="Date-Wise Payment Settlement History" subtitle="Daily aggregated payment disbursements and remaining balances">
+      <SectionCard title={t('dairyOwner:reports.dateWisePaymentTitle', 'Date-Wise Payment Settlement History')} subtitle={t('dairyOwner:reports.dateWisePaymentSubtitle', 'Daily aggregated payment disbursements and remaining balances')}>
         {loading ? (
-          <div className="py-6 text-center text-slate-500 text-xs">Loading payment records...</div>
+          <div className="py-6 text-center text-slate-500 text-xs">{t('dairyOwner:reports.loadingPaymentRecords', 'Loading payment records...')}</div>
         ) : dateWisePayments.length === 0 ? (
-          <EmptyState title="No Settlement Statements" description="No payment settlements found for selected period." icon={Wallet} />
+          <EmptyState title={t('dairyOwner:reports.noSettlementStatements', 'No Settlement Statements')} description={t('dairyOwner:reports.noSettlementStatementsDesc', 'No payment settlements found for selected period.')} icon={Wallet} />
         ) : (
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                  <th className="py-3 px-4">Date</th>
-                  <th className="py-3 px-4 text-center">Settlements Issued</th>
-                  <th className="py-3 px-4 text-right">Gross Total</th>
-                  <th className="py-3 px-4 text-right">Paid Disbursed</th>
-                  <th className="py-3 px-4 text-right">Outstanding Balance</th>
+                  <th className="py-3 px-4">{t('common:labels.date', 'Date')}</th>
+                  <th className="py-3 px-4 text-center">{t('dairyOwner:reports.settlementsIssued', 'Settlements Issued')}</th>
+                  <th className="py-3 px-4 text-right">{t('dairyOwner:reports.grossTotal', 'Gross Total')}</th>
+                  <th className="py-3 px-4 text-right">{t('dairyOwner:reports.paidDisbursed', 'Paid Disbursed')}</th>
+                  <th className="py-3 px-4 text-right">{t('dairyOwner:reports.outstandingBalance', 'Outstanding Balance')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs text-slate-700 font-mono">

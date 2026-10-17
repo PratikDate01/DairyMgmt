@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { veterinarianService } from '../../services/veterinarianService';
 import { vetRequestService } from '../../services/vetRequestService';
+import { getStatusLabel } from '../../i18n/statusMap';
 import {
   Activity,
   Stethoscope,
@@ -21,6 +23,7 @@ import { CaseDetailModal } from './CaseDetailModal';
 import { ClinicalWorkspaceModal } from '../../components/veterinarian/ClinicalWorkspaceModal';
 
 export const PendingCases = () => {
+  const { t } = useTranslation(['veterinarian', 'common']);
   const { token } = useAuth();
   const [activeTab, setActiveTab] = useState('incoming_requests'); // 'incoming_requests' | 'general_queue'
 
@@ -133,10 +136,10 @@ export const PendingCases = () => {
         <div>
           <h1 className="text-xl font-extrabold text-slate-900 tracking-tight flex items-center space-x-2">
             <Stethoscope className="w-6 h-6 text-teal-600" />
-            <span>Veterinarian Clinical Console</span>
+            <span>{t('veterinarian:cases.title', 'Veterinarian Clinical Console')}</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Review incoming farmer consultation requests and manage livestock disease screening cases.
+            {t('veterinarian:cases.subtitle', 'Review incoming farmer consultation requests and manage livestock disease screening cases.')}
           </p>
         </div>
 
@@ -151,7 +154,7 @@ export const PendingCases = () => {
             }`}
           >
             <Send className="w-3.5 h-3.5" />
-            <span>Incoming Requests</span>
+            <span>{t('veterinarian:dashboard.openCasesQueue', { count: pendingRequestsCount, defaultValue: 'Incoming Requests' })}</span>
             {pendingRequestsCount > 0 && (
               <span className="px-1.5 py-0.5 bg-amber-500 text-white rounded-full text-[10px] font-extrabold ml-1">
                 {pendingRequestsCount}
@@ -167,7 +170,7 @@ export const PendingCases = () => {
             }`}
           >
             <Activity className="w-3.5 h-3.5" />
-            <span>Disease Cases Queue</span>
+            <span>{t('veterinarian:dashboard.recentCasesTitle', 'Disease Cases Queue')}</span>
           </button>
         </div>
       </div>
@@ -192,16 +195,16 @@ export const PendingCases = () => {
           {loadingRequests ? (
             <div className="p-12 text-center bg-white rounded-2xl border border-slate-200 space-y-2">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600 mx-auto"></div>
-              <p className="text-xs font-medium text-slate-500">Loading incoming farmer requests...</p>
+              <p className="text-xs font-medium text-slate-500">{t('veterinarian:pendingCasesPage.loadingRequests', 'Loading incoming farmer requests...')}</p>
             </div>
           ) : vetRequests.length === 0 ? (
             <div className="p-12 text-center bg-white rounded-2xl border border-slate-200 space-y-2">
               <div className="w-12 h-12 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center mx-auto text-xl">
                 👨‍⚕️
               </div>
-              <h3 className="text-sm font-bold text-slate-800">No Incoming Requests</h3>
+              <h3 className="text-sm font-bold text-slate-800">{t('veterinarian:pendingCasesPage.noRequestsTitle', 'No Incoming Requests')}</h3>
               <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                There are currently no consultation requests submitted directly to your profile by farmers.
+                {t('veterinarian:pendingCasesPage.noRequestsDesc', 'There are currently no consultation requests submitted directly to your profile by farmers.')}
               </p>
             </div>
           ) : (
@@ -225,7 +228,7 @@ export const PendingCases = () => {
                         <div className="flex items-center space-x-1">
                           {reqItem.escalationHistory && reqItem.escalationHistory.length > 0 && (
                             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
-                              🔁 Referred Request
+                              🔁 {t('veterinarian:pendingCasesPage.referredBadge', 'Referred Request')}
                             </span>
                           )}
                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
@@ -235,7 +238,7 @@ export const PendingCases = () => {
                               ? 'bg-red-50 text-red-700 border border-red-200'
                               : 'bg-amber-50 text-amber-800 border border-amber-200'
                           }`}>
-                            {reqItem.status.toUpperCase()}
+                            {getStatusLabel(reqItem.status, t)}
                           </span>
                         </div>
                       </div>
@@ -266,7 +269,7 @@ export const PendingCases = () => {
                       {/* Farmer Message */}
                       {reqItem.farmerMessage && (
                         <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100 text-xs text-slate-700 italic">
-                          <strong className="not-italic text-slate-900 block mb-0.5 font-semibold">Farmer's Message:</strong>
+                          <strong className="not-italic text-slate-900 block mb-0.5 font-semibold">{t('veterinarian:pendingCasesPage.farmerMessage', "Farmer's Message:")}</strong>
                           "{reqItem.farmerMessage}"
                         </div>
                       )}
@@ -274,7 +277,7 @@ export const PendingCases = () => {
                       {/* Rejection Reason display if rejected */}
                       {isRejected && reqItem.rejectionReason && (
                         <div className="p-2.5 bg-red-50 rounded-xl border border-red-100 text-[11px] text-red-800">
-                          <strong>Rejection Note:</strong> {reqItem.rejectionReason}
+                          <strong>{t('veterinarian:clinicalWorkspace.declineReasonLabel', 'Rejection Note')}:</strong> {reqItem.rejectionReason}
                         </div>
                       )}
                     </div>
@@ -282,7 +285,7 @@ export const PendingCases = () => {
                     {/* Action Footer */}
                     <div className="pt-3 border-t border-slate-100 space-y-2">
                       <div className="text-[10px] text-slate-400 font-mono">
-                        Requested: {new Date(reqItem.createdAt).toLocaleDateString()}
+                        {t('common:status.requested', 'Requested')}: {new Date(reqItem.createdAt).toLocaleDateString()}
                       </div>
 
                       {isPending ? (
@@ -294,7 +297,7 @@ export const PendingCases = () => {
                             className="py-1.5 px-3 bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 text-xs font-bold rounded-xl transition flex items-center justify-center space-x-1"
                           >
                             <XCircle className="w-3.5 h-3.5" />
-                            <span>Decline</span>
+                            <span>{t('veterinarian:pendingCasesPage.declineBtn', 'Decline')}</span>
                           </button>
                           <button
                             type="button"
@@ -303,7 +306,7 @@ export const PendingCases = () => {
                             className="py-1.5 px-3 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center justify-center space-x-1"
                           >
                             <CheckCircle className="w-3.5 h-3.5" />
-                            <span>Accept</span>
+                            <span>{t('veterinarian:pendingCasesPage.acceptBtn', 'Accept')}</span>
                           </button>
                         </div>
                       ) : !isRejected ? (
@@ -313,11 +316,11 @@ export const PendingCases = () => {
                           className="w-full py-2 px-3 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center justify-center space-x-2"
                         >
                           <Stethoscope className="w-4 h-4" />
-                          <span>Open Clinical Workspace</span>
+                          <span>{t('veterinarian:pendingCasesPage.openWorkspaceBtn', 'Open Clinical Workspace')}</span>
                         </button>
                       ) : (
                         <div className="p-2 text-center text-xs font-bold text-red-700 bg-red-50 rounded-xl border border-red-200 capitalize">
-                          Request Declined
+                          {t('common:status.declined', 'Request Declined')}
                         </div>
                       )}
                     </div>
@@ -333,13 +336,13 @@ export const PendingCases = () => {
       {activeTab === 'general_queue' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between bg-white p-4 rounded-xl border border-slate-200">
-            <span className="text-xs font-bold text-slate-700">Filter Cases by Status</span>
+            <span className="text-xs font-bold text-slate-700">{t('common:filters.status', 'Filter Cases by Status')}</span>
             <div className="flex items-center space-x-1 text-xs font-semibold">
               {[
-                { id: 'all', label: 'All Cases' },
-                { id: 'pending_review', label: 'Pending' },
-                { id: 'under_review', label: 'In Progress' },
-                { id: 'review_completed', label: 'Completed' }
+                { id: 'all', label: t('common:status.all', 'All Cases') },
+                { id: 'pending_review', label: getStatusLabel('pending_review', t) },
+                { id: 'under_review', label: getStatusLabel('under_review', t) },
+                { id: 'review_completed', label: getStatusLabel('review_completed', t) }
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -359,16 +362,16 @@ export const PendingCases = () => {
           {loadingCases ? (
             <div className="p-12 text-center bg-white rounded-2xl border border-slate-200">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600 mx-auto mb-3"></div>
-              <p className="text-xs font-medium text-slate-500">Loading cases queue...</p>
+              <p className="text-xs font-medium text-slate-500">{t('common:status.loading', 'Loading cases queue...')}</p>
             </div>
           ) : cases.length === 0 ? (
             <div className="p-12 text-center bg-white rounded-2xl border border-slate-200 space-y-2">
               <div className="w-12 h-12 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center mx-auto text-xl">
                 🩺
               </div>
-              <h3 className="text-sm font-bold text-slate-800">No Cases Found</h3>
+              <h3 className="text-sm font-bold text-slate-800">{t('common:status.noData', 'No Cases Found')}</h3>
               <p className="text-xs text-slate-500">
-                There are currently no cattle disease cases matching the selected status filter.
+                {t('veterinarian:dashboard.noPendingCases', 'There are currently no cattle disease cases matching the selected status filter.')}
               </p>
             </div>
           ) : (
@@ -390,7 +393,7 @@ export const PendingCases = () => {
                           ? 'bg-blue-50 text-blue-700 border border-blue-200'
                           : 'bg-amber-50 text-amber-700 border border-amber-200'
                       }`}>
-                        {caseItem.veterinarianReviewStatus.replace('_', ' ')}
+                        {getStatusLabel(caseItem.veterinarianReviewStatus, t)}
                       </span>
                     </div>
 
@@ -410,7 +413,7 @@ export const PendingCases = () => {
                     </div>
 
                     <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100 text-[11px] text-slate-600 line-clamp-2">
-                      <strong className="text-slate-800">Symptoms:</strong> {caseItem.symptoms || 'None reported.'}
+                      <strong className="text-slate-800">{t('farmer:aiScanner.describeSymptoms', 'Symptoms')}:</strong> {caseItem.symptoms || t('common:status.none', 'None reported.')}
                     </div>
                   </div>
 
@@ -422,7 +425,7 @@ export const PendingCases = () => {
                       onClick={() => setSelectedCase(caseItem)}
                       className="px-3.5 py-1.5 bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center space-x-1"
                     >
-                      <span>Review Case</span>
+                      <span>{t('veterinarian:cases.reviewCase', 'Review Case')}</span>
                       <ChevronRight className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -435,8 +438,8 @@ export const PendingCases = () => {
 
       {/* REJECTION REASON CONFIRMATION MODAL */}
       {rejectingRequest && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-sm">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-sm overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl relative my-auto max-h-[90vh] overflow-y-auto modal-animate">
             <button
               onClick={() => {
                 setRejectingRequest(null);
@@ -452,24 +455,24 @@ export const PendingCases = () => {
                 <XCircle className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-slate-900">Decline Consultation Request</h3>
-                <span className="text-xs text-slate-500">From Farmer: {rejectingRequest.farmer?.name}</span>
+                <h3 className="text-base font-bold text-slate-900">{t('veterinarian:clinicalWorkspace.declineModalTitle', 'Decline Consultation Request')}</h3>
+                <span className="text-xs text-slate-500">{t('veterinarian:clinicalWorkspace.farmerInfo', 'From Farmer')}: {rejectingRequest.farmer?.name}</span>
               </div>
             </div>
 
             <form onSubmit={handleRejectSubmit} className="space-y-4">
               <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-900 space-y-1">
-                <span className="font-bold block">Automatic Escalation Notice:</span>
-                <p>Declining this request will record your response and automatically forward the consultation request to the next suitable veterinarian.</p>
+                <span className="font-bold block">{t('common:status.note', 'Notice')}:</span>
+                <p>{t('veterinarian:clinicalWorkspace.declineModalSubtitle', 'Declining this request will record your response and automatically forward the consultation request to the next suitable veterinarian.')}</p>
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Reason for Declining (Optional)
+                  {t('veterinarian:clinicalWorkspace.declineReasonLabel', 'Reason for Declining (Optional)')}
                 </label>
                 <textarea
                   rows="3"
-                  placeholder="e.g. Currently fully booked, clinic out of area, or please consult another specialist..."
+                  placeholder={t('veterinarian:clinicalWorkspace.declineReasonPlaceholder', 'Provide clinical rationale...')}
                   value={rejectionReason}
                   onChange={(e) => setRejectionReason(e.target.value)}
                   className="w-full p-3 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 focus:ring-2 focus:ring-red-500 outline-none"
@@ -485,14 +488,14 @@ export const PendingCases = () => {
                   }}
                   className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition"
                 >
-                  Cancel
+                  {t('common:actions.cancel', 'Cancel')}
                 </button>
                 <button
                   type="submit"
                   disabled={submittingAction}
                   className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-xl shadow-xs transition disabled:opacity-50 flex items-center space-x-1.5"
                 >
-                  <span>{submittingAction ? 'Declining...' : 'Decline & Find Another Vet'}</span>
+                  <span>{submittingAction ? t('common:status.loading', 'Declining...') : t('veterinarian:clinicalWorkspace.confirmDeclineBtn', 'Decline & Reassign')}</span>
                 </button>
               </div>
             </form>

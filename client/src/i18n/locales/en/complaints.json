@@ -1,0 +1,31 @@
+{
+  "title": "Complaints & Support Desk",
+  "subtitle": "Submit operational grievances, report discrepancies, and receive prompt administrative assistance.",
+  "newComplaintBtn": "Submit New Complaint",
+  "historyTitle": "My Submitted Complaints",
+  "modalTitle": "Submit a Support Grievance",
+  "formTitle": "Complaint Subject / Title",
+  "formTitlePlaceholder": "e.g. Milk fat measurement discrepancy on 12th Oct",
+  "category": "Grievance Category",
+  "description": "Detailed Description of the Issue",
+  "descriptionPlaceholder": "Please provide complete context, dates, amounts, or references to help administrators investigate...",
+  "submitBtn": "Submit Grievance",
+  "submitting": "Submitting Complaint...",
+  "ticketNo": "Ticket #{{id}}",
+  "submittedOn": "Submitted On",
+  "adminResolution": "Administrative Resolution Notes",
+  "resolvedBy": "Resolved By",
+  "resolvedOn": "Resolved On",
+  "noComplaints": "No complaints or support tickets found in this view.",
+  "successMsg": "Your complaint has been submitted for administrative review.",
+
+  "categories": {
+    "general": "General Support",
+    "milk_collection": "Milk Collection Discrepancy",
+    "payments": "Payment & Ledger Dispute",
+    "veterinary": "Veterinary Consultation Issue",
+    "medicines": "Medicine Procurement / Order",
+    "fodder": "Fodder Marketplace Issue",
+    "account": "Account & Verification Support"
+  }
+}

@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { paymentService } from '../../services/paymentService';
+import { getStatusLabel, getPaymentMethodLabel } from '../../i18n/statusMap';
 import { PageHeader } from '../../components/common/PageHeader';
 import { SectionCard } from '../../components/common/SectionCard';
 import { StatCard } from '../../components/common/StatCard';
@@ -17,6 +19,7 @@ import {
 } from 'lucide-react';
 
 export const FarmerPayments = () => {
+  const { t } = useTranslation(['farmer', 'common']);
   const { token } = useAuth();
   const [payments, setPayments] = useState([]);
   const [metrics, setMetrics] = useState({ totalPaid: 0, totalPending: 0 });
@@ -35,11 +38,11 @@ export const FarmerPayments = () => {
         setMetrics(res.metrics);
       }
     } catch (err) {
-      setError(err.message || 'Failed to fetch payment history');
+      setError(err.message || t('common:error.loadFailed', 'Failed to fetch payment history'));
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, t]);
 
   useEffect(() => {
     fetchPayments();
@@ -48,9 +51,9 @@ export const FarmerPayments = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Payment History & Ledger"
-        description="View payment settlements disbursed by your connected dairy owner."
-        breadcrumbs={['Home', 'Farmer Portal', 'Payments']}
+        title={t('farmer:paymentsPage.title', 'Payment History & Ledger')}
+        description={t('farmer:paymentsPage.subtitle', 'View payment settlements disbursed by your connected dairy owner.')}
+        breadcrumbs={[t('common:nav.home', 'Home'), t('common:roles.farmer', 'Farmer Portal'), t('farmer:payments.title', 'Payments')]}
       />
 
       {error && (
@@ -60,7 +63,7 @@ export const FarmerPayments = () => {
             <span>{error}</span>
           </div>
           <button onClick={() => setError('')} className="text-red-500 hover:text-red-800 font-bold text-xs">
-            Dismiss
+            {t('common:actions.dismiss', 'Dismiss')}
           </button>
         </div>
       )}
@@ -68,48 +71,48 @@ export const FarmerPayments = () => {
       {/* Summary Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard
-          title="Total Paid / Received"
+          title={t('farmer:paymentsPage.totalPaid', 'Total Paid / Received')}
           value={`₹ ${metrics.totalPaid.toFixed(2)}`}
           icon={CheckCircle2}
-          badgeText="Disbursed Funds"
+          badgeText={t('farmer:paymentsPage.disbursedFunds', 'Disbursed Funds')}
           badgeType="success"
         />
         <StatCard
-          title="Pending Unpaid Balance"
+          title={t('farmer:paymentsPage.pendingBalance', 'Pending Unpaid Balance')}
           value={`₹ ${metrics.totalPending.toFixed(2)}`}
           icon={CreditCard}
-          badgeText={metrics.totalPending > 0 ? 'Pending Settlement' : 'Clear Balance'}
+          badgeText={metrics.totalPending > 0 ? t('farmer:paymentsPage.pendingSettlementBadge', 'Pending Settlement') : t('farmer:paymentsPage.clearBalanceBadge', 'Clear Balance')}
           badgeType={metrics.totalPending > 0 ? 'amber' : 'success'}
         />
         <StatCard
-          title="Settlement Receipts"
+          title={t('farmer:paymentsPage.settlementReceipts', 'Settlement Receipts')}
           value={`${payments.length} Payments`}
           icon={Wallet}
-          badgeText="Total Issued Statements"
+          badgeText={t('farmer:paymentsPage.totalIssuedStatements', 'Total Issued Statements')}
           badgeType="neutral"
         />
       </div>
 
       {/* History Ledger List */}
       <SectionCard
-        title="Disbursed Settlement History"
-        subtitle="Read-only ledger of payments received from your connected dairy"
+        title={t('farmer:paymentsPage.disbursedHistoryTitle', 'Disbursed Settlement History')}
+        subtitle={t('farmer:paymentsPage.disbursedHistorySubtitle', 'Read-only ledger of payments received from your connected dairy')}
         action={
           <button
             onClick={fetchPayments}
             className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded-lg transition"
-            title="Refresh History"
+            title={t('common:actions.refresh', 'Refresh History')}
           >
             <RefreshCw className="w-4 h-4" />
           </button>
         }
       >
         {loading ? (
-          <div className="py-8 text-center text-slate-500 text-sm">Loading payment history...</div>
+          <div className="py-8 text-center text-slate-500 text-sm">{t('farmer:paymentsPage.loadingPayments', 'Loading payment history...')}</div>
         ) : payments.length === 0 ? (
           <EmptyState
-            title="No Payment Statements Recorded Yet"
-            description="When your connected Dairy Owner creates a payment settlement for your milk collections, it will display here."
+            title={t('farmer:paymentsPage.noPaymentsFound', 'No Payment Statements Recorded Yet')}
+            description={t('farmer:paymentsPage.noPaymentsDesc', 'When your connected Dairy Owner creates a payment settlement for your milk collections, it will display here.')}
             icon={Wallet}
           />
         ) : (
@@ -119,37 +122,33 @@ export const FarmerPayments = () => {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                    <th className="py-3 px-4">Payment Date</th>
-                    <th className="py-3 px-4">Dairy Owner</th>
-                    <th className="py-3 px-4">Period</th>
-                    <th className="py-3 px-4 text-right">Gross Amount</th>
-                    <th className="py-3 px-4 text-right">Paid Received</th>
-                    <th className="py-3 px-4 text-right">Remaining</th>
-                    <th className="py-3 px-4 text-center">Status</th>
-                    <th className="py-3 px-4 text-center">Details</th>
+                    <th className="py-3 px-4">{t('farmer:paymentsPage.paymentDate', 'Payment Date')}</th>
+                    <th className="py-3 px-4">{t('farmer:paymentsPage.dairyOwner', 'Dairy Owner')}</th>
+                    <th className="py-3 px-4">{t('farmer:paymentsPage.periodCovered', 'Period')}</th>
+                    <th className="py-3 px-4 text-right">{t('common:labels.grossAmount', 'Gross Amount')}</th>
+                    <th className="py-3 px-4 text-right">{t('common:labels.paidAmount', 'Paid Received')}</th>
+                    <th className="py-3 px-4 text-right">{t('common:labels.balance', 'Remaining')}</th>
+                    <th className="py-3 px-4 text-center">{t('common:labels.status', 'Status')}</th>
+                    <th className="py-3 px-4 text-center">{t('common:labels.details', 'Details')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
                   {payments.map((p) => (
                     <tr key={p._id} className="hover:bg-slate-50/80 transition">
                       <td className="py-3 px-4 font-mono font-medium text-slate-900">
-                        {new Date(p.paymentDate).toLocaleDateString('en-IN', {
-                          day: 'numeric',
-                          month: 'short',
-                          year: 'numeric'
-                        })}
+                        {new Date(p.paymentDate).toLocaleDateString()}
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center space-x-2">
                           <Building2 className="w-4 h-4 text-blue-600 shrink-0" />
                           <div>
-                            <div className="font-semibold text-slate-900">{p.dairyOwner?.name || 'Dairy Owner'}</div>
+                            <div className="font-semibold text-slate-900">{p.dairyOwner?.name || t('common:roles.dairyOwner', 'Dairy Owner')}</div>
                             <div className="text-[10px] text-slate-400 font-mono">{p.dairyOwner?.phone}</div>
                           </div>
                         </div>
                       </td>
                       <td className="py-3 px-4 text-[11px] text-slate-500 font-mono">
-                        {new Date(p.paymentPeriodStart).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })} – {new Date(p.paymentPeriodEnd).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
+                        {new Date(p.paymentPeriodStart).toLocaleDateString()} – {new Date(p.paymentPeriodEnd).toLocaleDateString()}
                       </td>
                       <td className="py-3 px-4 text-right font-mono font-semibold text-slate-900">₹{p.grossAmount?.toFixed(2)}</td>
                       <td className="py-3 px-4 text-right font-mono font-bold text-emerald-700">₹{p.paidAmount?.toFixed(2)}</td>
@@ -159,21 +158,21 @@ export const FarmerPayments = () => {
                           className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
                             p.paymentStatus === 'paid'
                               ? 'bg-green-100 text-green-800'
-                              : p.paymentStatus === 'partiallyPaid'
+                              : p.paymentStatus === 'partiallyPaid' || p.paymentStatus === 'partial'
                               ? 'bg-amber-100 text-amber-800'
                               : p.paymentStatus === 'cancelled'
                               ? 'bg-red-100 text-red-800'
                               : 'bg-blue-100 text-blue-800'
                           }`}
                         >
-                          {p.paymentStatus}
+                          {getStatusLabel(p.paymentStatus, t)}
                         </span>
                       </td>
                       <td className="py-3 px-4 text-center">
                         <button
                           onClick={() => setSelectedDetail(p)}
                           className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition"
-                          title="View Statement"
+                          title={t('common:actions.viewDetails', 'View Statement')}
                         >
                           <Eye className="w-4 h-4" />
                         </button>
@@ -192,7 +191,7 @@ export const FarmerPayments = () => {
                     <div className="flex items-center space-x-2">
                       <Building2 className="w-4 h-4 text-blue-600 shrink-0" />
                       <div>
-                        <h4 className="font-bold text-slate-900">{p.dairyOwner?.name || 'Dairy Owner'}</h4>
+                        <h4 className="font-bold text-slate-900">{p.dairyOwner?.name || t('common:roles.dairyOwner', 'Dairy Owner')}</h4>
                         <p className="text-xs text-slate-500 font-mono">{p.dairyOwner?.phone}</p>
                       </div>
                     </div>
@@ -200,34 +199,34 @@ export const FarmerPayments = () => {
                       className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
                         p.paymentStatus === 'paid'
                           ? 'bg-green-100 text-green-800'
-                          : p.paymentStatus === 'partiallyPaid'
+                          : p.paymentStatus === 'partiallyPaid' || p.paymentStatus === 'partial'
                           ? 'bg-amber-100 text-amber-800'
                           : 'bg-blue-100 text-blue-800'
                       }`}
                     >
-                      {p.paymentStatus}
+                      {getStatusLabel(p.paymentStatus, t)}
                     </span>
                   </div>
 
                   <div className="grid grid-cols-3 gap-2 py-2 border-y border-slate-200 text-center">
                     <div>
-                      <span className="text-[10px] text-slate-400 block uppercase">Gross</span>
+                      <span className="text-[10px] text-slate-400 block uppercase">{t('common:labels.grossAmount', 'Gross')}</span>
                       <span className="font-mono font-bold text-slate-800">₹{p.grossAmount?.toFixed(2)}</span>
                     </div>
                     <div>
-                      <span className="text-[10px] text-slate-400 block uppercase">Paid</span>
+                      <span className="text-[10px] text-slate-400 block uppercase">{t('common:labels.paidAmount', 'Paid')}</span>
                       <span className="font-mono font-bold text-emerald-700">₹{p.paidAmount?.toFixed(2)}</span>
                     </div>
                     <div>
-                      <span className="text-[10px] text-slate-400 block uppercase">Balance</span>
+                      <span className="text-[10px] text-slate-400 block uppercase">{t('common:labels.balance', 'Balance')}</span>
                       <span className="font-mono font-bold text-amber-800">₹{p.remainingAmount?.toFixed(2)}</span>
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between pt-1 text-[11px] text-slate-500 font-mono">
-                    <span>{new Date(p.paymentDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+                    <span>{new Date(p.paymentDate).toLocaleDateString()}</span>
                     <button onClick={() => setSelectedDetail(p)} className="text-blue-600 font-bold hover:underline">
-                      View Statement →
+                      {t('common:actions.viewDetails', 'View Statement')} →
                     </button>
                   </div>
                 </div>
@@ -239,10 +238,10 @@ export const FarmerPayments = () => {
 
       {/* DETAIL MODAL */}
       {selectedDetail && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-xs">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-xl border border-slate-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/40 backdrop-xs overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-xl border border-slate-200 my-auto max-h-[90vh] overflow-y-auto modal-animate">
             <div className="flex items-center justify-between border-b pb-3">
-              <h3 className="text-base font-bold text-slate-900">Payment Statement Details</h3>
+              <h3 className="text-base font-bold text-slate-900">{t('farmer:paymentsPage.disbursedHistoryTitle', 'Payment Statement Details')}</h3>
               <button onClick={() => setSelectedDetail(null)} className="text-slate-400 hover:text-slate-700">
                 <XCircle className="w-5 h-5" />
               </button>
@@ -250,38 +249,38 @@ export const FarmerPayments = () => {
 
             <div className="space-y-2 text-xs text-slate-700 font-mono">
               <div className="flex justify-between py-1 border-b">
-                <span className="text-slate-500">Dairy Owner:</span>
+                <span className="text-slate-500">{t('farmer:paymentsPage.dairyOwner', 'Dairy Owner')}:</span>
                 <span className="font-bold text-slate-900">{selectedDetail.dairyOwner?.name}</span>
               </div>
               <div className="flex justify-between py-1 border-b">
-                <span className="text-slate-500">Payment Date:</span>
-                <span>{new Date(selectedDetail.paymentDate).toLocaleDateString('en-IN')}</span>
+                <span className="text-slate-500">{t('farmer:paymentsPage.paymentDate', 'Payment Date')}:</span>
+                <span>{new Date(selectedDetail.paymentDate).toLocaleDateString()}</span>
               </div>
               <div className="flex justify-between py-1 border-b">
-                <span className="text-slate-500">Payment Method:</span>
-                <span className="capitalize font-semibold">{selectedDetail.paymentMethod}</span>
+                <span className="text-slate-500">{t('farmer:payments.paymentMethod', 'Payment Method')}:</span>
+                <span className="capitalize font-semibold">{getPaymentMethodLabel(selectedDetail.paymentMethod, t)}</span>
               </div>
               {selectedDetail.referenceNumber && (
                 <div className="flex justify-between py-1 border-b">
-                  <span className="text-slate-500">Ref / UTR:</span>
+                  <span className="text-slate-500">{t('farmer:paymentsPage.referenceNo', 'Ref / UTR')}:</span>
                   <span>{selectedDetail.referenceNumber}</span>
                 </div>
               )}
               <div className="flex justify-between py-1 border-b">
-                <span className="text-slate-500">Gross Settlement:</span>
+                <span className="text-slate-500">{t('common:labels.grossAmount', 'Gross Settlement')}:</span>
                 <span className="font-bold">₹{selectedDetail.grossAmount?.toFixed(2)}</span>
               </div>
               <div className="flex justify-between py-1 border-b">
-                <span className="text-emerald-700 font-bold">Amount Paid:</span>
+                <span className="text-emerald-700 font-bold">{t('common:labels.paidAmount', 'Amount Paid')}:</span>
                 <span className="font-bold text-emerald-700">₹{selectedDetail.paidAmount?.toFixed(2)}</span>
               </div>
               <div className="flex justify-between py-1 border-b">
-                <span className="text-amber-800 font-bold">Remaining Balance:</span>
+                <span className="text-amber-800 font-bold">{t('common:labels.balance', 'Remaining Balance')}:</span>
                 <span className="font-bold text-amber-800">₹{selectedDetail.remainingAmount?.toFixed(2)}</span>
               </div>
               {selectedDetail.remarks && (
                 <div className="py-1">
-                  <span className="text-slate-500 block">Remarks:</span>
+                  <span className="text-slate-500 block">{t('common:labels.notes', 'Remarks')}:</span>
                   <p className="text-slate-800 font-sans italic mt-0.5">{selectedDetail.remarks}</p>
                 </div>
               )}
@@ -292,7 +291,7 @@ export const FarmerPayments = () => {
                 onClick={() => setSelectedDetail(null)}
                 className="px-4 py-2 bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg hover:bg-slate-200"
               >
-                Close Statement
+                {t('common:actions.close', 'Close')}
               </button>
             </div>
           </div>

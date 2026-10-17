@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { getStatusLabel } from '../../i18n/statusMap';
 import {
   Clock,
   CheckCircle,
@@ -36,6 +38,7 @@ const statusBadges = {
 };
 
 export default function MedicalMedicineRequests() {
+  const { t } = useTranslation(['medicalProvider', 'common']);
   const [requests, setRequests] = useState([]);
   const [summary, setSummary] = useState({
     total: 0,
@@ -219,8 +222,8 @@ export default function MedicalMedicineRequests() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Medicine Requests</h1>
-          <p className="text-slate-500 text-sm">Manage incoming farmer requests, order packing, and fulfillment.</p>
+          <h1 className="text-2xl font-bold text-slate-800">{t('medicalProvider:requestsPage.title', 'Medicine Requests')}</h1>
+          <p className="text-slate-500 text-sm">{t('medicalProvider:requestsPage.subtitle', 'Manage incoming farmer requests, order packing, and fulfillment.')}</p>
         </div>
         <button
           onClick={fetchData}
@@ -228,7 +231,7 @@ export default function MedicalMedicineRequests() {
           className="inline-flex items-center gap-2 bg-white border border-slate-300 text-slate-700 px-4 py-2 rounded-lg font-medium text-sm hover:bg-slate-50 shadow-sm transition"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          Refresh
+          {t('common:actions.refresh', 'Refresh')}
         </button>
       </div>
 
@@ -257,47 +260,47 @@ export default function MedicalMedicineRequests() {
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-amber-700 uppercase tracking-wider">Pending</span>
+            <span className="text-xs font-semibold text-amber-700 uppercase tracking-wider">{getStatusLabel('pending', t)}</span>
             <Clock className="w-5 h-5 text-amber-500" />
           </div>
           <p className="text-2xl font-bold text-slate-800">{summary.pending}</p>
-          <p className="text-xs text-slate-400 mt-1">Awaiting acceptance</p>
+          <p className="text-xs text-slate-400 mt-1">{t('medicalProvider:requestsPage.awaitingAcceptance', 'Awaiting acceptance')}</p>
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-blue-700 uppercase tracking-wider">Accepted</span>
+            <span className="text-xs font-semibold text-blue-700 uppercase tracking-wider">{getStatusLabel('accepted', t)}</span>
             <Check className="w-5 h-5 text-blue-500" />
           </div>
           <p className="text-2xl font-bold text-slate-800">{summary.accepted}</p>
-          <p className="text-xs text-slate-400 mt-1">Stock reserved</p>
+          <p className="text-xs text-slate-400 mt-1">{t('medicalProvider:requests.stockReserved', 'Stock reserved')}</p>
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-purple-700 uppercase tracking-wider">Packed</span>
+            <span className="text-xs font-semibold text-purple-700 uppercase tracking-wider">{getStatusLabel('packed', t)}</span>
             <Package className="w-5 h-5 text-purple-500" />
           </div>
           <p className="text-2xl font-bold text-slate-800">{summary.packed}</p>
-          <p className="text-xs text-slate-400 mt-1">Ready for pickup prep</p>
+          <p className="text-xs text-slate-400 mt-1">{t('medicalProvider:requests.readyForPickupPrep', 'Ready for pickup prep')}</p>
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-teal-700 uppercase tracking-wider">Ready</span>
+            <span className="text-xs font-semibold text-teal-700 uppercase tracking-wider">{getStatusLabel('ready', t)}</span>
             <ShoppingBag className="w-5 h-5 text-teal-500" />
           </div>
           <p className="text-2xl font-bold text-slate-800">{summary.ready}</p>
-          <p className="text-xs text-slate-400 mt-1">Waiting collection</p>
+          <p className="text-xs text-slate-400 mt-1">{t('medicalProvider:requests.waitingCollection', 'Waiting collection')}</p>
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm col-span-2 sm:col-span-1">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Completed</span>
+            <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">{getStatusLabel('completed', t)}</span>
             <CheckCircle className="w-5 h-5 text-emerald-500" />
           </div>
           <p className="text-2xl font-bold text-slate-800">{summary.completed}</p>
-          <p className="text-xs text-slate-400 mt-1">Fulfilled requests</p>
+          <p className="text-xs text-slate-400 mt-1">{t('medicalProvider:requests.fulfilledRequests', 'Fulfilled requests')}</p>
         </div>
       </div>
 
@@ -326,7 +329,7 @@ export default function MedicalMedicineRequests() {
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
             <input
               type="text"
-              placeholder="Search medicine or farmer..."
+              placeholder={t('medicalProvider:requests.searchPlaceholder', 'Search medicine or farmer...')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -358,14 +361,14 @@ export default function MedicalMedicineRequests() {
               type="submit"
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg text-sm transition shadow-sm"
             >
-              Apply Filter
+              {t('common:actions.applyFilter', 'Apply Filter')}
             </button>
             <button
               type="button"
               onClick={handleClearFilters}
               className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-sm font-medium transition"
             >
-              Reset
+              {t('common:actions.reset', 'Reset')}
             </button>
           </div>
         </form>
@@ -376,13 +379,13 @@ export default function MedicalMedicineRequests() {
         {loading ? (
           <div className="p-12 text-center text-slate-400 flex flex-col items-center justify-center gap-2">
             <RefreshCw className="w-6 h-6 animate-spin text-blue-600" />
-            <p className="text-sm">Loading requests...</p>
+            <p className="text-sm">{t('medicalProvider:requests.loadingRequests', 'Loading requests...')}</p>
           </div>
         ) : requests.length === 0 ? (
           <div className="p-12 text-center text-slate-400">
             <ShoppingBag className="w-12 h-12 mx-auto text-slate-300 mb-2" />
-            <p className="text-base font-semibold text-slate-700">No requests found</p>
-            <p className="text-xs text-slate-400">Try adjusting search or status filters.</p>
+            <p className="text-base font-semibold text-slate-700">{t('medicalProvider:requests.noRequestsFound', 'No requests found')}</p>
+            <p className="text-xs text-slate-400">{t('medicalProvider:requests.adjustFilterTip', 'Try adjusting search or status filters.')}</p>
           </div>
         ) : (
           <>
@@ -390,13 +393,13 @@ export default function MedicalMedicineRequests() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    <th className="p-4">Farmer Details</th>
-                    <th className="p-4">Medicine</th>
-                    <th className="p-4">Quantity</th>
-                    <th className="p-4">Total Amount</th>
-                    <th className="p-4">Requested On</th>
-                    <th className="p-4">Status</th>
-                    <th className="p-4 text-right">Actions</th>
+                    <th className="p-4">{t('medicalProvider:requests.farmerDetails', 'Farmer Details')}</th>
+                    <th className="p-4">{t('medicalProvider:requests.medicine', 'Medicine')}</th>
+                    <th className="p-4">{t('medicalProvider:requests.quantity', 'Quantity')}</th>
+                    <th className="p-4">{t('medicalProvider:requests.totalAmount', 'Total Amount')}</th>
+                    <th className="p-4">{t('medicalProvider:requests.requestedOn', 'Requested On')}</th>
+                    <th className="p-4">{t('common:labels.status', 'Status')}</th>
+                    <th className="p-4 text-right">{t('common:labels.actions', 'Actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-sm">
@@ -542,7 +545,7 @@ export default function MedicalMedicineRequests() {
           <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl border border-slate-100 space-y-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div>
-                <h3 className="text-lg font-bold text-slate-800">Request Details</h3>
+                <h3 className="text-lg font-bold text-slate-800">{t('medicalProvider:requests.requestDetailsTitle', 'Request Details')}</h3>
                 <p className="text-xs text-slate-400">ID: {selectedRequest._id}</p>
               </div>
               <button onClick={() => setModalType(null)} className="text-slate-400 hover:text-slate-600 p-1">
@@ -566,7 +569,7 @@ export default function MedicalMedicineRequests() {
 
             {/* Medicine Info & Pricing */}
             <div className="space-y-3">
-              <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Order Summary</h4>
+              <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t('medicalProvider:requests.orderSummary', 'Order Summary')}</h4>
               <div className="flex justify-between items-center text-sm p-3 bg-slate-50 rounded-lg">
                 <div>
                   <span className="font-semibold text-slate-800">{selectedRequest.medicineNameSnapshot}</span>
@@ -576,24 +579,24 @@ export default function MedicalMedicineRequests() {
               </div>
               {selectedRequest.notes && (
                 <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg text-xs text-amber-800">
-                  <span className="font-semibold">Farmer Notes:</span> {selectedRequest.notes}
+                  <span className="font-semibold">{t('medicalProvider:requests.farmerNotes', 'Farmer Notes:')}</span> {selectedRequest.notes}
                 </div>
               )}
               {selectedRequest.providerRemarks && (
                 <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg text-xs text-blue-800">
-                  <span className="font-semibold">Provider Remarks:</span> {selectedRequest.providerRemarks}
+                  <span className="font-semibold">{t('medicalProvider:requests.providerRemarks', 'Provider Remarks:')}</span> {selectedRequest.providerRemarks}
                 </div>
               )}
             </div>
 
             {/* Status Timeline */}
             <div className="space-y-3 border-t border-slate-100 pt-4">
-              <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Status Timeline</h4>
+              <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t('medicalProvider:requests.statusTimeline', 'Status Timeline')}</h4>
               <div className="space-y-4 relative pl-4 border-l-2 border-slate-200 ml-2">
                 {/* Step 1: Requested */}
                 <div className="relative">
                   <div className="absolute -left-[21px] top-0.5 w-3 h-3 rounded-full bg-blue-500 border-2 border-white" />
-                  <p className="text-xs font-semibold text-slate-800">Requested</p>
+                  <p className="text-xs font-semibold text-slate-800">{t('medicalProvider:requests.timelineRequested', 'Requested')}</p>
                   <p className="text-[11px] text-slate-400">{new Date(selectedRequest.requestedAt || selectedRequest.createdAt).toLocaleString()}</p>
                 </div>
 
@@ -601,7 +604,7 @@ export default function MedicalMedicineRequests() {
                 {selectedRequest.acceptedAt && (
                   <div className="relative">
                     <div className="absolute -left-[21px] top-0.5 w-3 h-3 rounded-full bg-blue-600 border-2 border-white" />
-                    <p className="text-xs font-semibold text-slate-800">Accepted</p>
+                    <p className="text-xs font-semibold text-slate-800">{t('medicalProvider:requests.timelineAccepted', 'Accepted')}</p>
                     <p className="text-[11px] text-slate-400">{new Date(selectedRequest.acceptedAt).toLocaleString()}</p>
                   </div>
                 )}
@@ -610,7 +613,7 @@ export default function MedicalMedicineRequests() {
                 {selectedRequest.packedAt && (
                   <div className="relative">
                     <div className="absolute -left-[21px] top-0.5 w-3 h-3 rounded-full bg-purple-600 border-2 border-white" />
-                    <p className="text-xs font-semibold text-slate-800">Packed</p>
+                    <p className="text-xs font-semibold text-slate-800">{t('medicalProvider:requests.timelinePacked', 'Packed')}</p>
                     <p className="text-[11px] text-slate-400">{new Date(selectedRequest.packedAt).toLocaleString()}</p>
                   </div>
                 )}
@@ -619,7 +622,7 @@ export default function MedicalMedicineRequests() {
                 {selectedRequest.readyAt && (
                   <div className="relative">
                     <div className="absolute -left-[21px] top-0.5 w-3 h-3 rounded-full bg-teal-600 border-2 border-white" />
-                    <p className="text-xs font-semibold text-slate-800">Ready for Collection</p>
+                    <p className="text-xs font-semibold text-slate-800">{t('medicalProvider:requests.timelineReady', 'Ready for Collection')}</p>
                     <p className="text-[11px] text-slate-400">{new Date(selectedRequest.readyAt).toLocaleString()}</p>
                   </div>
                 )}
@@ -628,7 +631,7 @@ export default function MedicalMedicineRequests() {
                 {selectedRequest.completedAt && (
                   <div className="relative">
                     <div className="absolute -left-[21px] top-0.5 w-3 h-3 rounded-full bg-emerald-600 border-2 border-white" />
-                    <p className="text-xs font-semibold text-slate-800">Completed</p>
+                    <p className="text-xs font-semibold text-slate-800">{t('medicalProvider:requests.timelineCompleted', 'Completed')}</p>
                     <p className="text-[11px] text-slate-400">{new Date(selectedRequest.completedAt).toLocaleString()}</p>
                   </div>
                 )}
@@ -637,7 +640,7 @@ export default function MedicalMedicineRequests() {
                 {selectedRequest.cancelledAt && (
                   <div className="relative">
                     <div className="absolute -left-[21px] top-0.5 w-3 h-3 rounded-full bg-gray-500 border-2 border-white" />
-                    <p className="text-xs font-semibold text-gray-800">Cancelled</p>
+                    <p className="text-xs font-semibold text-gray-800">{t('medicalProvider:requests.timelineCancelled', 'Cancelled')}</p>
                     <p className="text-[11px] text-slate-400">{new Date(selectedRequest.cancelledAt).toLocaleString()}</p>
                   </div>
                 )}
@@ -645,7 +648,7 @@ export default function MedicalMedicineRequests() {
                 {selectedRequest.rejectedAt && (
                   <div className="relative">
                     <div className="absolute -left-[21px] top-0.5 w-3 h-3 rounded-full bg-red-500 border-2 border-white" />
-                    <p className="text-xs font-semibold text-red-800">Rejected</p>
+                    <p className="text-xs font-semibold text-red-800">{t('medicalProvider:requests.timelineRejected', 'Rejected')}</p>
                     <p className="text-[11px] text-slate-400">{new Date(selectedRequest.rejectedAt).toLocaleString()}</p>
                   </div>
                 )}
@@ -666,18 +669,18 @@ export default function MedicalMedicineRequests() {
 
       {/* Modal: Reject Request */}
       {modalType === 'reject' && selectedRequest && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <form onSubmit={submitReject} className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-100 space-y-4">
-            <h3 className="text-lg font-bold text-slate-800">Reject Medicine Request</h3>
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <form onSubmit={submitReject} className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-100 space-y-4 my-auto max-h-[90vh] overflow-y-auto modal-animate">
+            <h3 className="text-lg font-bold text-slate-800">{t('medicalProvider:requests.rejectModalTitle', 'Reject Medicine Request')}</h3>
             <p className="text-xs text-slate-500">Provide optional remarks for rejecting request from {selectedRequest.farmer?.name}.</p>
 
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">Remarks / Reason</label>
+              <label className="block text-xs font-medium text-slate-700 mb-1">{t('medicalProvider:requests.remarksReason', 'Remarks / Reason')}</label>
               <textarea
                 rows={3}
                 value={providerRemarks}
                 onChange={(e) => setProviderRemarks(e.target.value)}
-                placeholder="e.g. Out of stock, expired batch..."
+                placeholder={t('medicalProvider:requests.rejectPlaceholder', 'e.g. Out of stock, expired batch...')}
                 className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-500"
               />
             </div>
@@ -688,14 +691,14 @@ export default function MedicalMedicineRequests() {
                 onClick={() => setModalType(null)}
                 className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-sm font-medium"
               >
-                Cancel
+                {t('common:actions.cancel', 'Cancel')}
               </button>
               <button
                 type="submit"
                 disabled={actionLoading}
                 className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium shadow-sm"
               >
-                {actionLoading ? 'Rejecting...' : 'Reject Request'}
+                {actionLoading ? t('common:status.loading', 'Rejecting...') : t('medicalProvider:requests.rejectRequest', 'Reject Request')}
               </button>
             </div>
           </form>
@@ -704,18 +707,18 @@ export default function MedicalMedicineRequests() {
 
       {/* Modal: Cancel Request */}
       {modalType === 'cancel' && selectedRequest && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <form onSubmit={submitCancel} className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-100 space-y-4">
-            <h3 className="text-lg font-bold text-slate-800">Cancel Medicine Request</h3>
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <form onSubmit={submitCancel} className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-100 space-y-4 my-auto max-h-[90vh] overflow-y-auto modal-animate">
+            <h3 className="text-lg font-bold text-slate-800">{t('medicalProvider:requests.cancelModalTitle', 'Cancel Medicine Request')}</h3>
             <p className="text-xs text-slate-500">Cancelling will restore the deducted stock of {selectedRequest.quantity} units to inventory.</p>
 
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">Cancellation Reason</label>
+              <label className="block text-xs font-medium text-slate-700 mb-1">{t('medicalProvider:requests.cancellationReason', 'Cancellation Reason')}</label>
               <textarea
                 rows={3}
                 value={cancelReason}
                 onChange={(e) => setCancelReason(e.target.value)}
-                placeholder="e.g. Customer requested cancellation..."
+                placeholder={t('medicalProvider:requests.cancelPlaceholder', 'e.g. Customer requested cancellation...')}
                 className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-gray-500"
               />
             </div>
@@ -726,7 +729,7 @@ export default function MedicalMedicineRequests() {
                 onClick={() => setModalType(null)}
                 className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-sm font-medium"
               >
-                Close
+                {t('common:actions.close', 'Close')}
               </button>
               <button
                 type="submit"

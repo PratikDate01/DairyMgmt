@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { complaintService } from '../../services/complaintService';
+import { getStatusLabel } from '../../i18n/statusMap';
 import { PageHeader } from '../../components/common/PageHeader';
 import { SectionCard } from '../../components/common/SectionCard';
 import { EmptyState } from '../../components/common/EmptyState';
@@ -20,6 +22,7 @@ import {
 } from 'lucide-react';
 
 export const Complaints = () => {
+  const { t } = useTranslation(['complaints', 'common']);
   const { user, token } = useAuth();
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -45,11 +48,11 @@ export const Complaints = () => {
       setComplaints(res.complaints || []);
     } catch (err) {
       console.error('Failed to load complaints:', err);
-      setError(err.message || 'Unable to load your complaint history.');
+      setError(err.message || t('common:error.loadFailed', 'Unable to load your complaint history.'));
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, t]);
 
   useEffect(() => {
     fetchComplaints();
@@ -68,14 +71,14 @@ export const Complaints = () => {
         category,
         description: description.trim()
       });
-      setSuccessMsg(res.message || 'Your complaint has been submitted for administrative review.');
+      setSuccessMsg(res.message || t('complaints:successMsg', 'Your complaint has been submitted for administrative review.'));
       setTitle('');
       setCategory('general');
       setDescription('');
       setShowModal(false);
       fetchComplaints();
     } catch (err) {
-      setError(err.message || 'Failed to submit complaint. Please try again.');
+      setError(err.message || t('common:error.actionFailed', 'Failed to submit complaint. Please try again.'));
     } finally {
       setSubmitting(false);
     }
@@ -86,22 +89,16 @@ export const Complaints = () => {
     return c.status === statusFilter;
   });
 
-  const categoryLabels = {
-    general: 'General Support',
-    milk_collection: 'Milk Collection Discrepancy',
-    payments: 'Payment & Ledger Dispute',
-    veterinary: 'Veterinary Consultation Issue',
-    medicines: 'Medicine Procurement / Order',
-    fodder: 'Fodder Marketplace Issue',
-    account: 'Account & Verification Support'
+  const getCategoryLabel = (cat) => {
+    return t(`complaints:categories.${cat}`, cat);
   };
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Complaints & Grievance Support"
-        description="Submit grievances, report platform discrepancies, and track administrative resolutions with complete transparency."
-        breadcrumbs={['Home', 'Complaints & Support']}
+        title={t('complaints:title', 'Complaints & Support Desk')}
+        description={t('complaints:subtitle', 'Submit operational grievances, report discrepancies, and receive prompt administrative assistance.')}
+        breadcrumbs={[t('common:nav.home', 'Home'), t('complaints:title', 'Complaints & Support')]}
         actions={
           <div className="flex items-center space-x-2">
             <button
@@ -113,12 +110,12 @@ export const Complaints = () => {
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-xs transition flex items-center space-x-1.5"
             >
               <PlusCircle className="w-4 h-4" />
-              <span>Log New Complaint</span>
+              <span>{t('complaints:newComplaintBtn', 'Submit New Complaint')}</span>
             </button>
             <button
               onClick={fetchComplaints}
               className="p-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg transition"
-              title="Refresh Complaints"
+              title={t('common:actions.refresh', 'Refresh')}
             >
               <RefreshCw className={`w-4 h-4 text-slate-500 ${loading ? 'animate-spin' : ''}`} />
             </button>
@@ -149,21 +146,21 @@ export const Complaints = () => {
 
       {/* Main Section */}
       <SectionCard
-        title="My Grievance History"
-        subtitle="Track submitted issues and administrator responses"
+        title={t('complaints:historyTitle', 'My Submitted Complaints')}
+        subtitle={t('complaints:subtitle', 'Track submitted issues and administrator responses')}
         action={
           <div className="flex items-center space-x-2">
-            <span className="text-xs text-slate-500 font-medium">Status:</span>
+            <span className="text-xs text-slate-500 font-medium">{t('common:labels.status', 'Status')}:</span>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               className="text-xs px-2.5 py-1.5 border border-slate-300 rounded-lg bg-white text-slate-700 focus:outline-none"
             >
-              <option value="all">All Statuses ({complaints.length})</option>
-              <option value="open">Open</option>
-              <option value="in_progress">In Progress</option>
-              <option value="resolved">Resolved</option>
-              <option value="closed">Closed</option>
+              <option value="all">{t('common:status.all', 'All Statuses')} ({complaints.length})</option>
+              <option value="open">{getStatusLabel('open', t)}</option>
+              <option value="in_progress">{getStatusLabel('in_progress', t)}</option>
+              <option value="resolved">{getStatusLabel('resolved', t)}</option>
+              <option value="closed">{getStatusLabel('closed', t)}</option>
             </select>
           </div>
         }
@@ -171,12 +168,12 @@ export const Complaints = () => {
         {loading ? (
           <div className="py-12 text-center text-slate-400 text-xs">
             <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-slate-400" />
-            Loading complaint history...
+            {t('common:status.loading', 'Loading complaint history...')}
           </div>
         ) : filteredComplaints.length === 0 ? (
           <EmptyState
-            title="No Complaints Logged"
-            description="You have no recorded complaints matching this filter. Click 'Log New Complaint' to submit an issue to administrators."
+            title={t('complaints:noComplaints', 'No complaints or support tickets found in this view.')}
+            description={t('complaints:noComplaints', 'You have no recorded complaints matching this filter. Click Submit New Complaint to report an issue.')}
             icon={MessageSquare}
           />
         ) : (
@@ -191,14 +188,14 @@ export const Complaints = () => {
                     <div className="flex items-center space-x-2">
                       <h4 className="text-sm font-bold text-slate-900">{c.title}</h4>
                       <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
-                        {categoryLabels[c.category] || c.category}
+                        {getCategoryLabel(c.category)}
                       </span>
                     </div>
                     <div className="text-[11px] text-slate-500 flex items-center space-x-3">
-                      <span>Submitted: {new Date(c.createdAt).toLocaleString()}</span>
+                      <span>{t('complaints:submittedOn', 'Submitted On')}: {new Date(c.createdAt).toLocaleString()}</span>
                       {c.resolvedAt && (
                         <span className="text-emerald-700 font-medium">
-                          Resolved: {new Date(c.resolvedAt).toLocaleDateString()}
+                          {t('complaints:resolvedOn', 'Resolved On')}: {new Date(c.resolvedAt).toLocaleDateString()}
                         </span>
                       )}
                     </div>
@@ -213,7 +210,7 @@ export const Complaints = () => {
                         : 'bg-amber-50 text-amber-800 border-amber-200'
                     }`}
                   >
-                    {c.status?.replace('_', ' ')}
+                    {getStatusLabel(c.status, t)}
                   </span>
                 </div>
 
@@ -226,14 +223,14 @@ export const Complaints = () => {
                   <div className="p-3 bg-emerald-50/60 border border-emerald-200 rounded-lg text-xs space-y-1">
                     <div className="font-bold text-emerald-900 flex items-center space-x-1">
                       <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                      <span>Administrator Resolution Notes</span>
+                      <span>{t('complaints:adminResolution', 'Administrative Resolution Notes')}</span>
                     </div>
                     <p className="text-emerald-800">{c.adminNotes}</p>
                   </div>
                 ) : (
                   <div className="text-[11px] text-slate-400 italic flex items-center space-x-1">
                     <Clock className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Awaiting administrator evaluation & resolution notes</span>
+                    <span>{t('complaints:noResolutionNotes', 'Awaiting administrator evaluation & resolution notes')}</span>
                   </div>
                 )}
               </div>
@@ -244,12 +241,12 @@ export const Complaints = () => {
 
       {/* Submission Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-lg overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/40 backdrop-blur-xs overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-lg overflow-hidden my-auto max-h-[90vh] flex flex-col modal-animate">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
               <h3 className="text-sm font-bold text-slate-900 flex items-center space-x-2">
                 <MessageSquare className="w-4 h-4 text-blue-600" />
-                <span>Submit Grievance to Platform Administrators</span>
+                <span>{t('complaints:modalTitle', 'Submit a Support Grievance')}</span>
               </h3>
               <button
                 onClick={() => setShowModal(false)}
@@ -259,13 +256,15 @@ export const Complaints = () => {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs">
+            <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs overflow-y-auto flex-1">
               <div>
-                <label className="block text-slate-600 font-semibold mb-1">Complaint Title *</label>
+                <label className="block text-slate-600 font-semibold mb-1">
+                  {t('complaints:formTitle', 'Complaint Subject / Title')} *
+                </label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Milk quantity logged incorrectly for morning shift"
+                  placeholder={t('complaints:formTitlePlaceholder', 'e.g. Milk quantity logged incorrectly for morning shift')}
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -273,28 +272,32 @@ export const Complaints = () => {
               </div>
 
               <div>
-                <label className="block text-slate-600 font-semibold mb-1">Issue Category *</label>
+                <label className="block text-slate-600 font-semibold mb-1">
+                  {t('complaints:category', 'Grievance Category')} *
+                </label>
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 >
-                  <option value="general">General Support</option>
-                  <option value="milk_collection">Milk Collection Discrepancy</option>
-                  <option value="payments">Payment & Ledger Dispute</option>
-                  <option value="veterinary">Veterinary Consultation Issue</option>
-                  <option value="medicines">Medicine Procurement / Order</option>
-                  <option value="fodder">Fodder Marketplace Issue</option>
-                  <option value="account">Account & Verification Support</option>
+                  <option value="general">{t('complaints:categories.general', 'General Support')}</option>
+                  <option value="milk_collection">{t('complaints:categories.milk_collection', 'Milk Collection Discrepancy')}</option>
+                  <option value="payments">{t('complaints:categories.payments', 'Payment & Ledger Dispute')}</option>
+                  <option value="veterinary">{t('complaints:categories.veterinary', 'Veterinary Consultation Issue')}</option>
+                  <option value="medicines">{t('complaints:categories.medicines', 'Medicine Procurement / Order')}</option>
+                  <option value="fodder">{t('complaints:categories.fodder', 'Fodder Marketplace Issue')}</option>
+                  <option value="account">{t('complaints:categories.account', 'Account & Verification Support')}</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-slate-600 font-semibold mb-1">Detailed Description *</label>
+                <label className="block text-slate-600 font-semibold mb-1">
+                  {t('complaints:description', 'Detailed Description of the Issue')} *
+                </label>
                 <textarea
                   rows={4}
                   required
-                  placeholder="Provide date, cattle ID, transaction details, or other context to assist the administrator in resolving your grievance..."
+                  placeholder={t('complaints:descriptionPlaceholder', 'Provide date, cattle ID, transaction details, or other context to assist the administrator in resolving your grievance...')}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -307,7 +310,7 @@ export const Complaints = () => {
                   onClick={() => setShowModal(false)}
                   className="px-4 py-2 border border-slate-300 rounded-lg font-semibold text-slate-700 hover:bg-slate-50"
                 >
-                  Cancel
+                  {t('common:actions.cancel', 'Cancel')}
                 </button>
                 <button
                   type="submit"
@@ -317,12 +320,12 @@ export const Complaints = () => {
                   {submitting ? (
                     <>
                       <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                      <span>Submitting...</span>
+                      <span>{t('complaints:submitting', 'Submitting Complaint...')}</span>
                     </>
                   ) : (
                     <>
                       <Send className="w-3.5 h-3.5" />
-                      <span>Submit Grievance</span>
+                      <span>{t('complaints:submitBtn', 'Submit Grievance')}</span>
                     </>
                   )}
                 </button>

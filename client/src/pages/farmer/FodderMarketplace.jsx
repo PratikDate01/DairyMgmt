@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { getStatusLabel } from '../../i18n/statusMap';
 import { useAuth } from '../../context/AuthContext';
 import { fodderListingService } from '../../services/fodderListingService';
 import { PageHeader } from '../../components/common/PageHeader';
@@ -41,6 +43,7 @@ const FODDER_TYPES = [
 ];
 
 export const FodderMarketplace = () => {
+  const { t } = useTranslation(['farmer', 'common']);
   const { user, token } = useAuth();
 
   // State variables
@@ -279,16 +282,16 @@ export const FodderMarketplace = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Fodder Marketplace"
-        description="Farmer-to-Farmer fodder marketplace. Buy, sell, and list available green & dry cattle fodder directly with neighboring farmers."
-        breadcrumbs={['Home', 'Fodder Marketplace']}
+        title={t('farmer:fodderMarket.title', 'Fodder Marketplace')}
+        description={t('farmer:fodder.subtitle', 'Farmer-to-Farmer fodder marketplace. Buy, sell, and list available green & dry cattle fodder directly with neighboring farmers.')}
+        breadcrumbs={[t('common:nav.home', 'Home'), t('common:roles.farmer', 'Farmer'), t('farmer:fodderMarket.title', 'Fodder Marketplace')]}
         actions={
           <button
             onClick={openCreateModal}
             className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center space-x-1.5 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            <span>Post Fodder Listing</span>
+            <span>{t('farmer:fodderMarket.postListingBtn', 'Post Fodder Listing')}</span>
           </button>
         }
       />
@@ -321,7 +324,7 @@ export const FodderMarketplace = () => {
             }`}
           >
             <Store className="w-4 h-4" />
-            <span>Browse Fodder Marketplace ({marketplaceListings.length})</span>
+            <span>{t('farmer:fodderMarket.browseTab', 'Browse Fodder Marketplace')} ({marketplaceListings.length})</span>
           </button>
 
           <button
@@ -333,7 +336,7 @@ export const FodderMarketplace = () => {
             }`}
           >
             <Layers className="w-4 h-4" />
-            <span>My Fodder Listings ({farmerListings.length})</span>
+            <span>{t('farmer:fodderMarket.myListingsTab', 'My Fodder Listings')} ({farmerListings.length})</span>
           </button>
         </div>
 
@@ -344,7 +347,7 @@ export const FodderMarketplace = () => {
           className="px-3 py-2 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition self-end sm:self-auto"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-          <span>Refresh Listings</span>
+          <span>{t('farmer:fodderMarket.refreshListings', 'Refresh Listings')}</span>
         </button>
       </div>
 
@@ -358,7 +361,7 @@ export const FodderMarketplace = () => {
                 <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
                 <input
                   type="text"
-                  placeholder="Search by title, description, or village/city..."
+                  placeholder={t('farmer:fodderMarket.searchPlaceholder', 'Search by title, description, or village/city...')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -369,14 +372,14 @@ export const FodderMarketplace = () => {
                 type="submit"
                 className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition"
               >
-                Search
+                {t('common:actions.search', 'Search')}
               </button>
             </form>
 
             {/* Fodder Category Chips */}
             <div className="flex items-center space-x-2 overflow-x-auto pb-1 text-xs">
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0 flex items-center">
-                <Filter className="w-3.5 h-3.5 mr-1" /> Type:
+                <Filter className="w-3.5 h-3.5 mr-1" /> {t('farmer:fodderMarket.filterType', 'Type')}:
               </span>
               {FODDER_TYPES.map((type) => (
                 <button
@@ -398,12 +401,12 @@ export const FodderMarketplace = () => {
           {loading ? (
             <div className="py-12 text-center space-y-2">
               <RefreshCw className="w-6 h-6 text-emerald-600 animate-spin mx-auto" />
-              <p className="text-xs text-slate-500 font-semibold">Loading fodder listings from nearby farmers...</p>
+              <p className="text-xs text-slate-500 font-semibold">{t('farmer:fodderMarket.loadingListings', 'Loading fodder listings from nearby farmers...')}</p>
             </div>
           ) : marketplaceListings.length === 0 ? (
             <EmptyState
-              title="No Fodder Listings Available"
-              description="No active fodder listings match your search or selected filter. Post a listing to get started!"
+              title={t('farmer:fodderMarket.noListingsFound', 'No Fodder Listings Available')}
+              description={t('farmer:fodderMarket.noListingsDesc', 'No active fodder listings match your search or selected filter. Post a listing to get started!')}
               icon={Wheat}
             />
           ) : (
@@ -425,7 +428,7 @@ export const FodderMarketplace = () => {
                       ) : (
                         <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 bg-slate-100">
                           <Wheat className="w-10 h-10 mb-1 text-slate-300" />
-                          <span className="text-[11px] font-bold">Fodder Photo</span>
+                          <span className="text-[11px] font-bold">{t('farmer:fodder.fodderPhoto', 'Fodder Photo')}</span>
                         </div>
                       )}
 
@@ -451,11 +454,11 @@ export const FodderMarketplace = () => {
 
                       <div className="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                         <div>
-                          <span className="text-[10px] text-slate-400 font-semibold uppercase block">Quantity</span>
+                          <span className="text-[10px] text-slate-400 font-semibold uppercase block">{t('common:labels.quantity', 'Quantity')}</span>
                           <span className="font-bold text-slate-800">{listing.quantity} {listing.quantityUnit}s</span>
                         </div>
                         <div>
-                          <span className="text-[10px] text-slate-400 font-semibold uppercase block">Available From</span>
+                          <span className="text-[10px] text-slate-400 font-semibold uppercase block">{t('farmer:fodder.availableFrom', 'Available From')}</span>
                           <span className="font-semibold text-slate-700 flex items-center">
                             <Calendar className="w-3 h-3 mr-1 text-slate-400" />
                             {new Date(listing.availableDate).toLocaleDateString()}
@@ -473,10 +476,10 @@ export const FodderMarketplace = () => {
                         {/* Mandated Honest Distance Display */}
                         <div className="flex items-center justify-between text-[11px] pt-1">
                           <span className="px-2 py-0.5 bg-slate-100 text-slate-500 rounded-md font-semibold text-[10px]">
-                            Distance unavailable
+                            {t('farmer:fodder.distanceUnavailable', 'Distance unavailable')}
                           </span>
                           <span className="text-slate-400 text-[10px]">
-                            Seller: <span className="font-semibold text-slate-700">{listing.farmer?.name || 'Farmer'}</span>
+                            {t('farmer:fodder.seller', 'Seller:')} <span className="font-semibold text-slate-700">{listing.farmer?.name || t('common:roles.farmer', 'Farmer')}</span>
                           </span>
                         </div>
                       </div>
@@ -490,7 +493,7 @@ export const FodderMarketplace = () => {
                       className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center justify-center space-x-1.5 cursor-pointer"
                     >
                       <Eye className="w-3.5 h-3.5" />
-                      <span>View Full Details & Contact</span>
+                      <span>{t('farmer:fodder.viewFullDetailsContact', 'View Full Details & Contact')}</span>
                     </button>
                   </div>
                 </div>
@@ -504,22 +507,22 @@ export const FodderMarketplace = () => {
       {activeTab === 'my_listings' && (
         <div className="space-y-6">
           <SectionCard
-            title="My Published Fodder Listings"
-            subtitle="Manage your listed fodder inventory, mark items as sold, edit, or deactivate listings."
+            title={t('farmer:fodder.myPublishedListings', 'My Published Fodder Listings')}
+            subtitle={t('farmer:fodder.myListingsSubtitle', 'Manage your listed fodder inventory, mark items as sold, edit, or deactivate listings.')}
             action={
               <button
                 onClick={openCreateModal}
                 className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition flex items-center space-x-1 cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>Add New Listing</span>
+                <span>{t('farmer:fodder.addNewListing', 'Add New Listing')}</span>
               </button>
             }
           >
             {farmerListings.length === 0 ? (
               <EmptyState
-                title="You Haven't Published Any Fodder Listings Yet"
-                description="Click 'Add New Listing' to list green/dry fodder, hay, or silage for neighboring farmers to purchase."
+                title={t('farmer:fodder.emptyMyListingsTitle', "You Haven't Published Any Fodder Listings Yet")}
+                description={t('farmer:fodder.emptyMyListingsDesc', "Click 'Add New Listing' to list green/dry fodder, hay, or silage for neighboring farmers to purchase.")}
                 icon={Plus}
               />
             ) : (
@@ -556,11 +559,11 @@ export const FodderMarketplace = () => {
 
                       <div className="p-2.5 bg-white rounded-xl border border-slate-200 flex justify-between text-xs font-mono">
                         <div>
-                          <span className="text-[10px] text-slate-400 font-sans block">Price</span>
+                          <span className="text-[10px] text-slate-400 font-sans block">{t('common:labels.price', 'Price')}</span>
                           <span className="font-bold text-emerald-700">₹{listing.price} / {listing.quantityUnit}</span>
                         </div>
                         <div className="text-right">
-                          <span className="text-[10px] text-slate-400 font-sans block">Quantity</span>
+                          <span className="text-[10px] text-slate-400 font-sans block">{t('common:labels.quantity', 'Quantity')}</span>
                           <span className="font-bold text-slate-800">{listing.quantity} {listing.quantityUnit}s</span>
                         </div>
                       </div>
@@ -574,14 +577,14 @@ export const FodderMarketplace = () => {
                             onClick={() => handleStatusChange(listing._id, 'sold')}
                             className="flex-1 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-[11px] transition text-center"
                           >
-                            Mark Sold
+                            {t('farmer:fodder.markSold', 'Mark Sold')}
                           </button>
                         ) : (
                           <button
                             onClick={() => handleStatusChange(listing._id, 'active')}
                             className="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-[11px] transition text-center"
                           >
-                            Re-activate
+                            {t('farmer:fodder.reactivate', 'Re-activate')}
                           </button>
                         )}
 
@@ -590,13 +593,13 @@ export const FodderMarketplace = () => {
                           className="px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 rounded-lg font-bold text-[11px] transition flex items-center space-x-1"
                         >
                           <Edit2 className="w-3 h-3" />
-                          <span>Edit</span>
+                          <span>{t('common:actions.edit', 'Edit')}</span>
                         </button>
 
                         <button
                           onClick={() => handleDeleteListing(listing._id)}
                           className="px-2.5 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg font-bold text-[11px] transition"
-                          title="Delete Listing"
+                          title={t('common:actions.delete', 'Delete Listing')}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -612,14 +615,14 @@ export const FodderMarketplace = () => {
 
       {/* CREATE / EDIT FODDER LISTING MODAL */}
       {isCreateModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-slate-100 space-y-5 my-8">
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-slate-100 space-y-5 my-auto max-h-[90vh] overflow-y-auto modal-animate">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div>
                 <h3 className="text-lg font-bold text-slate-900">
-                  {editingListing ? 'Edit Fodder Listing' : 'Post New Fodder Listing'}
+                  {editingListing ? t('farmer:fodder.editListing', 'Edit Fodder Listing') : t('farmer:fodder.postNewListing', 'Post New Fodder Listing')}
                 </h3>
-                <p className="text-xs text-slate-500">Fill in details to list fodder for neighboring farmers</p>
+                <p className="text-xs text-slate-500">{t('farmer:fodder.fillListingDetails', 'Fill in details to list fodder for neighboring farmers')}</p>
               </div>
               <button
                 onClick={() => setIsCreateModalOpen(false)}
@@ -639,7 +642,7 @@ export const FodderMarketplace = () => {
             <form onSubmit={handleFormSubmit} className="space-y-4">
               {/* Photo Upload Section */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Fodder Photo (Optional)</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">{t('farmer:fodder.fodderPhotoOptional', 'Fodder Photo (Optional)')}</label>
                 <div className="flex items-center space-x-4">
                   {imagePreview ? (
                     <div className="relative w-24 h-24 rounded-2xl overflow-hidden border border-slate-300 shrink-0">
@@ -658,8 +661,8 @@ export const FodderMarketplace = () => {
                   ) : (
                     <label className="w-full p-4 border-2 border-dashed border-slate-300 hover:border-emerald-500 bg-slate-50 hover:bg-emerald-50/50 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition text-center">
                       <Upload className="w-6 h-6 text-slate-400 mb-1" />
-                      <span className="text-xs font-bold text-slate-700">Click to Select Fodder Photo</span>
-                      <span className="text-[10px] text-slate-400">JPG, PNG, WEBP (Max 5MB)</span>
+                      <span className="text-xs font-bold text-slate-700">{t('farmer:fodder.clickSelectFodderPhoto', 'Click to Select Fodder Photo')}</span>
+                      <span className="text-[10px] text-slate-400">{t('farmer:fodder.imageLimit5mb', 'JPG, PNG, WEBP (Max 5MB)')}</span>
                       <input
                         type="file"
                         accept="image/*"
@@ -674,11 +677,11 @@ export const FodderMarketplace = () => {
               {/* Title & Fodder Type */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Listing Title *</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">{t('farmer:fodder.listingTitle', 'Listing Title *')}</label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Fresh Green Maize Fodder"
+                    placeholder={t('farmer:fodder.titlePlaceholder', 'e.g. Fresh Green Maize Fodder')}
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -686,7 +689,7 @@ export const FodderMarketplace = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Fodder Type *</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">{t('farmer:fodder.fodderTypeRequired', 'Fodder Type *')}</label>
                   <select
                     value={formData.fodderType}
                     onChange={(e) => setFormData({ ...formData, fodderType: e.target.value })}
@@ -703,10 +706,10 @@ export const FodderMarketplace = () => {
 
               {formData.fodderType === 'Other' && (
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Specify Custom Fodder Type *</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">{t('farmer:fodder.specifyCustomType', 'Specify Custom Fodder Type *')}</label>
                   <input
                     type="text"
-                    placeholder="e.g. Organic Mustard Straw"
+                    placeholder={t('farmer:fodder.customTypePlaceholder', 'e.g. Organic Mustard Straw')}
                     value={formData.customFodderType}
                     onChange={(e) => setFormData({ ...formData, customFodderType: e.target.value })}
                     className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -716,11 +719,11 @@ export const FodderMarketplace = () => {
 
               {/* Description */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Fodder Description *</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">{t('farmer:fodder.fodderDescription', 'Fodder Description *')}</label>
                 <textarea
                   rows={3}
                   required
-                  placeholder="Describe quality, moisture content, feeding suitability for cows/buffaloes..."
+                  placeholder={t('farmer:fodder.descriptionPlaceholder', 'Describe quality, moisture content, feeding suitability for cows/buffaloes...')}
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -730,7 +733,7 @@ export const FodderMarketplace = () => {
               {/* Price, Quantity, Unit, Date */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Price (₹) *</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">{t('farmer:fodder.priceRequired', 'Price (₹) *')}</label>
                   <input
                     type="number"
                     min="1"
@@ -743,7 +746,7 @@ export const FodderMarketplace = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Quantity *</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">{t('farmer:fodder.quantityRequired', 'Quantity *')}</label>
                   <input
                     type="number"
                     min="1"
@@ -756,22 +759,22 @@ export const FodderMarketplace = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Unit *</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">{t('farmer:fodder.unitRequired', 'Unit *')}</label>
                   <select
                     value={formData.quantityUnit}
                     onChange={(e) => setFormData({ ...formData, quantityUnit: e.target.value })}
                     className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-semibold"
                   >
                     <option value="kg">kg</option>
-                    <option value="quintal">quintal</option>
-                    <option value="ton">ton</option>
-                    <option value="bundle">bundle</option>
-                    <option value="acre">acre</option>
+                    <option value="quintal">{t('farmer:fodder.quintal', 'quintal')}</option>
+                    <option value="ton">{t('farmer:fodder.ton', 'ton')}</option>
+                    <option value="bundle">{t('farmer:fodder.bundle', 'bundle')}</option>
+                    <option value="acre">{t('farmer:fodder.acre', 'acre')}</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Available Date *</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">{t('farmer:fodder.availableDate', 'Available Date *')}</label>
                   <input
                     type="date"
                     required
@@ -785,16 +788,16 @@ export const FodderMarketplace = () => {
               {/* Location Information */}
               <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
                 <span className="text-xs font-bold text-slate-800 flex items-center">
-                  <MapPin className="w-3.5 h-3.5 text-emerald-600 mr-1" /> Location Information
+                  <MapPin className="w-3.5 h-3.5 text-emerald-600 mr-1" /> {t('farmer:fodder.locationInfo', 'Location Information')}
                 </span>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Village / Area *</label>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">{t('farmer:fodder.villageArea', 'Village / Area *')}</label>
                     <input
                       type="text"
                       required
-                      placeholder="e.g. Rampur Village"
+                      placeholder={t('farmer:fodder.villagePlaceholder', 'e.g. Rampur Village')}
                       value={formData.locationArea}
                       onChange={(e) => setFormData({ ...formData, locationArea: e.target.value })}
                       className="w-full p-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-800"
@@ -802,11 +805,11 @@ export const FodderMarketplace = () => {
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">City / Town *</label>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">{t('farmer:fodder.cityTown', 'City / Town *')}</label>
                     <input
                       type="text"
                       required
-                      placeholder="e.g. Anand"
+                      placeholder={t('farmer:fodder.cityPlaceholder', 'e.g. Anand')}
                       value={formData.locationCity}
                       onChange={(e) => setFormData({ ...formData, locationCity: e.target.value })}
                       className="w-full p-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-800"
@@ -817,10 +820,10 @@ export const FodderMarketplace = () => {
 
               {/* Contact Phone */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Contact Phone Number</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">{t('farmer:fodder.contactPhone', 'Contact Phone Number')}</label>
                 <input
                   type="text"
-                  placeholder="e.g. +91 9876543210"
+                  placeholder={t('farmer:fodder.phonePlaceholder', 'e.g. +91 9876543210')}
                   value={formData.contactPhone}
                   onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
                   className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800"
@@ -834,7 +837,7 @@ export const FodderMarketplace = () => {
                   onClick={() => setIsCreateModalOpen(false)}
                   className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-xl"
                 >
-                  Cancel
+                  {t('common:actions.cancel', 'Cancel')}
                 </button>
                 <button
                   type="submit"
@@ -844,10 +847,10 @@ export const FodderMarketplace = () => {
                   {submitting ? (
                     <>
                       <RefreshCw className="w-4 h-4 animate-spin" />
-                      <span>Saving Listing...</span>
+                      <span>{t('farmer:fodder.savingListing', 'Saving Listing...')}</span>
                     </>
                   ) : (
-                    <span>{editingListing ? 'Update Listing' : 'Publish Listing'}</span>
+                    <span>{editingListing ? t('farmer:fodder.updateListing', 'Update Listing') : t('farmer:fodder.publishListing', 'Publish Listing')}</span>
                   )}
                 </button>
               </div>
@@ -858,8 +861,8 @@ export const FodderMarketplace = () => {
 
       {/* FULL LISTING DETAIL & CONTACT MODAL */}
       {selectedDetailListing && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-slate-100 space-y-4 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-slate-100 space-y-4 my-auto max-h-[90vh] overflow-y-auto modal-animate">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
                 <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 font-extrabold text-[10px] rounded-full uppercase tracking-wider">
@@ -886,7 +889,7 @@ export const FodderMarketplace = () => {
               ) : (
                 <div className="text-center text-slate-400">
                   <Wheat className="w-12 h-12 mx-auto mb-1 text-slate-300" />
-                  <span className="text-xs font-bold">No Image Attached</span>
+                  <span className="text-xs font-bold">{t('farmer:fodder.noImageAttached', 'No Image Attached')}</span>
                 </div>
               )}
             </div>
@@ -894,32 +897,32 @@ export const FodderMarketplace = () => {
             {/* Details Grid */}
             <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs">
               <div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase block">Price</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase block">{t('common:labels.price', 'Price')}</span>
                 <span className="font-bold text-emerald-700 text-base font-mono">
                   ₹{selectedDetailListing.price} / {selectedDetailListing.quantityUnit}
                 </span>
               </div>
               <div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase block">Available Stock</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase block">{t('farmer:fodder.availableStock', 'Available Stock')}</span>
                 <span className="font-bold text-slate-800 text-sm">
                   {selectedDetailListing.quantity} {selectedDetailListing.quantityUnit}s
                 </span>
               </div>
               <div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase block">Available Date</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase block">{t('farmer:fodder.availableDate', 'Available Date *')}</span>
                 <span className="font-semibold text-slate-700">
                   {new Date(selectedDetailListing.availableDate).toLocaleDateString()}
                 </span>
               </div>
               <div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase block">Distance</span>
-                <span className="font-semibold text-slate-500">Distance unavailable</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase block">{t('farmer:fodder.distance', 'Distance')}</span>
+                <span className="font-semibold text-slate-500">{t('farmer:fodder.distanceUnavailable', 'Distance unavailable')}</span>
               </div>
             </div>
 
             {/* Description */}
             <div className="space-y-1 text-xs">
-              <span className="font-bold text-slate-800 block">Fodder Details & Quality:</span>
+              <span className="font-bold text-slate-800 block">{t('farmer:fodder.fodderDetailsQuality', 'Fodder Details & Quality:')}</span>
               <p className="text-slate-600 leading-relaxed bg-slate-50/50 p-3 rounded-xl border border-slate-100">
                 {selectedDetailListing.description}
               </p>
@@ -928,7 +931,7 @@ export const FodderMarketplace = () => {
             {/* Location */}
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1">
               <span className="font-bold text-slate-800 flex items-center">
-                <MapPin className="w-3.5 h-3.5 text-emerald-600 mr-1" /> Pickup Location:
+                <MapPin className="w-3.5 h-3.5 text-emerald-600 mr-1" /> {t('farmer:fodder.pickupLocation', 'Pickup Location:')}
               </span>
               <p className="text-slate-700 font-medium pl-4">
                 {selectedDetailListing.location?.area}, {selectedDetailListing.location?.city}
@@ -943,7 +946,7 @@ export const FodderMarketplace = () => {
                   <User className="w-5 h-5" />
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-emerald-800 uppercase block">Seller Farmer</span>
+                  <span className="text-[10px] font-bold text-emerald-800 uppercase block">{t('farmer:fodder.sellerFarmer', 'Seller Farmer')}</span>
                   <p className="text-sm font-bold text-slate-900">{selectedDetailListing.farmer?.name || 'Farmer Seller'}</p>
                   <p className="text-xs text-slate-600 font-mono">{selectedDetailListing.contactPhone || selectedDetailListing.farmer?.phone || 'Phone unavailable'}</p>
                 </div>
@@ -955,7 +958,7 @@ export const FodderMarketplace = () => {
                   className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center space-x-1.5"
                 >
                   <Phone className="w-3.5 h-3.5" />
-                  <span>Call Seller</span>
+                  <span>{t('farmer:fodder.callSeller', 'Call Seller')}</span>
                 </a>
               )}
             </div>
@@ -965,7 +968,7 @@ export const FodderMarketplace = () => {
                 onClick={() => setSelectedDetailListing(null)}
                 className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl"
               >
-                Close
+                {t('common:actions.close', 'Close')}
               </button>
             </div>
           </div>

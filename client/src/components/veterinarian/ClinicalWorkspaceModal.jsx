@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { getStatusLabel } from '../../i18n/statusMap';
 import { useAuth } from '../../context/AuthContext';
 import { vetRequestService } from '../../services/vetRequestService';
 import {
@@ -26,6 +28,7 @@ import {
 } from 'lucide-react';
 
 export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated }) => {
+  const { t } = useTranslation(['veterinarian', 'common']);
   const { token } = useAuth();
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'examination' | 'diagnosis' | 'prescription' | 'followup' | 'timeline'
 
@@ -214,9 +217,9 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <h2 className="text-base font-extrabold text-slate-900">Veterinary Clinical Case Workspace</h2>
+                <h2 className="text-base font-extrabold text-slate-900">{t('veterinarian:clinicalWorkspace.workspaceTitle', 'Veterinary Clinical Case Workspace')}</h2>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200 uppercase">
-                  {currentReq.status.replace('_', ' ')}
+                  {getStatusLabel(currentReq.status, t)}
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
@@ -230,11 +233,11 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
         <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 shrink-0">
           <div className="grid grid-cols-5 gap-1 text-center text-[11px]">
             {[
-              { id: 'accepted', label: '1. Accepted' },
-              { id: 'examination', label: '2. Exam' },
-              { id: 'diagnosed', label: '3. Diagnosis' },
-              { id: 'prescription_created', label: '4. Prescription' },
-              { id: 'completed', label: '5. Complete' }
+              { id: 'accepted', label: t('veterinarian:clinicalWorkspace.steps.accepted', '1. Accepted') },
+              { id: 'examination', label: t('veterinarian:clinicalWorkspace.steps.exam', '2. Exam') },
+              { id: 'diagnosed', label: t('veterinarian:clinicalWorkspace.steps.diagnosis', '3. Diagnosis') },
+              { id: 'prescription_created', label: t('veterinarian:clinicalWorkspace.steps.prescription', '4. Prescription') },
+              { id: 'completed', label: t('veterinarian:clinicalWorkspace.steps.complete', '5. Complete') }
             ].map(step => {
               const st = getStepStatus(step.id);
               return (
@@ -273,12 +276,12 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
         {/* Workspace Navigation Tabs */}
         <div className="flex items-center space-x-1 border-b border-slate-200 pb-2 overflow-x-auto shrink-0 scrollbar-none">
           {[
-            { id: 'overview', label: 'Overview & AI Screening', icon: Info },
-            { id: 'examination', label: 'Clinical Exam', icon: Activity },
-            { id: 'diagnosis', label: 'Final Diagnosis', icon: ShieldCheck },
-            { id: 'prescription', label: 'Prescription', icon: Pill },
-            { id: 'followup', label: 'Follow-Up & Close', icon: Calendar },
-            { id: 'timeline', label: 'Case Timeline', icon: Clock }
+            { id: 'overview', label: t('veterinarian:clinicalWorkspace.tabs.overview', 'Overview & AI Screening'), icon: Info },
+            { id: 'examination', label: t('veterinarian:clinicalWorkspace.tabs.exam', 'Clinical Exam'), icon: Activity },
+            { id: 'diagnosis', label: t('veterinarian:clinicalWorkspace.tabs.diagnosis', 'Final Diagnosis'), icon: ShieldCheck },
+            { id: 'prescription', label: t('veterinarian:clinicalWorkspace.tabs.prescription', 'Prescription'), icon: Pill },
+            { id: 'followup', label: t('veterinarian:clinicalWorkspace.tabs.followup', 'Follow-Up & Close'), icon: Calendar },
+            { id: 'timeline', label: t('veterinarian:clinicalWorkspace.tabs.timeline', 'Case Timeline'), icon: Clock }
           ].map(tab => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -308,10 +311,8 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
               <div className="p-4 bg-amber-50 border border-amber-300 rounded-2xl flex items-start space-x-3 text-amber-900 shadow-xs">
                 <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                 <div className="space-y-1 text-xs">
-                  <h4 className="font-extrabold text-amber-950">Preliminary AI Health Screening Disclaimer</h4>
-                  <p className="leading-relaxed">
-                    Artificial Intelligence screening is strictly a preliminary diagnostic aid. AI results must <strong>never</strong> be presented as the final diagnosis. As the licensed veterinarian, you are required to conduct clinical evaluation and enter your explicit <strong>Veterinarian Final Diagnosis</strong> in Step 3.
-                  </p>
+                  <h4 className="font-extrabold text-amber-950">{t('veterinarian:clinicalWorkspace.preliminaryAiDisclaimerTitle', 'Preliminary AI Health Screening Disclaimer')}</h4>
+                  <p className="leading-relaxed">{t('veterinarian:clinicalWorkspace.preliminaryAiDisclaimerBody', 'Artificial Intelligence screening is strictly a preliminary diagnostic aid. AI results must never be presented as the final diagnosis. As the licensed veterinarian, you are required to conduct clinical evaluation and enter your explicit diagnosis and treatment protocol.')}</p>
                 </div>
               </div>
 
@@ -321,7 +322,7 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
                 <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
                   <div className="flex items-center space-x-1.5 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
                     <User className="w-3.5 h-3.5 text-teal-600" />
-                    <span>Farmer Profile</span>
+                    <span>{t('veterinarian:clinicalWorkspace.farmerInfo', 'Farmer Profile')}</span>
                   </div>
                   <h3 className="text-sm font-extrabold text-slate-900">{currentReq.farmer?.name || 'Farmer'}</h3>
                   <div className="space-y-1 text-slate-600">
@@ -338,7 +339,7 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
                   </div>
                   {currentReq.farmerMessage && (
                     <div className="mt-2 p-2.5 bg-white border border-slate-200 rounded-xl italic text-slate-700">
-                      <strong>Message from Farmer:</strong> "{currentReq.farmerMessage}"
+                      <strong>{t('veterinarian:pendingCasesPage.farmerMessage', 'Message from Farmer:')}</strong> "{currentReq.farmerMessage}"
                     </div>
                   )}
                 </div>
@@ -346,18 +347,18 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
                 {/* Cattle Info Card */}
                 <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">Cattle Information</span>
+                    <span className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">{t('veterinarian:clinicalWorkspace.cattleInfo', 'Cattle Information')}</span>
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                       currentReq.cattle?.healthStatus === 'critical' ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-800'
                     }`}>
-                      {currentReq.cattle?.healthStatus?.replace('_', ' ') || 'Registered Animal'}
+                      {getStatusLabel(currentReq.cattle?.healthStatus || 'healthy', t)}
                     </span>
                   </div>
-                  <h3 className="text-sm font-extrabold text-slate-900">Tag: {currentReq.cattle?.nameTag || 'N/A'}</h3>
+                  <h3 className="text-sm font-extrabold text-slate-900">{t('farmer:cattle.nameTag', 'Tag')}: {currentReq.cattle?.nameTag || 'N/A'}</h3>
                   <div className="grid grid-cols-2 gap-2 text-slate-600">
-                    <p>Breed: <strong className="text-slate-800">{currentReq.cattle?.breed || 'N/A'}</strong></p>
-                    <p>Gender: <strong className="text-slate-800">{currentReq.cattle?.gender || 'N/A'}</strong></p>
-                    <p>Age: <strong className="text-slate-800">{currentReq.cattle?.ageYears ? `${currentReq.cattle.ageYears} yrs` : 'N/A'}</strong></p>
+                    <p>{t('farmer:cattle.breed', 'Breed')}: <strong className="text-slate-800">{currentReq.cattle?.breed || 'N/A'}</strong></p>
+                    <p>{t('farmer:cattle.gender', 'Gender')}: <strong className="text-slate-800">{currentReq.cattle?.gender || 'N/A'}</strong></p>
+                    <p>{t('farmer:cattle.ageYears', 'Age')}: <strong className="text-slate-800">{currentReq.cattle?.ageYears ? `${currentReq.cattle.ageYears} yrs` : 'N/A'}</strong></p>
                   </div>
                 </div>
               </div>
@@ -367,10 +368,10 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <span className="p-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold">AI</span>
-                    <h3 className="text-sm font-bold text-blue-950">AI Diagnostic Preliminary Assessment</h3>
+                    <h3 className="text-sm font-bold text-blue-950">{t('veterinarian:dashboard.aiPreliminary', 'AI Diagnostic Preliminary Assessment')}</h3>
                   </div>
                   <span className="text-xs font-bold text-blue-800 bg-blue-100 px-3 py-1 rounded-full">
-                    Confidence: {currentReq.diseaseScan?.confidence || 85}%
+                    {t('farmer:aiScanner.confidence', 'Confidence')}: {currentReq.diseaseScan?.confidence || 85}%
                   </span>
                 </div>
 
@@ -393,21 +394,21 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
                   {/* AI Finding details */}
                   <div className="md:col-span-2 space-y-2">
                     <div className="p-3 bg-white rounded-xl border border-blue-200 space-y-1">
-                      <span className="text-[10px] font-extrabold text-blue-600 uppercase tracking-wider block">AI Suggested Preliminary Condition</span>
+                      <span className="text-[10px] font-extrabold text-blue-600 uppercase tracking-wider block">{t('farmer:aiScanner.detectedCondition', 'AI Suggested Preliminary Condition')}</span>
                       <p className="text-sm font-extrabold text-slate-900">{currentReq.aiCondition || currentReq.diseaseScan?.detectedCondition}</p>
                       <p className="text-slate-600">
-                        Risk Level: <strong className={currentReq.riskLevel === 'High' ? 'text-red-600' : 'text-amber-700'}>{currentReq.riskLevel || 'Moderate'}</strong>
+                        {t('common:status.risk', 'Risk Level')}: <strong className={currentReq.riskLevel === 'High' ? 'text-red-600' : 'text-amber-700'}>{currentReq.riskLevel || 'Moderate'}</strong>
                       </p>
                     </div>
 
                     <div className="p-3 bg-white rounded-xl border border-blue-200 text-slate-700 space-y-1">
-                      <strong className="text-slate-900 block">Submitted Symptoms:</strong>
-                      <p>{currentReq.symptoms || currentReq.diseaseScan?.symptoms || 'No specific symptoms submitted.'}</p>
+                      <strong className="text-slate-900 block">{t('farmer:aiScanner.describeSymptoms', 'Submitted Symptoms')}:</strong>
+                      <p>{currentReq.symptoms || currentReq.diseaseScan?.symptoms || t('common:status.none', 'No specific symptoms submitted.')}</p>
                     </div>
 
                     {currentReq.diseaseScan?.recommendations && (
                       <div className="p-3 bg-white rounded-xl border border-blue-200 text-slate-700 space-y-1">
-                        <strong className="text-slate-900 block">AI Initial Suggestions:</strong>
+                        <strong className="text-slate-900 block">{t('farmer:aiScanner.recommendations', 'AI Initial Suggestions')}:</strong>
                         <p>{currentReq.diseaseScan.recommendations}</p>
                       </div>
                     )}
@@ -417,12 +418,12 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
 
               {/* Action Prompt */}
               <div className="flex items-center justify-between pt-2">
-                <p className="text-xs text-slate-500">Ready to examine the cattle?</p>
+                <p className="text-xs text-slate-500">{t('veterinarian:clinicalWorkspace.proceedToExam', 'Ready to examine the cattle?')}</p>
                 <button
                   onClick={() => setActiveTab('examination')}
                   className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center space-x-1.5"
                 >
-                  <span>Proceed to Clinical Exam</span>
+                  <span>{t('veterinarian:clinicalWorkspace.proceedToExam', 'Proceed to Clinical Exam')}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -435,19 +436,19 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
               <div className="p-4 bg-teal-50/60 border border-teal-200 rounded-2xl space-y-1">
                 <h3 className="font-extrabold text-teal-950 text-sm flex items-center space-x-1.5">
                   <Activity className="w-4 h-4 text-teal-600" />
-                  <span>Step 2 — Record Clinical Examination Findings</span>
+                  <span>{t('veterinarian:clinicalWorkspace.step2Title', 'Step 2 — Record Clinical Examination Findings')}</span>
                 </h3>
                 <p className="text-slate-600">
-                  Document your physical observations, vital signs, temperature, and visible cattle symptoms.
+                  {t('veterinarian:clinicalWorkspace.step2Subtitle', 'Document your physical observations, vital signs, temperature, and visible cattle symptoms.')}
                 </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Body Temperature (Optional)</label>
+                  <label className="block font-semibold text-slate-700 mb-1">{t('veterinarian:clinicalWorkspace.temperature', 'Body Temperature (Optional)')}</label>
                   <input
                     type="text"
-                    placeholder="e.g. 102.5 °F (Normal is ~101.5 °F)"
+                    placeholder={t('veterinarian:clinicalWorkspace.tempPlaceholder', 'e.g. 102.5 °F (Normal is ~101.5 °F)')}
                     value={examForm.temperature}
                     onChange={(e) => setExamForm(prev => ({ ...prev, temperature: e.target.value }))}
                     className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-teal-500 outline-none"
@@ -455,25 +456,25 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Appetite / Feeding State</label>
+                  <label className="block font-semibold text-slate-700 mb-1">{t('veterinarian:clinicalWorkspace.appetite', 'Appetite / Feeding State')}</label>
                   <select
                     value={examForm.appetite}
                     onChange={(e) => setExamForm(prev => ({ ...prev, appetite: e.target.value }))}
                     className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-teal-500 outline-none"
                   >
-                    <option value="Normal">Normal Appetite</option>
-                    <option value="Reduced">Reduced Feeding Intake</option>
-                    <option value="Anorexic">Complete Loss of Appetite / Anorexic</option>
-                    <option value="Weak">Weak / Lethargic</option>
+                    <option value="Normal">{t('common:status.normal', 'Normal Appetite')}</option>
+                    <option value="Reduced">{t('common:status.reduced', 'Reduced Feeding Intake')}</option>
+                    <option value="Anorexic">{t('common:status.anorexic', 'Complete Loss of Appetite / Anorexic')}</option>
+                    <option value="Weak">{t('common:status.weak', 'Weak / Lethargic')}</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Physical Symptoms / Clinical Findings</label>
+                <label className="block font-semibold text-slate-700 mb-1">{t('veterinarian:clinicalWorkspace.physicalSymptoms', 'Physical Symptoms / Clinical Findings')}</label>
                 <textarea
                   rows="3"
-                  placeholder="Record visible physical signs e.g., skin lesions, udder swelling, nasal discharge, fever, lameness..."
+                  placeholder={t('veterinarian:clinicalWorkspace.physicalSymptomsPlaceholder', 'Record visible physical signs e.g., skin lesions, udder swelling, nasal discharge, fever, lameness...')}
                   value={examForm.physicalSymptoms}
                   onChange={(e) => setExamForm(prev => ({ ...prev, physicalSymptoms: e.target.value }))}
                   className="w-full p-3 bg-white border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-teal-500 outline-none"
@@ -481,10 +482,10 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">General Clinical Observations</label>
+                <label className="block font-semibold text-slate-700 mb-1">{t('veterinarian:clinicalWorkspace.observationsNotes', 'General Clinical Observations')}</label>
                 <textarea
                   rows="3"
-                  placeholder="Detail overall health condition, hydration status, rumination activity, behavior..."
+                  placeholder={t('veterinarian:clinicalWorkspace.observationsPlaceholder', 'Detail overall health condition, hydration status, rumination activity, behavior...')}
                   value={examForm.observations}
                   onChange={(e) => setExamForm(prev => ({ ...prev, observations: e.target.value }))}
                   className="w-full p-3 bg-white border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-teal-500 outline-none"
@@ -492,10 +493,10 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Additional Examination Notes</label>
+                <label className="block font-semibold text-slate-700 mb-1">{t('common:fields.notes', 'Additional Examination Notes')}</label>
                 <textarea
                   rows="2"
-                  placeholder="Any other relevant details or history provided by the farmer..."
+                  placeholder={t('veterinarian:clinicalWorkspace.additionalNotesPlaceholder', 'Any other relevant details or history provided by the farmer...')}
                   value={examForm.additionalNotes}
                   onChange={(e) => setExamForm(prev => ({ ...prev, additionalNotes: e.target.value }))}
                   className="w-full p-3 bg-white border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-teal-500 outline-none"
@@ -508,7 +509,7 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
                   onClick={() => setActiveTab('overview')}
                   className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition"
                 >
-                  Back
+                  {t('common:actions.back', 'Back')}
                 </button>
                 <div className="flex items-center space-x-2">
                   <button
@@ -516,14 +517,14 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
                     disabled={submitting}
                     className="px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl shadow-xs transition disabled:opacity-50 flex items-center space-x-1.5"
                   >
-                    <span>{submitting ? 'Saving...' : 'Save Examination Findings'}</span>
+                    <span>{submitting ? t('common:status.loading', 'Saving...') : t('veterinarian:clinicalWorkspace.saveExamFindings', 'Save Examination Findings')}</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setActiveTab('diagnosis')}
                     className="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl shadow-xs transition flex items-center space-x-1"
                   >
-                    <span>Next: Final Diagnosis</span>
+                    <span>{t('veterinarian:clinicalWorkspace.nextDiagnosis', 'Next: Final Diagnosis')}</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -537,20 +538,20 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
               <div className="p-4 bg-emerald-50/70 border border-emerald-300 rounded-2xl space-y-1">
                 <div className="flex items-center space-x-2 text-emerald-900">
                   <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
-                  <h3 className="font-extrabold text-sm">Step 3 — Veterinarian Final Diagnosis</h3>
+                  <h3 className="font-extrabold text-sm">{t('veterinarian:clinicalWorkspace.step3Title', 'Step 3 — Veterinarian Final Diagnosis')}</h3>
                 </div>
                 <p className="text-slate-600">
-                  As the attending doctor, confirm and record your authoritative clinical diagnosis. This will overwrite preliminary AI estimates.
+                  {t('veterinarian:clinicalWorkspace.step3Subtitle', 'As the attending doctor, confirm and record your authoritative clinical diagnosis. This will overwrite preliminary AI estimates.')}
                 </p>
               </div>
 
               <div>
                 <label className="block font-extrabold text-slate-900 mb-1">
-                  Veterinarian Final Diagnosis <span className="text-red-500">*</span>
+                  {t('veterinarian:clinicalWorkspace.diagnosisTitle', 'Veterinarian Final Diagnosis')} <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Acute Mastitis (Left Hind Quarter), Lumpy Skin Disease, Foot & Mouth Disease..."
+                  placeholder={t('veterinarian:clinicalWorkspace.diagnosisPlaceholder', 'e.g. Acute Mastitis (Left Hind Quarter), Lumpy Skin Disease, Foot & Mouth Disease...')}
                   value={diagnosisForm.diagnosis}
                   onChange={(e) => setDiagnosisForm(prev => ({ ...prev, diagnosis: e.target.value }))}
                   className="w-full p-3 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none"
@@ -559,24 +560,24 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Clinical Condition Severity</label>
+                <label className="block font-semibold text-slate-700 mb-1">{t('veterinarian:clinicalWorkspace.conditionSeverity', 'Clinical Condition Severity')}</label>
                 <select
                   value={diagnosisForm.severity}
                   onChange={(e) => setDiagnosisForm(prev => ({ ...prev, severity: e.target.value }))}
                   className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs font-bold focus:ring-2 focus:ring-emerald-500 outline-none"
                 >
-                  <option value="Mild">Mild Condition</option>
-                  <option value="Moderate">Moderate Condition</option>
-                  <option value="Severe">Severe Condition</option>
-                  <option value="Critical">Critical Emergency</option>
+                  <option value="Mild">{t('common:status.mild', 'Mild Condition')}</option>
+                  <option value="Moderate">{t('common:status.moderate', 'Moderate Condition')}</option>
+                  <option value="Severe">{t('common:status.severe', 'Severe Condition')}</option>
+                  <option value="Critical">{t('common:status.critical', 'Critical Emergency')}</option>
                 </select>
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Diagnosis Notes & Clinical Findings</label>
+                <label className="block font-semibold text-slate-700 mb-1">{t('veterinarian:clinicalWorkspace.observationsNotes', 'Diagnosis Notes & Clinical Findings')}</label>
                 <textarea
                   rows="3"
-                  placeholder="Explain why this diagnosis was reached, pathological observations, laboratory findings..."
+                  placeholder={t('veterinarian:clinicalWorkspace.diagnosisNotesPlaceholder', 'Explain why this diagnosis was reached, pathological observations, laboratory findings...')}
                   value={diagnosisForm.notes}
                   onChange={(e) => setDiagnosisForm(prev => ({ ...prev, notes: e.target.value }))}
                   className="w-full p-3 bg-white border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 outline-none"
@@ -584,10 +585,10 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Clinical Treatment Advice</label>
+                <label className="block font-semibold text-slate-700 mb-1">{t('veterinarian:clinicalWorkspace.treatmentProtocol', 'Clinical Treatment Advice')}</label>
                 <textarea
                   rows="3"
-                  placeholder="Outline clinical treatment protocol, injection procedures, isolation requirements..."
+                  placeholder={t('veterinarian:clinicalWorkspace.treatmentAdvicePlaceholder', 'Outline clinical treatment protocol, injection procedures, isolation requirements...')}
                   value={diagnosisForm.treatmentAdvice}
                   onChange={(e) => setDiagnosisForm(prev => ({ ...prev, treatmentAdvice: e.target.value }))}
                   className="w-full p-3 bg-white border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 outline-none"
@@ -595,10 +596,10 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Additional Advice for Farmer</label>
+                <label className="block font-semibold text-slate-700 mb-1">{t('veterinarian:clinicalWorkspace.careAdviceForFarmer', 'Additional Advice for Farmer')}</label>
                 <textarea
                   rows="2"
-                  placeholder="Sanitation advice, milking hygiene, calf segregation, diet adjustments..."
+                  placeholder={t('veterinarian:clinicalWorkspace.careAdvicePlaceholder', 'Sanitation advice, milking hygiene, calf segregation, diet adjustments...')}
                   value={diagnosisForm.additionalAdvice}
                   onChange={(e) => setDiagnosisForm(prev => ({ ...prev, additionalAdvice: e.target.value }))}
                   className="w-full p-3 bg-white border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 outline-none"
@@ -611,7 +612,7 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
                   onClick={() => setActiveTab('examination')}
                   className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition"
                 >
-                  Back
+                  {t('common:actions.back', 'Back')}
                 </button>
                 <div className="flex items-center space-x-2">
                   <button
@@ -620,14 +621,14 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
                     className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-xs transition disabled:opacity-50 flex items-center space-x-1.5"
                   >
                     <ShieldCheck className="w-4 h-4" />
-                    <span>{submitting ? 'Confirming...' : 'Confirm Final Diagnosis'}</span>
+                    <span>{submitting ? t('common:status.loading', 'Confirming...') : t('veterinarian:clinicalWorkspace.confirmDiagnosis', 'Confirm Final Diagnosis')}</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setActiveTab('prescription')}
                     className="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl shadow-xs transition flex items-center space-x-1"
                   >
-                    <span>Next: Prescription</span>
+                    <span>{t('veterinarian:clinicalWorkspace.nextPrescription', 'Next: Prescription')}</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -641,24 +642,24 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
               <div className="p-4 bg-purple-50/70 border border-purple-200 rounded-2xl space-y-1">
                 <div className="flex items-center space-x-2 text-purple-950">
                   <Pill className="w-5 h-5 text-purple-600 shrink-0" />
-                  <h3 className="font-extrabold text-sm">Step 4 — Issue Veterinary Prescription</h3>
+                  <h3 className="font-extrabold text-sm">{t('veterinarian:clinicalWorkspace.step4Title', 'Step 4 — Issue Veterinary Prescription')}</h3>
                 </div>
                 <p className="text-slate-600">
-                  Add prescribed medicines, dosages, frequencies, and administration instructions for the farmer.
+                  {t('veterinarian:clinicalWorkspace.step4Subtitle', 'Add prescribed medicines, dosages, frequencies, and administration instructions for the farmer.')}
                 </p>
               </div>
 
               {/* Medicines Table */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="font-extrabold text-slate-900">Prescribed Medicines List</label>
+                  <label className="font-extrabold text-slate-900">{t('veterinarian:clinicalWorkspace.medicinesList', 'Prescribed Medicines List')}</label>
                   <button
                     type="button"
                     onClick={handleAddMedicineRow}
                     className="px-3 py-1.5 bg-purple-100 hover:bg-purple-200 text-purple-800 font-bold rounded-xl transition flex items-center space-x-1"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    <span>Add Medicine</span>
+                    <span>{t('veterinarian:clinicalWorkspace.addMedicineBtn', 'Add Medicine')}</span>
                   </button>
                 </div>
 
@@ -668,7 +669,7 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
                     className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 relative group"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-extrabold text-slate-600">Item #{idx + 1}</span>
+                      <span className="font-extrabold text-slate-600">{t('common:status.item', 'Item')} #{idx + 1}</span>
                       {prescriptionForm.medicines.length > 1 && (
                         <button
                           type="button"
@@ -684,7 +685,7 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
                       <div className="sm:col-span-2">
                         <input
                           type="text"
-                          placeholder="Medicine Name (e.g. Amoxicillin 500mg)"
+                          placeholder={t('veterinarian:clinicalWorkspace.medicineNamePlaceholder', 'Medicine Name (e.g. Amoxicillin 500mg)')}
                           value={med.medicineName}
                           onChange={(e) => handleMedicineChange(idx, 'medicineName', e.target.value)}
                           className="w-full p-2 bg-white border border-slate-300 rounded-lg text-xs font-semibold focus:ring-2 focus:ring-purple-500 outline-none"
@@ -693,7 +694,7 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
                       <div>
                         <input
                           type="text"
-                          placeholder="Dosage (e.g. 10 ml)"
+                          placeholder={t('veterinarian:clinicalWorkspace.dosagePlaceholder', 'Dosage (e.g. 10 ml)')}
                           value={med.dosage}
                           onChange={(e) => handleMedicineChange(idx, 'dosage', e.target.value)}
                           className="w-full p-2 bg-white border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-purple-500 outline-none"
@@ -702,7 +703,7 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
                       <div>
                         <input
                           type="text"
-                          placeholder="Frequency (e.g. Twice Daily)"
+                          placeholder={t('veterinarian:clinicalWorkspace.frequencyPlaceholder', 'Frequency (e.g. Twice Daily)')}
                           value={med.frequency}
                           onChange={(e) => handleMedicineChange(idx, 'frequency', e.target.value)}
                           className="w-full p-2 bg-white border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-purple-500 outline-none"
@@ -713,14 +714,14 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <input
                         type="text"
-                        placeholder="Duration (e.g. 5 Days)"
+                        placeholder={t('veterinarian:clinicalWorkspace.durationPlaceholder', 'Duration (e.g. 5 Days)')}
                         value={med.duration}
                         onChange={(e) => handleMedicineChange(idx, 'duration', e.target.value)}
                         className="w-full p-2 bg-white border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-purple-500 outline-none"
                       />
                       <input
                         type="text"
-                        placeholder="Instructions (e.g. Administer after milking)"
+                        placeholder={t('veterinarian:clinicalWorkspace.instructionsPlaceholder', 'Instructions (e.g. Administer after milking)')}
                         value={med.instructions}
                         onChange={(e) => handleMedicineChange(idx, 'instructions', e.target.value)}
                         className="w-full p-2 bg-white border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-purple-500 outline-none"
@@ -731,10 +732,10 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">General Treatment & Care Instructions</label>
+                <label className="block font-semibold text-slate-700 mb-1">{t('veterinarian:clinicalWorkspace.generalInstructions', 'General Treatment & Care Instructions')}</label>
                 <textarea
                   rows="3"
-                  placeholder="Detail instructions e.g. apply teat dip after milking, keep animal clean, complete full antibiotic course..."
+                  placeholder={t('veterinarian:clinicalWorkspace.generalInstructionsPlaceholder', 'Detail instructions e.g. apply teat dip after milking, keep animal clean, complete full antibiotic course...')}
                   value={prescriptionForm.generalInstructions}
                   onChange={(e) => setPrescriptionForm(prev => ({ ...prev, generalInstructions: e.target.value }))}
                   className="w-full p-3 bg-white border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-purple-500 outline-none"
@@ -742,10 +743,10 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Dietary & Nutrition Advice</label>
+                <label className="block font-semibold text-slate-700 mb-1">{t('veterinarian:clinicalWorkspace.dietaryAdvice', 'Dietary & Nutrition Advice')}</label>
                 <textarea
                   rows="2"
-                  placeholder="Feed modifications, fresh water intake, mineral mixture supplements..."
+                  placeholder={t('veterinarian:clinicalWorkspace.dietaryAdvicePlaceholder', 'Feed modifications, fresh water intake, mineral mixture supplements...')}
                   value={prescriptionForm.dietaryAdvice}
                   onChange={(e) => setPrescriptionForm(prev => ({ ...prev, dietaryAdvice: e.target.value }))}
                   className="w-full p-3 bg-white border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-purple-500 outline-none"
@@ -758,7 +759,7 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
                   onClick={() => setActiveTab('diagnosis')}
                   className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition"
                 >
-                  Back
+                  {t('common:actions.back', 'Back')}
                 </button>
                 <div className="flex items-center space-x-2">
                   <button
@@ -767,14 +768,14 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
                     className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-xs transition disabled:opacity-50 flex items-center space-x-1.5"
                   >
                     <Pill className="w-4 h-4" />
-                    <span>{submitting ? 'Saving...' : 'Save & Issue Prescription'}</span>
+                    <span>{submitting ? t('common:status.loading', 'Saving...') : t('veterinarian:clinicalWorkspace.saveIssuePrescription', 'Save & Issue Prescription')}</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setActiveTab('followup')}
                     className="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl shadow-xs transition flex items-center space-x-1"
                   >
-                    <span>Next: Follow-Up</span>
+                    <span>{t('veterinarian:clinicalWorkspace.nextFollowUp', 'Next: Follow-Up')}</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -788,10 +789,10 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
               <div className="p-4 bg-blue-50/70 border border-blue-200 rounded-2xl space-y-1">
                 <div className="flex items-center space-x-2 text-blue-950">
                   <Calendar className="w-5 h-5 text-blue-600 shrink-0" />
-                  <h3 className="font-extrabold text-sm">Step 5 — Follow-Up Advice & Case Closure</h3>
+                  <h3 className="font-extrabold text-sm">{t('veterinarian:clinicalWorkspace.step5Title', 'Step 5 — Follow-Up Advice & Case Closure')}</h3>
                 </div>
                 <p className="text-slate-600">
-                  Schedule an optional follow-up date and mark the clinical consultation as complete.
+                  {t('veterinarian:clinicalWorkspace.step5Subtitle', 'Schedule an optional follow-up date and mark the clinical consultation as complete.')}
                 </p>
               </div>
 
@@ -805,13 +806,13 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
                     className="w-4 h-4 text-teal-600 rounded border-slate-300 focus:ring-teal-500"
                   />
                   <label htmlFor="followup-needed" className="font-bold text-slate-900 cursor-pointer">
-                    Follow-up examination required for this cattle
+                    {t('veterinarian:clinicalWorkspace.followUpRequired', 'Follow-up examination required for this cattle')}
                   </label>
                 </div>
 
                 {followUpForm.required && (
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">Recommended Follow-Up Date</label>
+                    <label className="block font-semibold text-slate-700 mb-1">{t('veterinarian:clinicalWorkspace.followUpDate', 'Recommended Follow-Up Date')}</label>
                     <input
                       type="date"
                       value={followUpForm.date}
@@ -822,10 +823,10 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
                 )}
 
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Follow-Up Instructions for Farmer</label>
+                  <label className="block font-semibold text-slate-700 mb-1">{t('veterinarian:clinicalWorkspace.followUpInstructions', 'Follow-Up Instructions for Farmer')}</label>
                   <textarea
                     rows="3"
-                    placeholder="e.g. Schedule check-up if fever persists after 3 days, monitor milk yield recovery..."
+                    placeholder={t('veterinarian:clinicalWorkspace.followUpPlaceholder', 'e.g. Schedule check-up if fever persists after 3 days, monitor milk yield recovery...')}
                     value={followUpForm.instructions}
                     onChange={(e) => setFollowUpForm(prev => ({ ...prev, instructions: e.target.value }))}
                     className="w-full p-3 bg-white border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-teal-500 outline-none"
@@ -839,7 +840,7 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
                   onClick={() => setActiveTab('prescription')}
                   className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition"
                 >
-                  Back
+                  {t('common:actions.back', 'Back')}
                 </button>
                 <div className="flex items-center space-x-2">
                   <button
@@ -848,7 +849,7 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
                     disabled={submitting}
                     className="px-4 py-2.5 bg-slate-700 hover:bg-slate-800 text-white font-bold rounded-xl shadow-xs transition disabled:opacity-50"
                   >
-                    <span>Save Follow-Up Advice</span>
+                    <span>{submitting ? t('common:status.loading', 'Saving...') : t('veterinarian:clinicalWorkspace.saveFollowUpBtn', 'Save Follow-Up Advice')}</span>
                   </button>
                   <button
                     type="button"
@@ -857,7 +858,7 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
                     className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition disabled:opacity-50 flex items-center space-x-1.5"
                   >
                     <CheckCircle2 className="w-4 h-4" />
-                    <span>{submitting ? 'Closing...' : 'Complete Case & Close'}</span>
+                    <span>{submitting ? t('common:status.loading', 'Closing...') : t('veterinarian:clinicalWorkspace.completeCaseClose', 'Complete Case & Close')}</span>
                   </button>
                 </div>
               </div>
@@ -870,10 +871,10 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-1">
                 <h3 className="font-extrabold text-slate-900 text-sm flex items-center space-x-1.5">
                   <Clock className="w-4 h-4 text-teal-600" />
-                  <span>Clinical Progression & Referral Timeline</span>
+                  <span>{t('veterinarian:clinicalWorkspace.timelineTitle', 'Clinical Progression & Referral Timeline')}</span>
                 </h3>
                 <p className="text-slate-500">
-                  Audit log of case creation, doctor assignment, referral history, examination, diagnosis, and prescription.
+                  {t('veterinarian:clinicalWorkspace.timelineSubtitle', 'Audit log of case creation, doctor assignment, referral history, examination, diagnosis, and prescription.')}
                 </p>
               </div>
 
@@ -882,7 +883,7 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
                 <div className="p-4 bg-indigo-50/80 border border-indigo-200 rounded-2xl space-y-2">
                   <h4 className="font-extrabold text-indigo-950 flex items-center space-x-1.5">
                     <RotateCw className="w-4 h-4 text-indigo-600" />
-                    <span>Referral / Escalation History</span>
+                    <span>{t('veterinarian:clinicalWorkspace.escalationHistoryTitle', 'Referral / Escalation History')}</span>
                   </h4>
                   <div className="space-y-2">
                     {currentReq.escalationHistory.map((item, i) => (

@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+import { getStatusLabel } from '../../i18n/statusMap';
 import { useAuth } from '../../context/AuthContext';
 import { dairyFarmerService } from '../../services/dairyFarmerService';
 import { PageHeader } from '../../components/common/PageHeader';
@@ -7,6 +9,7 @@ import { EmptyState } from '../../components/common/EmptyState';
 import { Search, UserPlus, Users, CheckCircle2, Clock, UserMinus } from 'lucide-react';
 
 export const ConnectedFarmers = () => {
+  const { t } = useTranslation(['dairyOwner', 'common']);
   const { token } = useAuth();
 
   const [searchPhone, setSearchPhone] = useState('');
@@ -94,32 +97,32 @@ export const ConnectedFarmers = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Connected Farmers"
-        description="Search, connect, and manage farmers registered under your dairy operation."
-        breadcrumbs={['Home', 'Dairy Console', 'Connected Farmers']}
+        title={t('dairyOwner:farmers.title', 'Connected Farmers')}
+        description={t('dairyOwner:farmers.subtitle', 'Search, connect, and manage farmers registered under your dairy operation.')}
+        breadcrumbs={[t('common:nav.home', 'Home'), t('common:roles.dairyOwner', 'Dairy Owner'), t('dairyOwner:farmers.title', 'Connected Farmers')]}
       />
 
       {error && (
         <div className="p-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg flex justify-between items-center">
           <span>{error}</span>
-          <button onClick={() => setError('')} className="text-red-500 hover:text-red-800 font-bold text-xs">Dismiss</button>
+          <button onClick={() => setError('')} className="text-red-500 hover:text-red-800 font-bold text-xs">{t('common:actions.dismiss', 'Dismiss')}</button>
         </div>
       )}
 
       {successMsg && (
         <div className="p-4 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg flex justify-between items-center">
           <span>{successMsg}</span>
-          <button onClick={() => setSuccessMsg('')} className="text-green-500 hover:text-green-800 font-bold text-xs">Dismiss</button>
+          <button onClick={() => setSuccessMsg('')} className="text-green-500 hover:text-green-800 font-bold text-xs">{t('common:actions.dismiss', 'Dismiss')}</button>
         </div>
       )}
 
       {/* Step 1: Search & Add Farmer */}
-      <SectionCard title="Add / Connect New Farmer" subtitle="Search for registered farmers using their 10-digit mobile number">
+      <SectionCard title={t('dairyOwner:farmersPage.searchFarmerTitle', 'Add / Connect New Farmer')} subtitle={t('dairyOwner:farmers.subtitle', 'Search for registered farmers using their 10-digit mobile number')}>
         <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3 max-w-xl">
           <div className="relative flex-1">
             <input
               type="text"
-              placeholder="Enter 10-digit farmer mobile number"
+              placeholder={t('dairyOwner:farmersPage.searchPhonePlaceholder', 'Enter 10-digit farmer mobile number')}
               value={searchPhone}
               onChange={(e) => setSearchPhone(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-800 focus:ring-2 focus:ring-blue-500 outline-none text-sm"
@@ -133,7 +136,7 @@ export const ConnectedFarmers = () => {
             className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-lg shadow-xs transition disabled:opacity-50 flex items-center justify-center space-x-2"
           >
             <Search className="w-4 h-4" />
-            <span>{searchLoading ? 'Searching...' : 'Search Farmer'}</span>
+            <span>{searchLoading ? t('dairyOwner:farmersPage.searching', 'Searching...') : t('dairyOwner:farmersPage.searchBtn', 'Search Farmer')}</span>
           </button>
         </form>
 
@@ -147,7 +150,7 @@ export const ConnectedFarmers = () => {
         {foundFarmer && (
           <div className="mt-4 p-4 bg-blue-50/60 border border-blue-200 rounded-lg max-w-xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <span className="text-xs text-blue-600 font-bold uppercase tracking-wider block">Farmer Found</span>
+              <span className="text-xs text-blue-600 font-bold uppercase tracking-wider block">{t('dairyOwner:farmersPage.farmerFound', 'Farmer Found')}</span>
               <h4 className="text-base font-bold text-slate-900">{foundFarmer.name}</h4>
               <p className="text-xs text-slate-600 font-mono">Mobile: {foundFarmer.phone}</p>
             </div>
@@ -157,7 +160,7 @@ export const ConnectedFarmers = () => {
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-xs transition disabled:opacity-50 flex items-center justify-center space-x-1.5"
             >
               <UserPlus className="w-4 h-4" />
-              <span>{actionLoading ? 'Sending...' : 'Send Connection Request'}</span>
+              <span>{actionLoading ? t('common:status.loading', 'Sending...') : t('dairyOwner:farmersPage.sendRequest', 'Send Connection Request')}</span>
             </button>
           </div>
         )}
@@ -167,15 +170,15 @@ export const ConnectedFarmers = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Active Farmers List */}
         <SectionCard
-          title={`Active Farmers (${activeConnections.length})`}
-          subtitle="Farmers currently associated with your dairy"
+          title={t('dairyOwner:farmersPage.activeFarmersTab', { count: activeConnections.length, defaultValue: `Active Farmers (${activeConnections.length})` })}
+          subtitle={t('dairyOwner:farmers.activeList', 'Farmers currently associated with your dairy')}
         >
           {loading ? (
-            <div className="py-8 text-center text-slate-500 text-xs">Loading farmers...</div>
+            <div className="py-8 text-center text-slate-500 text-xs">{t('dairyOwner:farmersPage.loadingFarmers', 'Loading farmers...')}</div>
           ) : activeConnections.length === 0 ? (
             <EmptyState
-              title="No Active Farmers Connected"
-              description="Use the search box above to send connection requests to farmers."
+              title={t('dairyOwner:farmersPage.noActive', 'No Active Farmers Connected')}
+              description={t('dairyOwner:farmers.noActive', 'Use the search box above to send connection requests to farmers.')}
               icon={Users}
             />
           ) : (
@@ -196,12 +199,12 @@ export const ConnectedFarmers = () => {
                   </div>
                   <div className="flex items-center space-x-2">
                     <span className="text-[11px] font-semibold px-2 py-0.5 bg-green-100 text-green-800 rounded flex items-center">
-                      <CheckCircle2 className="w-3 h-3 mr-1 text-green-600" /> Active
+                      <CheckCircle2 className="w-3 h-3 mr-1 text-green-600" /> {getStatusLabel('active', t)}
                     </span>
                     <button
                       onClick={() => handleDisconnect(item._id)}
                       disabled={actionLoading}
-                      title="Disconnect Relationship"
+                      title={t('dairyOwner:farmers.disconnectTooltip', 'Disconnect Relationship')}
                       className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
                     >
                       <UserMinus className="w-4 h-4" />
@@ -215,15 +218,15 @@ export const ConnectedFarmers = () => {
 
         {/* Pending Requests List */}
         <SectionCard
-          title={`Pending Requests (${pendingConnections.length})`}
-          subtitle="Connection requests waiting for farmer approval"
+          title={t('dairyOwner:farmersPage.pendingRequestsTab', { count: pendingConnections.length, defaultValue: `Pending Requests (${pendingConnections.length})` })}
+          subtitle={t('dairyOwner:farmers.pendingRequests', 'Connection requests waiting for farmer approval')}
         >
           {loading ? (
-            <div className="py-8 text-center text-slate-500 text-xs">Loading requests...</div>
+            <div className="py-8 text-center text-slate-500 text-xs">{t('common:status.loading', 'Loading requests...')}</div>
           ) : pendingConnections.length === 0 ? (
             <EmptyState
-              title="No Pending Connection Requests"
-              description="Pending connection invitations will be listed here."
+              title={t('dairyOwner:farmersPage.noPending', 'No Pending Connection Requests')}
+              description={t('dairyOwner:farmers.noPending', 'Pending connection invitations will be listed here.')}
               icon={Clock}
             />
           ) : (
@@ -243,7 +246,7 @@ export const ConnectedFarmers = () => {
                     </div>
                   </div>
                   <span className="text-[11px] font-semibold px-2.5 py-0.5 bg-amber-100 text-amber-800 rounded flex items-center">
-                    <Clock className="w-3 h-3 mr-1 text-amber-600" /> Pending Approval
+                    <Clock className="w-3 h-3 mr-1 text-amber-600" /> {getStatusLabel('pending', t)}
                   </span>
                 </div>
               ))}
@@ -254,7 +257,7 @@ export const ConnectedFarmers = () => {
 
       {/* History Log (Rejected / Disconnected) */}
       {otherConnections.length > 0 && (
-        <SectionCard title="Past Connections History" subtitle="Rejected or disconnected relationship logs">
+        <SectionCard title={t('dairyOwner:farmers.pastConnectionsTitle', 'Past Connections History')} subtitle={t('dairyOwner:farmers.pastConnectionsSubtitle', 'Past rejected or disconnected connection logs')}>
           <div className="space-y-2">
             {otherConnections.map((item) => (
               <div key={item._id} className="p-3 bg-slate-50 border border-slate-100 rounded-lg flex items-center justify-between text-xs">

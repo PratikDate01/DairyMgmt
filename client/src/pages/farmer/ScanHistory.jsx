@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { diseaseScanService } from '../../services/diseaseScanService';
 import { VeterinarianRecommendations } from '../../components/farmer/VeterinarianRecommendations';
+import { getStatusLabel } from '../../i18n/statusMap';
 import {
   FileText,
   Scan,
@@ -16,6 +18,7 @@ import {
 } from 'lucide-react';
 
 export const ScanHistory = () => {
+  const { t } = useTranslation(['farmer', 'common']);
   const { token } = useAuth();
   const [scans, setScans] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -28,13 +31,13 @@ export const ScanHistory = () => {
         const data = await diseaseScanService.getFarmerScans(token);
         setScans(data);
       } catch (err) {
-        setError(err.message || 'Failed to load disease scan history.');
+        setError(err.message || t('common:error.loadFailed', 'Failed to load disease scan history.'));
       } finally {
         setLoading(false);
       }
     };
     fetchScans();
-  }, [token]);
+  }, [token, t]);
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -42,28 +45,28 @@ export const ScanHistory = () => {
         return (
           <span className="px-2.5 py-1 bg-green-50 text-green-700 border border-green-200 text-xs font-bold rounded-lg flex items-center space-x-1">
             <CheckCircle className="w-3.5 h-3.5 text-green-600" />
-            <span>Vet Reviewed</span>
+            <span>{getStatusLabel('review_completed', t)}</span>
           </span>
         );
       case 'under_review':
         return (
           <span className="px-2.5 py-1 bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold rounded-lg flex items-center space-x-1">
             <Stethoscope className="w-3.5 h-3.5 text-blue-600" />
-            <span>Under Vet Review</span>
+            <span>{getStatusLabel('under_review', t)}</span>
           </span>
         );
       case 'info_requested':
         return (
           <span className="px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold rounded-lg flex items-center space-x-1">
             <Info className="w-3.5 h-3.5 text-amber-600" />
-            <span>More Info Required</span>
+            <span>{getStatusLabel('info_requested', t)}</span>
           </span>
         );
       default:
         return (
           <span className="px-2.5 py-1 bg-slate-100 text-slate-700 border border-slate-200 text-xs font-bold rounded-lg flex items-center space-x-1">
             <Clock className="w-3.5 h-3.5 text-slate-500" />
-            <span>Pending Review</span>
+            <span>{getStatusLabel('pending_review', t)}</span>
           </span>
         );
     }
@@ -76,10 +79,10 @@ export const ScanHistory = () => {
         <div>
           <h1 className="text-xl font-extrabold text-slate-900 tracking-tight flex items-center space-x-2">
             <FileText className="w-6 h-6 text-blue-600" />
-            <span>Disease Scan History</span>
+            <span>{t('farmer:scanHistory.title', 'Disease Scan History')}</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            View your cattle disease screening reports and professional veterinarian reviews.
+            {t('farmer:scanHistory.subtitle', 'View your cattle disease screening reports and professional veterinarian reviews.')}
           </p>
         </div>
 
@@ -88,7 +91,7 @@ export const ScanHistory = () => {
           className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center justify-center space-x-2"
         >
           <Scan className="w-4 h-4" />
-          <span>New AI Disease Scan</span>
+          <span>{t('common:actions.newScan', 'New AI Disease Scan')}</span>
         </Link>
       </div>
 
@@ -102,23 +105,27 @@ export const ScanHistory = () => {
       {loading ? (
         <div className="p-12 text-center bg-white rounded-2xl border border-slate-200">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3"></div>
-          <p className="text-xs font-medium text-slate-500">Loading scan history...</p>
+          <p className="text-xs font-medium text-slate-500">
+            {t('farmer:scanHistory.loading', 'Loading scan history...')}
+          </p>
         </div>
       ) : scans.length === 0 ? (
         <div className="p-12 text-center bg-white rounded-2xl border border-slate-200 space-y-3">
           <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto text-xl">
             🐄
           </div>
-          <h3 className="text-sm font-bold text-slate-800">No Disease Scans Found</h3>
+          <h3 className="text-sm font-bold text-slate-800">
+            {t('farmer:scanHistory.noScansTitle', 'No Disease Scans Found')}
+          </h3>
           <p className="text-xs text-slate-500 max-w-sm mx-auto">
-            You haven't submitted any cattle disease scans yet. Use our AI Scanner to check your cattle's health.
+            {t('farmer:scanHistory.noScansDesc', 'You haven\'t submitted any cattle disease scans yet. Use our AI Scanner to check your cattle\'s health.')}
           </p>
           <Link
             to="/farmer/ai-scanner"
             className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl hover:bg-blue-700 transition"
           >
             <Scan className="w-4 h-4" />
-            <span>Start AI Scan Now</span>
+            <span>{t('common:actions.startScan', 'Start AI Scan Now')}</span>
           </Link>
         </div>
       ) : (
@@ -155,7 +162,7 @@ export const ScanHistory = () => {
                   onClick={() => setSelectedScan(scan)}
                   className="px-3 py-1.5 bg-slate-50 hover:bg-blue-50 text-blue-700 text-xs font-bold rounded-lg border border-slate-200 hover:border-blue-200 transition flex items-center space-x-1"
                 >
-                  <span>View Details</span>
+                  <span>{t('common:actions.viewDetails', 'View Details')}</span>
                   <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -182,7 +189,7 @@ export const ScanHistory = () => {
               <div>
                 <h3 className="text-base font-bold text-slate-900">{selectedScan.detectedCondition}</h3>
                 <span className="text-xs text-slate-500">
-                  Cattle: <strong>{selectedScan.cattle?.nameTag || selectedScan.animalIdTag}</strong> {selectedScan.cattle?.breed ? `(${selectedScan.cattle.breed})` : ''} • Scanned on {new Date(selectedScan.createdAt).toLocaleString()}
+                  {t('common:labels.cattle', 'Cattle')}: <strong>{selectedScan.cattle?.nameTag || selectedScan.animalIdTag}</strong> {selectedScan.cattle?.breed ? `(${selectedScan.cattle.breed})` : ''} • {t('farmer:scanHistory.scanDate', 'Scan Date')}: {new Date(selectedScan.createdAt).toLocaleString()}
                 </span>
               </div>
             </div>
@@ -192,15 +199,21 @@ export const ScanHistory = () => {
               
               <div className="space-y-3 text-xs">
                 <div className="p-3 bg-blue-50 rounded-xl border border-blue-100">
-                  <span className="font-bold text-blue-900 block mb-1">AI Screening Assessment</span>
+                  <span className="font-bold text-blue-900 block mb-1">
+                    {t('farmer:scanHistory.assessment', 'AI Screening Assessment')}
+                  </span>
                   <p className="text-blue-950 font-semibold">{selectedScan.detectedCondition}</p>
-                  <p className="text-slate-600 mt-1">Confidence Score: <strong className="text-blue-700">{selectedScan.confidence}%</strong></p>
+                  <p className="text-slate-600 mt-1">
+                    {t('farmer:scanHistory.confidenceScore', { score: selectedScan.confidence, defaultValue: `Confidence Score: ${selectedScan.confidence}%` })}
+                  </p>
                 </div>
 
                 <div>
-                  <span className="font-bold text-slate-700 block mb-0.5">Symptoms Reported:</span>
+                  <span className="font-bold text-slate-700 block mb-0.5">
+                    {t('farmer:scanHistory.symptomsReported', 'Symptoms Reported:')}
+                  </span>
                   <p className="text-slate-600 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-                    {selectedScan.symptoms || 'None specified.'}
+                    {selectedScan.symptoms || t('farmer:scanHistory.noneSpecified', 'None specified.')}
                   </p>
                 </div>
               </div>
@@ -211,7 +224,7 @@ export const ScanHistory = () => {
               <div className="flex items-center justify-between">
                 <span className="text-xs font-extrabold text-slate-900 flex items-center space-x-1.5">
                   <Stethoscope className="w-4 h-4 text-blue-600" />
-                  <span>Veterinarian Professional Assessment</span>
+                  <span>{t('farmer:scanHistory.vetProfessionalAssessment', 'Veterinarian Professional Assessment')}</span>
                 </span>
                 {getStatusBadge(selectedScan.veterinarianReviewStatus)}
               </div>
@@ -219,24 +232,32 @@ export const ScanHistory = () => {
               {selectedScan.veterinarianNotes ? (
                 <div className="space-y-2 text-xs pt-2">
                   <p className="text-slate-700">
-                    <strong className="text-slate-900 block mb-0.5">Doctor's Notes:</strong>
+                    <strong className="text-slate-900 block mb-0.5">
+                      {t('farmer:scanHistory.doctorNotes', 'Doctor\'s Notes:')}
+                    </strong>
                     {selectedScan.veterinarianNotes}
                   </p>
                   {selectedScan.veterinarianRecommendation && (
                     <p className="text-slate-700 pt-1 border-t border-slate-200">
-                      <strong className="text-slate-900 block mb-0.5">Treatment Recommendation:</strong>
+                      <strong className="text-slate-900 block mb-0.5">
+                        {t('farmer:scanHistory.treatmentRecommendation', 'Treatment Recommendation:')}
+                      </strong>
                       {selectedScan.veterinarianRecommendation}
                     </p>
                   )}
                   {selectedScan.veterinarian && (
                     <p className="text-[11px] text-slate-400 pt-1">
-                      Reviewed by Dr. {selectedScan.veterinarian.name} ({selectedScan.veterinarian.phone})
+                      {t('farmer:scanHistory.reviewedBy', {
+                        name: selectedScan.veterinarian.name,
+                        phone: selectedScan.veterinarian.phone,
+                        defaultValue: `Reviewed by Dr. ${selectedScan.veterinarian.name} (${selectedScan.veterinarian.phone})`
+                      })}
                     </p>
                   )}
                 </div>
               ) : (
                 <p className="text-xs text-slate-500 italic pt-1">
-                  This case is currently queued. A licensed veterinarian will review the scan and add professional clinical advice shortly.
+                  {t('farmer:scanHistory.caseQueuedNotice', 'This case is currently queued. A licensed veterinarian will review the scan and add professional clinical advice shortly.')}
                 </p>
               )}
             </div>
@@ -246,7 +267,9 @@ export const ScanHistory = () => {
 
             <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-900 flex items-center space-x-2">
               <Info className="w-4 h-4 text-amber-600 flex-shrink-0" />
-              <span>AI results are for initial screening. Always consult a veterinarian for critical livestock health decisions.</span>
+              <span>
+                {t('farmer:scanHistory.disclaimerBottom', 'AI results are for initial screening. Always consult a veterinarian for critical livestock health decisions.')}
+              </span>
             </div>
           </div>
         </div>

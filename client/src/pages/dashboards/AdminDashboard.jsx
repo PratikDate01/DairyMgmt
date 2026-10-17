@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { adminService } from '../../services/adminService';
 import { complaintService } from '../../services/complaintService';
+import { getRoleLabel, getStatusLabel } from '../../i18n/statusMap';
 import { PageHeader } from '../../components/common/PageHeader';
 import { StatCard } from '../../components/common/StatCard';
 import { SectionCard } from '../../components/common/SectionCard';
@@ -42,6 +44,7 @@ import {
 } from 'lucide-react';
 
 export const AdminDashboard = () => {
+  const { t } = useTranslation(['admin', 'common', 'complaints']);
   const { user, token } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || 'overview';
@@ -335,32 +338,32 @@ export const AdminDashboard = () => {
   };
 
   const navigationTabs = [
-    { id: 'overview', label: 'Overview', icon: BarChart3 },
-    { id: 'users', label: 'Users', icon: Users, badge: stats?.users?.totalUsers },
-    { id: 'verifications', label: 'Verifications', icon: ShieldCheck, badge: (stats?.users?.pendingVetVerifications || 0) + (stats?.users?.pendingStoreVerifications || 0) },
-    { id: 'cattle', label: 'Cattle Records', icon: HeartPulse, badge: stats?.operations?.totalCattle },
-    { id: 'vet-requests', label: 'Vet Requests', icon: Activity, badge: stats?.operations?.activeVetRequests },
-    { id: 'medicines', label: 'Medicines', icon: Pill, badge: stats?.operations?.totalMedicines },
-    { id: 'fodder', label: 'Fodder Listings', icon: Store, badge: stats?.operations?.activeFodderListings },
-    { id: 'complaints', label: 'Complaints', icon: MessageSquare, badge: stats?.operations?.openComplaints },
-    { id: 'reports', label: 'System Reports', icon: FileText }
+    { id: 'overview', label: t('admin:dashboard.tabs.overview', 'Overview & KPIs'), icon: BarChart3 },
+    { id: 'users', label: t('admin:dashboard.tabs.users', 'User Directory'), icon: Users, badge: stats?.users?.totalUsers },
+    { id: 'verifications', label: t('admin:dashboard.tabs.verifications', 'Verifications'), icon: ShieldCheck, badge: (stats?.users?.pendingVetVerifications || 0) + (stats?.users?.pendingStoreVerifications || 0) },
+    { id: 'cattle', label: t('admin:dashboard.tabs.cattle', 'Cattle Records'), icon: HeartPulse, badge: stats?.operations?.totalCattle },
+    { id: 'vet-requests', label: t('admin:dashboard.tabs.vetRequests', 'Vet Requests'), icon: Activity, badge: stats?.operations?.activeVetRequests },
+    { id: 'medicines', label: t('admin:dashboard.tabs.medicines', 'Medicines'), icon: Pill, badge: stats?.operations?.totalMedicines },
+    { id: 'fodder', label: t('admin:dashboard.tabs.fodder', 'Fodder Listings'), icon: Store, badge: stats?.operations?.activeFodderListings },
+    { id: 'complaints', label: t('admin:dashboard.tabs.complaints', 'Complaints'), icon: MessageSquare, badge: stats?.operations?.openComplaints },
+    { id: 'reports', label: t('admin:reports.title', 'System Reports'), icon: FileText }
   ];
 
   const roleLabelMap = {
-    farmer: 'Farmer',
-    dairyOwner: 'Dairy Owner',
-    veterinarian: 'Veterinarian',
-    medicalProvider: 'Medical Store',
-    admin: 'Administrator'
+    farmer: getRoleLabel('farmer', t),
+    dairyOwner: getRoleLabel('dairyOwner', t),
+    veterinarian: getRoleLabel('veterinarian', t),
+    medicalProvider: getRoleLabel('medicalProvider', t),
+    admin: getRoleLabel('admin', t)
   };
 
   return (
     <div className="space-y-6">
       {/* Page Header */}
       <PageHeader
-        title="Admin Control Center"
-        description={`Logged in as ${user?.name || 'Administrator'} (${user?.phone}). Complete platform administration, role authorization, and record verification.`}
-        breadcrumbs={['Home', 'Admin Dashboard', navigationTabs.find(t => t.id === activeTab)?.label || 'Overview']}
+        title={t('admin:dashboard.title', 'Admin Control Center')}
+        description={t('admin:dashboard.subtitle', { name: user?.name || 'Administrator', phone: user?.phone, defaultValue: `Logged in as ${user?.name || 'Administrator'} (${user?.phone}). Complete platform administration, role authorization, and record verification.` })}
+        breadcrumbs={[t('common:nav.home', 'Home'), t('admin:dashboard.title', 'Admin Dashboard'), navigationTabs.find(t => t.id === activeTab)?.label || 'Overview']}
         actions={
           <div className="flex items-center space-x-2">
             <button
@@ -368,7 +371,7 @@ export const AdminDashboard = () => {
               className="px-3 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold rounded-lg shadow-xs transition flex items-center space-x-1.5"
             >
               <MessageSquare className="w-3.5 h-3.5" />
-              <span>Log Complaint</span>
+              <span>{t('complaints:newComplaintBtn', 'Log Complaint')}</span>
             </button>
             <button
               onClick={() => {
@@ -378,7 +381,7 @@ export const AdminDashboard = () => {
               className="px-3 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg shadow-xs transition flex items-center space-x-1.5"
             >
               <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${statsLoading || dataLoading ? 'animate-spin' : ''}`} />
-              <span>Refresh</span>
+              <span>{t('common:actions.refresh', 'Refresh')}</span>
             </button>
           </div>
         }
@@ -445,45 +448,45 @@ export const AdminDashboard = () => {
         <div className="space-y-6">
           {/* User Metrics Row */}
           <div>
-            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">User & Account Metrics</h3>
+            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">{t('admin:dashboard.userAccountMetrics', 'User & Account Metrics')}</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
               <StatCard
-                title="Total Users"
+                title={t('admin:dashboard.totalUsersStat', 'Total Users')}
                 value={statsLoading ? '...' : `${stats?.users?.totalUsers || 0}`}
                 icon={Users}
                 badgeText="System Total"
                 badgeType="neutral"
               />
               <StatCard
-                title="Farmers"
+                title={t('admin:dashboard.farmersStat', 'Farmers')}
                 value={statsLoading ? '...' : `${stats?.users?.totalFarmers || 0}`}
                 icon={Users}
                 badgeText="Milk Producers"
                 badgeType="success"
               />
               <StatCard
-                title="Dairy Owners"
+                title={t('admin:dashboard.dairyOwnersStat', 'Dairy Owners')}
                 value={statsLoading ? '...' : `${stats?.users?.totalDairyOwners || 0}`}
                 icon={Building2}
                 badgeText="Dairies"
                 badgeType="blue"
               />
               <StatCard
-                title="Veterinarians"
+                title={t('admin:dashboard.veterinariansStat', 'Veterinarians')}
                 value={statsLoading ? '...' : `${stats?.users?.totalVeterinarians || 0}`}
                 icon={Stethoscope}
                 badgeText={`${stats?.users?.pendingVetVerifications || 0} Pending`}
                 badgeType={stats?.users?.pendingVetVerifications ? 'amber' : 'neutral'}
               />
               <StatCard
-                title="Medical Stores"
+                title={t('admin:dashboard.medicalStoresStat', 'Medical Stores')}
                 value={statsLoading ? '...' : `${stats?.users?.totalMedicalStores || 0}`}
                 icon={Store}
                 badgeText={`${stats?.users?.pendingStoreVerifications || 0} Pending`}
                 badgeType={stats?.users?.pendingStoreVerifications ? 'amber' : 'neutral'}
               />
               <StatCard
-                title="Administrators"
+                title={t('admin:dashboard.administratorsStat', 'Administrators')}
                 value={statsLoading ? '...' : `${stats?.users?.totalAdmins || 0}`}
                 icon={ShieldAlert}
                 badgeText="Super Users"
@@ -494,38 +497,38 @@ export const AdminDashboard = () => {
 
           {/* Operational & Financial Metrics */}
           <div>
-            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Operational Oversight</h3>
+            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">{t('admin:dashboard.operationalOversight', 'Operational Oversight')}</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
               <StatCard
-                title="Registered Cattle"
+                title={t('admin:dashboard.registeredCattleStat', 'Registered Cattle')}
                 value={statsLoading ? '...' : `${stats?.operations?.totalCattle || 0}`}
                 icon={HeartPulse}
                 badgeText="Across All Herds"
                 badgeType="neutral"
               />
               <StatCard
-                title="Active Vet Requests"
+                title={t('admin:dashboard.activeVetRequestsStat', 'Active Vet Requests')}
                 value={statsLoading ? '...' : `${stats?.operations?.activeVetRequests || 0}`}
                 icon={Activity}
                 badgeText={`${stats?.operations?.totalVetRequests || 0} Total`}
                 badgeType={stats?.operations?.activeVetRequests ? 'amber' : 'neutral'}
               />
               <StatCard
-                title="Active Medicines"
+                title={t('admin:dashboard.activeMedicinesStat', 'Active Medicines')}
                 value={statsLoading ? '...' : `${stats?.operations?.totalMedicines || 0}`}
                 icon={Pill}
                 badgeText={`${stats?.operations?.totalMedicineRequests || 0} Orders`}
                 badgeType="neutral"
               />
               <StatCard
-                title="Active Fodder Listings"
+                title={t('admin:dashboard.activeFodderListingsStat', 'Active Fodder Listings')}
                 value={statsLoading ? '...' : `${stats?.operations?.activeFodderListings || 0}`}
                 icon={Store}
                 badgeText={`${stats?.operations?.totalFodderListings || 0} Total`}
                 badgeType="neutral"
               />
               <StatCard
-                title="Open Complaints"
+                title={t('admin:dashboard.openComplaintsStat', 'Open Complaints')}
                 value={statsLoading ? '...' : `${stats?.operations?.openComplaints || 0}`}
                 icon={MessageSquare}
                 badgeText={`${stats?.operations?.totalComplaints || 0} Total`}
@@ -537,7 +540,7 @@ export const AdminDashboard = () => {
           {/* Financial Totals */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-4 bg-blue-50/70 border border-blue-200 rounded-xl">
-              <span className="text-xs font-semibold text-blue-700 uppercase tracking-wider block">Cumulative Milk Volume</span>
+              <span className="text-xs font-semibold text-blue-700 uppercase tracking-wider block">{t('admin:dashboard.cumulativeMilkVolume', 'Cumulative Milk Volume')}</span>
               <span className="font-mono font-bold text-slate-900 text-xl mt-1 block">
                 {stats?.financials?.totalMilkQuantity?.toLocaleString('en-IN') || 0} Liters
               </span>
@@ -546,7 +549,7 @@ export const AdminDashboard = () => {
               </span>
             </div>
             <div className="p-4 bg-emerald-50/70 border border-emerald-200 rounded-xl">
-              <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider block">Disbursed Payments</span>
+              <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider block">{t('admin:dashboard.disbursedPayments', 'Disbursed Payments')}</span>
               <span className="font-mono font-bold text-emerald-900 text-xl mt-1 block">
                 ₹ {stats?.financials?.totalDisbursedFunds?.toLocaleString('en-IN', { minimumFractionDigits: 2 }) || '0.00'}
               </span>
@@ -555,7 +558,7 @@ export const AdminDashboard = () => {
               </span>
             </div>
             <div className="p-4 bg-amber-50/70 border border-amber-200 rounded-xl">
-              <span className="text-xs font-semibold text-amber-700 uppercase tracking-wider block">Outstanding Balances</span>
+              <span className="text-xs font-semibold text-amber-700 uppercase tracking-wider block">{t('admin:dashboard.outstandingBalances', 'Outstanding Balances')}</span>
               <span className="font-mono font-bold text-amber-900 text-xl mt-1 block">
                 ₹ {stats?.financials?.totalOutstandingBalance?.toLocaleString('en-IN', { minimumFractionDigits: 2 }) || '0.00'}
               </span>
@@ -571,7 +574,7 @@ export const AdminDashboard = () => {
               <div className="flex items-center space-x-3">
                 <ShieldAlert className="w-6 h-6 text-amber-600 shrink-0" />
                 <div>
-                  <h4 className="text-sm font-bold text-amber-900">Pending Professional Verifications</h4>
+                  <h4 className="text-sm font-bold text-amber-900">{t('admin:dashboard.pendingProfessionalVerifications', 'Pending Professional Verifications')}</h4>
                   <p className="text-xs text-amber-800">
                     There are {stats?.users?.pendingVetVerifications || 0} veterinarians and {stats?.users?.pendingStoreVerifications || 0} medical stores awaiting license review.
                   </p>
@@ -590,11 +593,11 @@ export const AdminDashboard = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Recent Registrations */}
             <SectionCard
-              title="Recent User Registrations"
-              subtitle="Latest 5 registered accounts"
+              title={t('admin:dashboard.recentUsersTitle', 'Recent User Registrations')}
+              subtitle={t('admin:dashboard.recentUsersSubtitle', 'Latest 5 registered accounts')}
               action={
                 <button onClick={() => setTab('users')} className="text-xs text-blue-600 hover:text-blue-800 font-semibold flex items-center">
-                  View All <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
+                  {t('common:actions.viewAll', 'View All')} <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
                 </button>
               }
             >
@@ -617,15 +620,15 @@ export const AdminDashboard = () => {
                     </div>
                   ))
                 ) : (
-                  <p className="text-xs text-slate-400 py-3 text-center">No recent users found</p>
+                  <p className="text-xs text-slate-400 py-3 text-center">{t('admin:dashboard.noRecentUsers', 'No recent users found')}</p>
                 )}
               </div>
             </SectionCard>
 
             {/* Recent Vet Requests */}
             <SectionCard
-              title="Recent Veterinary Requests"
-              subtitle="Latest clinical escalations & diagnosis requests"
+              title={t('admin:dashboard.recentVetsTitle', 'Recent Veterinary Requests')}
+              subtitle={t('admin:dashboard.recentVetsSubtitle', 'Latest clinical escalations & diagnosis requests')}
               action={
                 <button onClick={() => setTab('vet-requests')} className="text-xs text-blue-600 hover:text-blue-800 font-semibold flex items-center">
                   View All <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
@@ -657,7 +660,7 @@ export const AdminDashboard = () => {
                     </div>
                   ))
                 ) : (
-                  <p className="text-xs text-slate-400 py-3 text-center">No recent veterinary requests found</p>
+                  <p className="text-xs text-slate-400 py-3 text-center">{t('admin:dashboard.noRecentVetRequests', 'No recent veterinary requests found')}</p>
                 )}
               </div>
             </SectionCard>
@@ -668,8 +671,8 @@ export const AdminDashboard = () => {
       {/* TAB 2: USERS DIRECTORY */}
       {activeTab === 'users' && (
         <SectionCard
-          title="System User Directory"
-          subtitle="Inspect user accounts, normalized multi-role profiles, and toggle account activation status"
+          title={t('admin:users.title', 'System User Directory')}
+          subtitle={t('admin:users.subtitle', 'Inspect user accounts, normalized multi-role profiles, and toggle account activation status')}
         >
           {/* Filters Bar */}
           <div className="mb-4 flex flex-col md:flex-row gap-3 items-center justify-between">
@@ -680,12 +683,12 @@ export const AdminDashboard = () => {
                 onChange={(e) => setUserRoleFilter(e.target.value)}
                 className="text-xs px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-700 focus:outline-none focus:ring-1 focus:ring-slate-500"
               >
-                <option value="all">All Roles</option>
-                <option value="farmer">Farmer</option>
-                <option value="dairyOwner">Dairy Owner</option>
-                <option value="veterinarian">Veterinarian</option>
-                <option value="medicalProvider">Medical Store</option>
-                <option value="admin">Administrator</option>
+                <option value="all">{t('admin:dashboard.allRoles', 'All Roles')}</option>
+                <option value="farmer">{t('common:roles.farmer', 'Farmer')}</option>
+                <option value="dairyOwner">{t('common:roles.dairyOwner', 'Dairy Owner')}</option>
+                <option value="veterinarian">{t('common:roles.veterinarian', 'Veterinarian')}</option>
+                <option value="medicalProvider">{t('common:roles.medicalProvider', 'Medical Store')}</option>
+                <option value="admin">{t('admin:dashboard.administrator', 'Administrator')}</option>
               </select>
 
               {/* Status Filter */}
@@ -694,9 +697,9 @@ export const AdminDashboard = () => {
                 onChange={(e) => setUserStatusFilter(e.target.value)}
                 className="text-xs px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-700 focus:outline-none focus:ring-1 focus:ring-slate-500"
               >
-                <option value="all">All Statuses</option>
-                <option value="active">Active Only</option>
-                <option value="suspended">Suspended Only</option>
+                <option value="all">{t('admin:dashboard.allStatuses', 'All Statuses')}</option>
+                <option value="active">{t('admin:dashboard.activeOnly', 'Active Only')}</option>
+                <option value="suspended">{t('admin:dashboard.suspendedOnly', 'Suspended Only')}</option>
               </select>
             </div>
 
@@ -705,7 +708,7 @@ export const AdminDashboard = () => {
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
               <input
                 type="text"
-                placeholder="Search name, phone, email..."
+                placeholder={t('admin:dashboard.searchUserPlaceholder', 'Search name, phone, email...')}
                 value={userSearch}
                 onChange={(e) => setUserSearch(e.target.value)}
                 className="w-full text-xs pl-9 pr-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-500"
@@ -717,12 +720,12 @@ export const AdminDashboard = () => {
           {dataLoading ? (
             <div className="py-12 text-center text-slate-400 text-xs">
               <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-slate-400" />
-              Loading users directory...
+              {t('admin:dashboard.loadingDirectory', 'Loading users directory...')}
             </div>
           ) : usersList.length === 0 ? (
             <EmptyState
-              title="No Users Found"
-              description="No user records matched your current role, status, or search query."
+              title={t('admin:dashboard.noUsersTitle', 'No Users Found')}
+              description={t('admin:dashboard.noUsersDesc', 'No user records matched your current role, status, or search query.')}
               icon={Users}
             />
           ) : (
@@ -730,13 +733,13 @@ export const AdminDashboard = () => {
               <table className="w-full text-left text-xs text-slate-700 divide-y divide-slate-200">
                 <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold text-[11px]">
                   <tr>
-                    <th className="px-4 py-3">User</th>
-                    <th className="px-4 py-3">Contact</th>
-                    <th className="px-4 py-3">Roles</th>
-                    <th className="px-4 py-3">Account Status</th>
-                    <th className="px-4 py-3">Verification</th>
-                    <th className="px-4 py-3">Registered</th>
-                    <th className="px-4 py-3 text-right">Actions</th>
+                    <th className="px-4 py-3">{t('admin:dashboard.userCol', 'User')}</th>
+                    <th className="px-4 py-3">{t('admin:dashboard.contactCol', 'Contact')}</th>
+                    <th className="px-4 py-3">{t('admin:dashboard.rolesCol', 'Roles')}</th>
+                    <th className="px-4 py-3">{t('admin:dashboard.accountStatusCol', 'Account Status')}</th>
+                    <th className="px-4 py-3">{t('admin:dashboard.verificationCol', 'Verification')}</th>
+                    <th className="px-4 py-3">{t('admin:dashboard.registeredCol', 'Registered')}</th>
+                    <th className="px-4 py-3 text-right">{t('admin:dashboard.actionsCol', 'Actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 bg-white">
@@ -751,7 +754,7 @@ export const AdminDashboard = () => {
                             <div className="text-[11px] text-slate-500">Clinic: {u.clinicName}</div>
                           )}
                           {isSelf && (
-                            <span className="text-[10px] text-blue-600 font-bold">(Your Account)</span>
+                            <span className="text-[10px] text-blue-600 font-bold">({t('admin:dashboard.yourAccount', 'Your Account')})</span>
                           )}
                         </td>
                         <td className="px-4 py-3">
@@ -837,8 +840,8 @@ export const AdminDashboard = () => {
       {/* TAB 3: PROFESSIONAL VERIFICATIONS */}
       {activeTab === 'verifications' && (
         <SectionCard
-          title="Professional Verification Management"
-          subtitle="Review, approve, or reject veterinarians and medical stores with persistent credentials"
+          title={t('admin:verifications.title', 'Professional Verification Management')}
+          subtitle={t('admin:verifications.subtitle', 'Review, approve, or reject veterinarians and medical stores with persistent credentials')}
         >
           {/* Subtabs & Filters */}
           <div className="mb-4 flex flex-col md:flex-row gap-3 items-center justify-between">
@@ -861,22 +864,22 @@ export const AdminDashboard = () => {
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 }`}
               >
-                Medical Stores
+                {t('admin:dashboard.medicalStores', 'Medical Stores')}
               </button>
             </div>
 
             {/* Status Filter */}
             <div className="flex items-center space-x-2">
-              <span className="text-xs text-slate-500 font-medium">Status:</span>
+              <span className="text-xs text-slate-500 font-medium">{t('admin:dashboard.statusLabel', 'Status:')}</span>
               <select
                 value={verificationStatusFilter}
                 onChange={(e) => setVerificationStatusFilter(e.target.value)}
                 className="text-xs px-3 py-1.5 border border-slate-300 rounded-lg bg-white text-slate-700 focus:outline-none"
               >
-                <option value="all">All Verification Statuses</option>
-                <option value="pending">Pending Review Only</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
+                <option value="all">{t('admin:dashboard.allVerificationStatuses', 'All Verification Statuses')}</option>
+                <option value="pending">{t('admin:dashboard.pendingReviewOnly', 'Pending Review Only')}</option>
+                <option value="approved">{t('admin:dashboard.approved', 'Approved')}</option>
+                <option value="rejected">{t('admin:dashboard.rejected', 'Rejected')}</option>
               </select>
             </div>
           </div>
@@ -889,7 +892,7 @@ export const AdminDashboard = () => {
             </div>
           ) : verificationsList.length === 0 ? (
             <EmptyState
-              title="No Verifications Matching Criteria"
+              title={t('admin:dashboard.noVerificationsFound', 'No Verifications Matching Criteria')}
               description={`No ${verificationRoleFilter === 'veterinarian' ? 'veterinarian' : 'medical store'} records found for the selected verification status.`}
               icon={ShieldCheck}
             />
@@ -898,13 +901,13 @@ export const AdminDashboard = () => {
               <table className="w-full text-left text-xs text-slate-700 divide-y divide-slate-200">
                 <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold text-[11px]">
                   <tr>
-                    <th className="px-4 py-3">Professional / Entity</th>
-                    <th className="px-4 py-3">Contact</th>
-                    <th className="px-4 py-3">Specialization / Clinic</th>
-                    <th className="px-4 py-3">License Number</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3">Admin Notes</th>
-                    <th className="px-4 py-3 text-right">Actions</th>
+                    <th className="px-4 py-3">{t('admin:dashboard.professionalEntity', 'Professional / Entity')}</th>
+                    <th className="px-4 py-3">{t('admin:dashboard.contactCol', 'Contact')}</th>
+                    <th className="px-4 py-3">{t('admin:dashboard.specializationClinic', 'Specialization / Clinic')}</th>
+                    <th className="px-4 py-3">{t('admin:dashboard.licenseNumber', 'License Number')}</th>
+                    <th className="px-4 py-3">{t('common:labels.status', 'Status')}</th>
+                    <th className="px-4 py-3">{t('admin:dashboard.adminNotes', 'Admin Notes')}</th>
+                    <th className="px-4 py-3 text-right">{t('admin:dashboard.actionsCol', 'Actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 bg-white">
@@ -920,7 +923,7 @@ export const AdminDashboard = () => {
                         {v.expertise && <div className="text-[11px] text-slate-500">Exp: {v.expertise}</div>}
                       </td>
                       <td className="px-4 py-3 font-mono text-[11px]">
-                        {v.licenseNumber || <span className="text-slate-400 italic">Not recorded</span>}
+                        {v.licenseNumber || <span className="text-slate-400 italic">{t('admin:dashboard.notRecorded', 'Not recorded')}</span>}
                       </td>
                       <td className="px-4 py-3">
                         <span
@@ -936,7 +939,7 @@ export const AdminDashboard = () => {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-slate-500 text-[11px] max-w-xs truncate">
-                        {v.verificationNotes || <span className="text-slate-300 italic">None</span>}
+                        {v.verificationNotes || <span className="text-slate-300 italic">{t('admin:dashboard.none', 'None')}</span>}
                       </td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end space-x-1.5">
@@ -944,13 +947,13 @@ export const AdminDashboard = () => {
                             onClick={() => handleOpenVerificationModal(v, 'approved')}
                             className="px-2 py-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 rounded text-xs font-semibold"
                           >
-                            Approve
+                            {t('common:actions.approve', 'Approve')}
                           </button>
                           <button
                             onClick={() => handleOpenVerificationModal(v, 'rejected')}
                             className="px-2 py-1 bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 rounded text-xs font-semibold"
                           >
-                            Reject
+                            {t('common:actions.reject', 'Reject')}
                           </button>
                         </div>
                       </td>
@@ -966,24 +969,24 @@ export const AdminDashboard = () => {
       {/* TAB 4: CATTLE RECORDS */}
       {activeTab === 'cattle' && (
         <SectionCard
-          title="Platform Cattle Herd Directory"
-          subtitle="System-wide cattle records registered by all connected farmers"
+          title={t('admin:cattle.title', 'Platform Cattle Herd Directory')}
+          subtitle={t('admin:cattle.subtitle', 'System-wide cattle records registered by all connected farmers')}
         >
           {/* Filters Bar */}
           <div className="mb-4 flex flex-col md:flex-row gap-3 items-center justify-between">
             <div className="flex items-center space-x-2">
-              <span className="text-xs text-slate-500 font-medium">Health Status:</span>
+              <span className="text-xs text-slate-500 font-medium">{t('admin:dashboard.healthStatusLabel', 'Health Status:')}</span>
               <select
                 value={cattleHealthFilter}
                 onChange={(e) => setCattleHealthFilter(e.target.value)}
                 className="text-xs px-3 py-1.5 border border-slate-300 rounded-lg bg-white text-slate-700 focus:outline-none"
               >
-                <option value="all">All Health Conditions</option>
-                <option value="healthy">Healthy</option>
-                <option value="sick">Sick</option>
-                <option value="under_observation">Under Observation</option>
-                <option value="vaccinated">Vaccinated</option>
-                <option value="critical">Critical</option>
+                <option value="all">{t('admin:dashboard.allHealthConditions', 'All Health Conditions')}</option>
+                <option value="healthy">{t('admin:dashboard.healthy', 'Healthy')}</option>
+                <option value="sick">{t('admin:dashboard.sick', 'Sick')}</option>
+                <option value="under_observation">{t('admin:dashboard.underObservation', 'Under Observation')}</option>
+                <option value="vaccinated">{t('admin:dashboard.vaccinated', 'Vaccinated')}</option>
+                <option value="critical">{t('admin:dashboard.critical', 'Critical')}</option>
               </select>
             </div>
 
@@ -991,7 +994,7 @@ export const AdminDashboard = () => {
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
               <input
                 type="text"
-                placeholder="Search tag, breed, notes..."
+                placeholder={t('admin:dashboard.searchCattlePlaceholder', 'Search tag, breed, notes...')}
                 value={cattleSearch}
                 onChange={(e) => setCattleSearch(e.target.value)}
                 className="w-full text-xs pl-9 pr-3 py-2 border border-slate-300 rounded-lg focus:outline-none"
@@ -1007,7 +1010,7 @@ export const AdminDashboard = () => {
             </div>
           ) : cattleList.length === 0 ? (
             <EmptyState
-              title="No Cattle Records Found"
+              title={t('admin:cattle.noCattle', 'No Cattle Records Found')}
               description="No cattle profiles match the chosen health conditions or search query."
               icon={HeartPulse}
             />
@@ -1016,12 +1019,12 @@ export const AdminDashboard = () => {
               <table className="w-full text-left text-xs text-slate-700 divide-y divide-slate-200">
                 <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold text-[11px]">
                   <tr>
-                    <th className="px-4 py-3">Tag / Identifier</th>
-                    <th className="px-4 py-3">Owner (Farmer)</th>
-                    <th className="px-4 py-3">Breed & Gender</th>
-                    <th className="px-4 py-3">Age</th>
-                    <th className="px-4 py-3">Health Status</th>
-                    <th className="px-4 py-3">Registered Date</th>
+                    <th className="px-4 py-3">{t('admin:dashboard.tagIdentifier', 'Tag / Identifier')}</th>
+                    <th className="px-4 py-3">{t('admin:dashboard.ownerFarmer', 'Owner (Farmer)')}</th>
+                    <th className="px-4 py-3">{t('admin:dashboard.breedGender', 'Breed & Gender')}</th>
+                    <th className="px-4 py-3">{t('admin:dashboard.age', 'Age')}</th>
+                    <th className="px-4 py-3">{t('admin:dashboard.healthStatusLabel', 'Health Status')}</th>
+                    <th className="px-4 py-3">{t('admin:dashboard.registeredDate', 'Registered Date')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 bg-white">
@@ -1065,8 +1068,8 @@ export const AdminDashboard = () => {
       {/* TAB 5: VETERINARY REQUESTS & CLINICAL OVERSIGHT */}
       {activeTab === 'vet-requests' && (
         <SectionCard
-          title="Veterinary Requests & Escalations"
-          subtitle="Oversight of disease scans, clinical triage, veterinarian assignments, and escalation history"
+          title={t('admin:vetRequests.title', 'Veterinary Requests & Escalations')}
+          subtitle={t('admin:vetRequests.subtitle', 'Oversight of disease scans, clinical triage, veterinarian assignments, and escalation history')}
         >
           {/* Filters Bar */}
           <div className="mb-4 flex flex-wrap gap-3 items-center justify-between">
@@ -1076,14 +1079,14 @@ export const AdminDashboard = () => {
                 onChange={(e) => setVetRequestStatusFilter(e.target.value)}
                 className="text-xs px-3 py-1.5 border border-slate-300 rounded-lg bg-white text-slate-700 focus:outline-none"
               >
-                <option value="all">All Clinical Stages</option>
-                <option value="pending">Pending</option>
-                <option value="accepted">Accepted</option>
-                <option value="examination">Examination</option>
-                <option value="diagnosed">Diagnosed</option>
-                <option value="prescription_created">Prescription Created</option>
-                <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
+                <option value="all">{t('admin:dashboard.allClinicalStages', 'All Clinical Stages')}</option>
+                <option value="pending">{t('status.pending', 'Pending')}</option>
+                <option value="accepted">{t('status.accepted', 'Accepted')}</option>
+                <option value="examination">{t('status.examination', 'Examination')}</option>
+                <option value="diagnosed">{t('status.diagnosed', 'Diagnosed')}</option>
+                <option value="prescription_created">{t('status.prescription_created', 'Prescription Created')}</option>
+                <option value="completed">{t('status.completed', 'Completed')}</option>
+                <option value="cancelled">{t('status.cancelled', 'Cancelled')}</option>
               </select>
 
               <select
@@ -1091,11 +1094,11 @@ export const AdminDashboard = () => {
                 onChange={(e) => setVetRequestRiskFilter(e.target.value)}
                 className="text-xs px-3 py-1.5 border border-slate-300 rounded-lg bg-white text-slate-700 focus:outline-none"
               >
-                <option value="all">All Risk Levels</option>
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-                <option value="critical">Critical</option>
+                <option value="all">{t('admin:dashboard.allRiskLevels', 'All Risk Levels')}</option>
+                <option value="low">{t('status.low', 'Low')}</option>
+                <option value="medium">{t('status.medium', 'Medium')}</option>
+                <option value="high">{t('status.high', 'High')}</option>
+                <option value="critical">{t('admin:dashboard.critical', 'Critical')}</option>
               </select>
             </div>
           </div>
@@ -1108,7 +1111,7 @@ export const AdminDashboard = () => {
             </div>
           ) : vetRequestsList.length === 0 ? (
             <EmptyState
-              title="No Veterinary Requests Found"
+              title={t('admin:vetRequests.noRequests', 'No Veterinary Requests Found')}
               description="No cases match the selected status and risk parameters."
               icon={Activity}
             />
@@ -1117,13 +1120,13 @@ export const AdminDashboard = () => {
               <table className="w-full text-left text-xs text-slate-700 divide-y divide-slate-200">
                 <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold text-[11px]">
                   <tr>
-                    <th className="px-4 py-3">Cattle & Farmer</th>
-                    <th className="px-4 py-3">Assigned Veterinarian</th>
-                    <th className="px-4 py-3">Risk Level</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3">Escalations</th>
-                    <th className="px-4 py-3">Date</th>
-                    <th className="px-4 py-3 text-right">Inspection</th>
+                    <th className="px-4 py-3">{t('admin:dashboard.cattleFarmer', 'Cattle & Farmer')}</th>
+                    <th className="px-4 py-3">{t('admin:dashboard.assignedVeterinarian', 'Assigned Veterinarian')}</th>
+                    <th className="px-4 py-3">{t('admin:dashboard.riskLevel', 'Risk Level')}</th>
+                    <th className="px-4 py-3">{t('common:labels.status', 'Status')}</th>
+                    <th className="px-4 py-3">{t('admin:dashboard.escalations', 'Escalations')}</th>
+                    <th className="px-4 py-3">{t('common:labels.date', 'Date')}</th>
+                    <th className="px-4 py-3 text-right">{t('admin:dashboard.inspection', 'Inspection')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 bg-white">
@@ -1144,7 +1147,7 @@ export const AdminDashboard = () => {
                             <div className="text-[11px] text-slate-500">{vr.veterinarian.specialization || 'General'}</div>
                           </div>
                         ) : (
-                          <span className="text-amber-600 font-semibold italic text-[11px]">Unassigned</span>
+                          <span className="text-amber-600 font-semibold italic text-[11px]">{t('admin:dashboard.unassigned', 'Unassigned')}</span>
                         )}
                       </td>
                       <td className="px-4 py-3">
@@ -1169,7 +1172,7 @@ export const AdminDashboard = () => {
                             {vr.escalationHistory.length} Referrals
                           </span>
                         ) : (
-                          <span className="text-slate-400 text-[11px]">Direct</span>
+                          <span className="text-slate-400 text-[11px]">{t('admin:dashboard.direct', 'Direct')}</span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-slate-500 text-[11px]">
@@ -1181,7 +1184,7 @@ export const AdminDashboard = () => {
                           className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-semibold flex items-center space-x-1 ml-auto"
                         >
                           <Eye className="w-3.5 h-3.5" />
-                          <span>View History</span>
+                          <span>{t('admin:dashboard.viewHistory', 'View History')}</span>
                         </button>
                       </td>
                     </tr>
@@ -1196,27 +1199,27 @@ export const AdminDashboard = () => {
       {/* TAB 6: MEDICINES CATALOG */}
       {activeTab === 'medicines' && (
         <SectionCard
-          title="Medicine Inventory & Catalog Oversight"
-          subtitle="System-wide pharmaceutical catalog registered by verified Medical Stores"
+          title={t('admin:dashboard.medicinesCatalogOversight', 'Medicine Inventory & Catalog Oversight')}
+          subtitle={t('admin:dashboard.medicinesSubtitle', 'System-wide pharmaceutical catalog registered by verified Medical Stores')}
         >
           {/* Filters Bar */}
           <div className="mb-4 flex flex-col md:flex-row gap-3 items-center justify-between">
             <div className="flex items-center space-x-2">
-              <span className="text-xs text-slate-500 font-medium">Category:</span>
+              <span className="text-xs text-slate-500 font-medium">{t('admin:dashboard.categoryLabel', 'Category:')}</span>
               <select
                 value={medicineCategoryFilter}
                 onChange={(e) => setMedicineCategoryFilter(e.target.value)}
                 className="text-xs px-3 py-1.5 border border-slate-300 rounded-lg bg-white text-slate-700 focus:outline-none"
               >
-                <option value="all">All Categories</option>
-                <option value="antibiotic">Antibiotic</option>
-                <option value="anti_inflammatory">Anti-Inflammatory</option>
-                <option value="vaccine">Vaccine</option>
-                <option value="nutritional_supplement">Nutritional Supplement</option>
-                <option value="antiseptic">Antiseptic</option>
-                <option value="anthelmintic">Anthelmintic</option>
-                <option value="hormone">Hormone</option>
-                <option value="general">General</option>
+                <option value="all">{t('admin:dashboard.allCategories', 'All Categories')}</option>
+                <option value="antibiotic">{t('admin:dashboard.catAntibiotic', 'Antibiotic')}</option>
+                <option value="anti_inflammatory">{t('admin:dashboard.catAntiInflammatory', 'Anti-Inflammatory')}</option>
+                <option value="vaccine">{t('admin:dashboard.catVaccine', 'Vaccine')}</option>
+                <option value="nutritional_supplement">{t('admin:dashboard.catNutritionalSupplement', 'Nutritional Supplement')}</option>
+                <option value="antiseptic">{t('admin:dashboard.catAntiseptic', 'Antiseptic')}</option>
+                <option value="anthelmintic">{t('admin:dashboard.catAnthelmintic', 'Anthelmintic')}</option>
+                <option value="hormone">{t('admin:dashboard.catHormone', 'Hormone')}</option>
+                <option value="general">{t('complaints:categories.general', 'General')}</option>
               </select>
             </div>
 
@@ -1224,7 +1227,7 @@ export const AdminDashboard = () => {
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
               <input
                 type="text"
-                placeholder="Search medicine name..."
+                placeholder={t('admin:dashboard.searchMedicinePlaceholder', 'Search medicine name...')}
                 value={medicineSearch}
                 onChange={(e) => setMedicineSearch(e.target.value)}
                 className="w-full text-xs pl-9 pr-3 py-2 border border-slate-300 rounded-lg focus:outline-none"
@@ -1240,7 +1243,7 @@ export const AdminDashboard = () => {
             </div>
           ) : medicinesList.length === 0 ? (
             <EmptyState
-              title="No Medicines Found"
+              title={t('admin:dashboard.noMedicinesFound', 'No Medicines Found')}
               description="No medicines match the selected category or search filter."
               icon={Pill}
             />
@@ -1249,12 +1252,12 @@ export const AdminDashboard = () => {
               <table className="w-full text-left text-xs text-slate-700 divide-y divide-slate-200">
                 <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold text-[11px]">
                   <tr>
-                    <th className="px-4 py-3">Medicine</th>
-                    <th className="px-4 py-3">Category</th>
-                    <th className="px-4 py-3">Medical Store</th>
-                    <th className="px-4 py-3">Unit Price</th>
-                    <th className="px-4 py-3">Stock Available</th>
-                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3">{t('admin:dashboard.medicine', 'Medicine')}</th>
+                    <th className="px-4 py-3">{t('admin:dashboard.categoryLabel', 'Category')}</th>
+                    <th className="px-4 py-3">{t('admin:dashboard.medicalStoreCol', 'Medical Store')}</th>
+                    <th className="px-4 py-3">{t('admin:dashboard.unitPrice', 'Unit Price')}</th>
+                    <th className="px-4 py-3">{t('admin:dashboard.stockAvailable', 'Stock Available')}</th>
+                    <th className="px-4 py-3">{t('common:labels.status', 'Status')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 bg-white">
@@ -1296,23 +1299,23 @@ export const AdminDashboard = () => {
       {/* TAB 7: FODDER LISTINGS & MARKETPLACE MODERATION */}
       {activeTab === 'fodder' && (
         <SectionCard
-          title="Fodder Marketplace Oversight"
-          subtitle="Farmer-to-farmer fodder listings with administrative moderation control"
+          title={t('admin:dashboard.fodderMarketplaceOversight', 'Fodder Marketplace Oversight')}
+          subtitle={t('admin:dashboard.fodderSubtitle', 'Farmer-to-farmer fodder listings with administrative moderation control')}
         >
           {/* Filters Bar */}
           <div className="mb-4 flex flex-col md:flex-row gap-3 items-center justify-between">
             <div className="flex items-center space-x-2">
-              <span className="text-xs text-slate-500 font-medium">Status:</span>
+              <span className="text-xs text-slate-500 font-medium">{t('admin:dashboard.statusLabel', 'Status:')}</span>
               <select
                 value={fodderStatusFilter}
                 onChange={(e) => setFodderStatusFilter(e.target.value)}
                 className="text-xs px-3 py-1.5 border border-slate-300 rounded-lg bg-white text-slate-700 focus:outline-none"
               >
-                <option value="all">All Statuses</option>
-                <option value="active">Active Only</option>
-                <option value="sold">Sold</option>
-                <option value="inactive">Inactive / Moderated</option>
-                <option value="expired">Expired</option>
+                <option value="all">{t('admin:dashboard.allStatuses', 'All Statuses')}</option>
+                <option value="active">{t('admin:dashboard.activeOnly', 'Active Only')}</option>
+                <option value="sold">{t('admin:dashboard.soldListing', 'Sold')}</option>
+                <option value="inactive">{t('admin:dashboard.inactiveModerated', 'Inactive / Moderated')}</option>
+                <option value="expired">{t('admin:dashboard.expiredListing', 'Expired')}</option>
               </select>
             </div>
 
@@ -1320,7 +1323,7 @@ export const AdminDashboard = () => {
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
               <input
                 type="text"
-                placeholder="Search fodder title, location..."
+                placeholder={t('admin:dashboard.searchFodderPlaceholder', 'Search fodder title, location...')}
                 value={fodderSearch}
                 onChange={(e) => setFodderSearch(e.target.value)}
                 className="w-full text-xs pl-9 pr-3 py-2 border border-slate-300 rounded-lg focus:outline-none"
@@ -1336,7 +1339,7 @@ export const AdminDashboard = () => {
             </div>
           ) : fodderList.length === 0 ? (
             <EmptyState
-              title="No Fodder Listings Found"
+              title={t('admin:dashboard.noFodderFound', 'No Fodder Listings Found')}
               description="No marketplace listings match the selected status or query."
               icon={Store}
             />
@@ -1345,13 +1348,13 @@ export const AdminDashboard = () => {
               <table className="w-full text-left text-xs text-slate-700 divide-y divide-slate-200">
                 <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold text-[11px]">
                   <tr>
-                    <th className="px-4 py-3">Listing Title</th>
-                    <th className="px-4 py-3">Farmer</th>
-                    <th className="px-4 py-3">Fodder Type</th>
-                    <th className="px-4 py-3">Quantity & Price</th>
-                    <th className="px-4 py-3">Location</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3 text-right">Moderation</th>
+                    <th className="px-4 py-3">{t('admin:dashboard.listingTitle', 'Listing Title')}</th>
+                    <th className="px-4 py-3">{t('common:roles.farmer', 'Farmer')}</th>
+                    <th className="px-4 py-3">{t('admin:dashboard.fodderType', 'Fodder Type')}</th>
+                    <th className="px-4 py-3">{t('admin:dashboard.quantityPrice', 'Quantity & Price')}</th>
+                    <th className="px-4 py-3">{t('admin:dashboard.location', 'Location')}</th>
+                    <th className="px-4 py-3">{t('common:labels.status', 'Status')}</th>
+                    <th className="px-4 py-3 text-right">{t('admin:dashboard.moderation', 'Moderation')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 bg-white">
@@ -1414,8 +1417,8 @@ export const AdminDashboard = () => {
       {/* TAB 8: COMPLAINTS & GRIEVANCE MANAGEMENT */}
       {activeTab === 'complaints' && (
         <SectionCard
-          title="Complaints & Grievance Resolution"
-          subtitle="User-submitted dispute and support complaints with administrative status resolution"
+          title={t('admin:dashboard.complaintsResolution', 'Complaints & Grievance Resolution')}
+          subtitle={t('admin:dashboard.complaintsSubtitle', 'User-submitted dispute and support complaints with administrative status resolution')}
         >
           {/* Filters Bar */}
           <div className="mb-4 flex flex-wrap gap-3 items-center justify-between">
@@ -1425,11 +1428,11 @@ export const AdminDashboard = () => {
                 onChange={(e) => setComplaintStatusFilter(e.target.value)}
                 className="text-xs px-3 py-1.5 border border-slate-300 rounded-lg bg-white text-slate-700 focus:outline-none"
               >
-                <option value="all">All Complaint Statuses</option>
-                <option value="open">Open</option>
-                <option value="in_progress">In Progress</option>
-                <option value="resolved">Resolved</option>
-                <option value="closed">Closed</option>
+                <option value="all">{t('admin:dashboard.allComplaintStatuses', 'All Complaint Statuses')}</option>
+                <option value="open">{t('status.open', 'Open')}</option>
+                <option value="in_progress">{t('status.in_progress', 'In Progress')}</option>
+                <option value="resolved">{t('status.resolved', 'Resolved')}</option>
+                <option value="closed">{t('status.closed', 'Closed')}</option>
               </select>
 
               <select
@@ -1437,14 +1440,14 @@ export const AdminDashboard = () => {
                 onChange={(e) => setComplaintCategoryFilter(e.target.value)}
                 className="text-xs px-3 py-1.5 border border-slate-300 rounded-lg bg-white text-slate-700 focus:outline-none"
               >
-                <option value="all">All Categories</option>
-                <option value="general">General</option>
-                <option value="milk_collection">Milk Collection</option>
-                <option value="payments">Payments</option>
-                <option value="veterinary">Veterinary</option>
-                <option value="medicines">Medicines</option>
-                <option value="fodder">Fodder</option>
-                <option value="account">Account</option>
+                <option value="all">{t('admin:dashboard.allCategories', 'All Categories')}</option>
+                <option value="general">{t('complaints:categories.general', 'General')}</option>
+                <option value="milk_collection">{t('complaints:categories.milk_collection', 'Milk Collection')}</option>
+                <option value="payments">{t('complaints:categories.payments', 'Payments')}</option>
+                <option value="veterinary">{t('complaints:categories.veterinary', 'Veterinary')}</option>
+                <option value="medicines">{t('complaints:categories.medicines', 'Medicines')}</option>
+                <option value="fodder">{t('complaints:categories.fodder', 'Fodder')}</option>
+                <option value="account">{t('complaints:categories.account', 'Account')}</option>
               </select>
             </div>
           </div>
@@ -1457,7 +1460,7 @@ export const AdminDashboard = () => {
             </div>
           ) : complaintsList.length === 0 ? (
             <EmptyState
-              title="No Complaints Found"
+              title={t('admin:dashboard.noComplaintsFound', 'No Complaints Found')}
               description="No grievances match the selected status or category."
               icon={MessageSquare}
             />
@@ -1466,12 +1469,12 @@ export const AdminDashboard = () => {
               <table className="w-full text-left text-xs text-slate-700 divide-y divide-slate-200">
                 <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold text-[11px]">
                   <tr>
-                    <th className="px-4 py-3">Title & Category</th>
-                    <th className="px-4 py-3">Submitted By</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3">Admin Resolution Notes</th>
-                    <th className="px-4 py-3">Submitted At</th>
-                    <th className="px-4 py-3 text-right">Actions</th>
+                    <th className="px-4 py-3">{t('admin:dashboard.titleCategory', 'Title & Category')}</th>
+                    <th className="px-4 py-3">{t('admin:dashboard.submittedBy', 'Submitted By')}</th>
+                    <th className="px-4 py-3">{t('common:labels.status', 'Status')}</th>
+                    <th className="px-4 py-3">{t('admin:dashboard.adminResolutionNotes', 'Admin Resolution Notes')}</th>
+                    <th className="px-4 py-3">{t('admin:dashboard.submittedAt', 'Submitted At')}</th>
+                    <th className="px-4 py-3 text-right">{t('admin:dashboard.actionsCol', 'Actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 bg-white">
@@ -1501,7 +1504,7 @@ export const AdminDashboard = () => {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-slate-500 text-[11px] max-w-xs">
-                        {c.adminNotes || <span className="text-slate-300 italic">No notes added</span>}
+                        {c.adminNotes || <span className="text-slate-300 italic">{t('admin:dashboard.noNotesAdded', 'No notes added')}</span>}
                       </td>
                       <td className="px-4 py-3 text-slate-500 text-[11px]">
                         {new Date(c.createdAt).toLocaleDateString()}
@@ -1526,14 +1529,14 @@ export const AdminDashboard = () => {
       {/* TAB 9: REPORTS EMBED / SUMMARY */}
       {activeTab === 'reports' && (
         <SectionCard
-          title="System Administration & Global Reports"
-          subtitle="Real-time financial and operational aggregates across all registered modules"
+          title={t('admin:reportsPage.title', 'System Administration & Global Reports')}
+          subtitle={t('admin:reportsPage.subtitle', 'Real-time financial and operational aggregates across all registered modules')}
           action={
             <Link
               to="/admin/reports"
               className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg flex items-center space-x-1"
             >
-              <span>Full Analytics View</span>
+              <span>{t('admin:dashboard.fullAnalyticsView', 'Full Analytics View')}</span>
               <ExternalLink className="w-3.5 h-3.5" />
             </Link>
           }
@@ -1541,7 +1544,7 @@ export const AdminDashboard = () => {
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
-                <span className="text-xs font-bold text-slate-500 uppercase">Milk Volume Intake</span>
+                <span className="text-xs font-bold text-slate-500 uppercase">{t('admin:dashboard.milkVolumeIntake', 'Milk Volume Intake')}</span>
                 <div className="mt-2 text-2xl font-bold font-mono text-slate-900">
                   {stats?.financials?.totalMilkQuantity?.toLocaleString('en-IN') || 0} Liters
                 </div>
@@ -1551,7 +1554,7 @@ export const AdminDashboard = () => {
               </div>
 
               <div className="p-4 bg-emerald-50/70 border border-emerald-200 rounded-xl">
-                <span className="text-xs font-bold text-emerald-700 uppercase">Disbursed Funds</span>
+                <span className="text-xs font-bold text-emerald-700 uppercase">{t('admin:dashboard.disbursedFunds', 'Disbursed Funds')}</span>
                 <div className="mt-2 text-2xl font-bold font-mono text-emerald-900">
                   ₹ {stats?.financials?.totalDisbursedFunds?.toLocaleString('en-IN', { minimumFractionDigits: 2 }) || '0.00'}
                 </div>
@@ -1561,7 +1564,7 @@ export const AdminDashboard = () => {
               </div>
 
               <div className="p-4 bg-amber-50/70 border border-amber-200 rounded-xl">
-                <span className="text-xs font-bold text-amber-700 uppercase">Outstanding Balance</span>
+                <span className="text-xs font-bold text-amber-700 uppercase">{t('admin:dashboard.outstandingBalance', 'Outstanding Balance')}</span>
                 <div className="mt-2 text-2xl font-bold font-mono text-amber-900">
                   ₹ {stats?.financials?.totalOutstandingBalance?.toLocaleString('en-IN', { minimumFractionDigits: 2 }) || '0.00'}
                 </div>
@@ -1572,12 +1575,12 @@ export const AdminDashboard = () => {
             </div>
 
             <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-600 space-y-2">
-              <div className="font-semibold text-slate-800">Ecosystem Integrity Notice</div>
+              <div className="font-semibold text-slate-800">{t('admin:dashboard.ecosystemIntegrityNotice', 'Ecosystem Integrity Notice')}</div>
               <p>
-                All reporting aggregations displayed in this dashboard and the dedicated reports page are computed dynamically from active MongoDB collections (<span className="font-mono">users</span>, <span className="font-mono">cattle</span>, <span className="font-mono">vetrequests</span>, <span className="font-mono">milkcollections</span>, <span className="font-mono">payments</span>, <span className="font-mono">complaints</span>).
+                {t('admin:dashboard.ecosystemNotice1', 'All reporting aggregations displayed in this dashboard and the dedicated reports page are computed dynamically from active MongoDB collections')} (<span className="font-mono">{'users'}</span>, <span className="font-mono">{'cattle'}</span>, <span className="font-mono">{'vetrequests'}</span>, <span className="font-mono">{'milkcollections'}</span>, <span className="font-mono">{'payments'}</span>, <span className="font-mono">{'complaints'}</span>).
               </p>
               <p>
-                Admin oversight does not duplicate financial ledgers or alter clinical examination findings without authorized doctor progression.
+                {t('admin:dashboard.ecosystemNotice2', 'Admin oversight does not duplicate financial ledgers or alter clinical examination findings without authorized doctor progression.')}
               </p>
             </div>
           </div>
@@ -1586,8 +1589,8 @@ export const AdminDashboard = () => {
 
       {/* MODAL 1: VERIFICATION MODAL */}
       {verificationModal.isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md overflow-hidden my-auto max-h-[90vh] flex flex-col modal-animate">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
               <h3 className="text-sm font-bold text-slate-900">
                 Update Professional Verification
@@ -1600,16 +1603,16 @@ export const AdminDashboard = () => {
               </button>
             </div>
 
-            <form onSubmit={handleSubmitVerification} className="p-6 space-y-4 text-xs">
+            <form onSubmit={handleSubmitVerification} className="p-6 space-y-4 text-xs overflow-y-auto flex-1">
               <div>
-                <label className="block text-slate-500 font-semibold mb-1">Target Account</label>
+                <label className="block text-slate-500 font-semibold mb-1">{t('admin:dashboard.targetAccount', 'Target Account')}</label>
                 <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-medium">
                   {verificationModal.user?.name} ({verificationModal.user?.phone})
                 </div>
               </div>
 
               <div>
-                <label className="block text-slate-500 font-semibold mb-1">Verification Decision</label>
+                <label className="block text-slate-500 font-semibold mb-1">{t('admin:dashboard.verificationDecision', 'Verification Decision')}</label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
@@ -1620,7 +1623,7 @@ export const AdminDashboard = () => {
                         : 'border-slate-200 text-slate-600 hover:bg-slate-50'
                     }`}
                   >
-                    Approve Account
+                    {t('admin:dashboard.approveAccount', 'Approve Account')}
                   </button>
                   <button
                     type="button"
@@ -1631,16 +1634,16 @@ export const AdminDashboard = () => {
                         : 'border-slate-200 text-slate-600 hover:bg-slate-50'
                     }`}
                   >
-                    Reject Account
+                    {t('admin:dashboard.rejectAccount', 'Reject Account')}
                   </button>
                 </div>
               </div>
 
               <div>
-                <label className="block text-slate-500 font-semibold mb-1">Medical / Veterinary License Number</label>
+                <label className="block text-slate-500 font-semibold mb-1">{t('admin:dashboard.medVetLicenseNumber', 'Medical / Veterinary License Number')}</label>
                 <input
                   type="text"
-                  placeholder="e.g. VET-MH-2024-8841"
+                  placeholder={t('admin:dashboard.licensePlaceholder', 'e.g. VET-MH-2024-8841')}
                   value={verificationModal.licenseNumber}
                   onChange={(e) => setVerificationModal(prev => ({ ...prev, licenseNumber: e.target.value }))}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none"
@@ -1648,10 +1651,10 @@ export const AdminDashboard = () => {
               </div>
 
               <div>
-                <label className="block text-slate-500 font-semibold mb-1">Verification Notes / Justification</label>
+                <label className="block text-slate-500 font-semibold mb-1">{t('admin:dashboard.verificationNotesJustification', 'Verification Notes / Justification')}</label>
                 <textarea
                   rows={3}
-                  placeholder="Notes regarding credentials or rejection reason..."
+                  placeholder={t('admin:verifications.reviewerNotes', 'Notes regarding credentials or rejection reason...')}
                   value={verificationModal.notes}
                   onChange={(e) => setVerificationModal(prev => ({ ...prev, notes: e.target.value }))}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none"
@@ -1695,9 +1698,9 @@ export const AdminDashboard = () => {
               </button>
             </div>
 
-            <form onSubmit={handleSubmitComplaintResolution} className="p-6 space-y-4 text-xs">
+            <form onSubmit={handleSubmitComplaintResolution} className="p-6 space-y-4 text-xs overflow-y-auto flex-1">
               <div>
-                <label className="block text-slate-500 font-semibold mb-1">Complaint Details</label>
+                <label className="block text-slate-500 font-semibold mb-1">{t('admin:dashboard.complaintDetails', 'Complaint Details')}</label>
                 <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 space-y-1">
                   <div className="font-bold">{complaintModal.complaint?.title}</div>
                   <div className="text-[11px] text-slate-600">{complaintModal.complaint?.description}</div>
@@ -1705,24 +1708,24 @@ export const AdminDashboard = () => {
               </div>
 
               <div>
-                <label className="block text-slate-500 font-semibold mb-1">Status</label>
+                <label className="block text-slate-500 font-semibold mb-1">{t('common:labels.status', 'Status')}</label>
                 <select
                   value={complaintModal.status}
                   onChange={(e) => setComplaintModal(prev => ({ ...prev, status: e.target.value }))}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-700 focus:outline-none"
                 >
-                  <option value="open">Open</option>
-                  <option value="in_progress">In Progress</option>
-                  <option value="resolved">Resolved</option>
-                  <option value="closed">Closed</option>
+                  <option value="open">{t('status.open', 'Open')}</option>
+                  <option value="in_progress">{t('status.in_progress', 'In Progress')}</option>
+                  <option value="resolved">{t('status.resolved', 'Resolved')}</option>
+                  <option value="closed">{t('status.closed', 'Closed')}</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-slate-500 font-semibold mb-1">Admin Resolution Notes</label>
+                <label className="block text-slate-500 font-semibold mb-1">{t('admin:dashboard.adminResolutionNotes', 'Admin Resolution Notes')}</label>
                 <textarea
                   rows={3}
-                  placeholder="Explain actions taken or resolution..."
+                  placeholder={t('admin:dashboard.adminResolutionNotes', 'Explain actions taken or resolution...')}
                   value={complaintModal.adminNotes}
                   onChange={(e) => setComplaintModal(prev => ({ ...prev, adminNotes: e.target.value }))}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none"
@@ -1766,13 +1769,13 @@ export const AdminDashboard = () => {
               </button>
             </div>
 
-            <form onSubmit={handleCreateNewComplaint} className="p-6 space-y-4 text-xs">
+            <form onSubmit={handleCreateNewComplaint} className="p-6 space-y-4 text-xs overflow-y-auto flex-1">
               <div>
-                <label className="block text-slate-500 font-semibold mb-1">Complaint Title</label>
+                <label className="block text-slate-500 font-semibold mb-1">{t('admin:dashboard.complaintTitle', 'Complaint Title')}</label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Discrepancy in milk collection fat rate"
+                  placeholder={t('admin:dashboard.complaintTitlePlaceholder', 'e.g. Discrepancy in milk collection fat rate')}
                   value={newComplaintModal.title}
                   onChange={(e) => setNewComplaintModal(prev => ({ ...prev, title: e.target.value }))}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none"
@@ -1780,28 +1783,28 @@ export const AdminDashboard = () => {
               </div>
 
               <div>
-                <label className="block text-slate-500 font-semibold mb-1">Category</label>
+                <label className="block text-slate-500 font-semibold mb-1">{t('common:labels.category', 'Category')}</label>
                 <select
                   value={newComplaintModal.category}
                   onChange={(e) => setNewComplaintModal(prev => ({ ...prev, category: e.target.value }))}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-700 focus:outline-none"
                 >
-                  <option value="general">General</option>
-                  <option value="milk_collection">Milk Collection</option>
-                  <option value="payments">Payments</option>
-                  <option value="veterinary">Veterinary</option>
-                  <option value="medicines">Medicines</option>
-                  <option value="fodder">Fodder</option>
-                  <option value="account">Account</option>
+                  <option value="general">{t('complaints:categories.general', 'General')}</option>
+                  <option value="milk_collection">{t('complaints:categories.milk_collection', 'Milk Collection')}</option>
+                  <option value="payments">{t('complaints:categories.payments', 'Payments')}</option>
+                  <option value="veterinary">{t('complaints:categories.veterinary', 'Veterinary')}</option>
+                  <option value="medicines">{t('complaints:categories.medicines', 'Medicines')}</option>
+                  <option value="fodder">{t('complaints:categories.fodder', 'Fodder')}</option>
+                  <option value="account">{t('complaints:categories.account', 'Account')}</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-slate-500 font-semibold mb-1">Description</label>
+                <label className="block text-slate-500 font-semibold mb-1">{t('admin:dashboard.description', 'Description')}</label>
                 <textarea
                   rows={4}
                   required
-                  placeholder="Detailed description of the issue..."
+                  placeholder={t('admin:dashboard.description', 'Detailed description of the issue...')}
                   value={newComplaintModal.description}
                   onChange={(e) => setNewComplaintModal(prev => ({ ...prev, description: e.target.value }))}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none"
@@ -1848,7 +1851,7 @@ export const AdminDashboard = () => {
             <div className="p-6 space-y-4 text-xs">
               <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl">
                 <div>
-                  <span className="text-slate-400 uppercase text-[10px] font-bold block">Cattle Profile</span>
+                  <span className="text-slate-400 uppercase text-[10px] font-bold block">{t('admin:dashboard.cattleProfile', 'Cattle Profile')}</span>
                   <div className="font-bold text-slate-800 mt-0.5">
                     {selectedVetRequest.cattle?.nameTag} ({selectedVetRequest.cattle?.breed})
                   </div>
@@ -1857,14 +1860,14 @@ export const AdminDashboard = () => {
                   </div>
                 </div>
                 <div>
-                  <span className="text-slate-400 uppercase text-[10px] font-bold block">Farmer Owner</span>
+                  <span className="text-slate-400 uppercase text-[10px] font-bold block">{t('admin:dashboard.farmerOwner', 'Farmer Owner')}</span>
                   <div className="font-bold text-slate-800 mt-0.5">{selectedVetRequest.farmer?.name}</div>
                   <div className="text-[11px] text-slate-500">{selectedVetRequest.farmer?.phone}</div>
                 </div>
               </div>
 
               <div>
-                <span className="text-slate-500 font-semibold block mb-1">Clinical Status & Risk</span>
+                <span className="text-slate-500 font-semibold block mb-1">{t('admin:dashboard.clinicalStatusRisk', 'Clinical Status & Risk')}</span>
                 <div className="flex items-center space-x-2">
                   <span className="px-2.5 py-0.5 rounded font-bold uppercase text-[10px] bg-slate-100 text-slate-700 border">
                     {selectedVetRequest.status?.replace('_', ' ')}
@@ -1881,7 +1884,7 @@ export const AdminDashboard = () => {
 
               {selectedVetRequest.notes && (
                 <div>
-                  <span className="text-slate-500 font-semibold block mb-1">Case Notes</span>
+                  <span className="text-slate-500 font-semibold block mb-1">{t('admin:dashboard.caseNotes', 'Case Notes')}</span>
                   <div className="p-3 bg-slate-50 rounded-lg text-slate-700 border border-slate-200">
                     {selectedVetRequest.notes}
                   </div>
@@ -1889,7 +1892,7 @@ export const AdminDashboard = () => {
               )}
 
               <div>
-                <span className="text-slate-500 font-semibold block mb-2">Escalation & Referral Timeline</span>
+                <span className="text-slate-500 font-semibold block mb-2">{t('admin:dashboard.escalationReferralTimeline', 'Escalation & Referral Timeline')}</span>
                 {selectedVetRequest.escalationHistory?.length ? (
                   <div className="space-y-2 border-l-2 border-slate-200 pl-3 ml-2">
                     {selectedVetRequest.escalationHistory.map((esc, i) => (

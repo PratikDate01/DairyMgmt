@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { cattleService } from '../../services/cattleService';
 import { diseaseScanService } from '../../services/diseaseScanService';
+import { getStatusLabel, getGenderLabel } from '../../i18n/statusMap';
 import { PageHeader } from '../../components/common/PageHeader';
 import { StatCard } from '../../components/common/StatCard';
 import { SectionCard } from '../../components/common/SectionCard';
@@ -27,6 +29,7 @@ import {
 } from 'lucide-react';
 
 export const MyCattle = () => {
+  const { t } = useTranslation(['farmer', 'common']);
   const { user, token } = useAuth();
   const navigate = useNavigate();
 
@@ -235,31 +238,31 @@ export const MyCattle = () => {
       case 'healthy':
         return (
           <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-50 text-green-700 border border-green-200 flex items-center w-fit">
-            <CheckCircle2 className="w-3 h-3 mr-1 text-green-600" /> Healthy
+            <CheckCircle2 className="w-3 h-3 mr-1 text-green-600" /> {getStatusLabel('healthy', t)}
           </span>
         );
       case 'sick':
         return (
           <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-50 text-red-700 border border-red-200 flex items-center w-fit">
-            <ShieldAlert className="w-3 h-3 mr-1 text-red-600" /> Sick
+            <ShieldAlert className="w-3 h-3 mr-1 text-red-600" /> {getStatusLabel('sick', t)}
           </span>
         );
       case 'under_observation':
         return (
           <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 flex items-center w-fit">
-            <AlertTriangle className="w-3 h-3 mr-1 text-amber-600" /> Under Observation
+            <AlertTriangle className="w-3 h-3 mr-1 text-amber-600" /> {getStatusLabel('under_observation', t)}
           </span>
         );
       case 'treatment_ongoing':
         return (
           <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 flex items-center w-fit">
-            <Activity className="w-3 h-3 mr-1 text-blue-600" /> Treatment Ongoing
+            <Activity className="w-3 h-3 mr-1 text-blue-600" /> {getStatusLabel('treatment_ongoing', t)}
           </span>
         );
       default:
         return (
           <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-            {status}
+            {getStatusLabel(status, t)}
           </span>
         );
     }
@@ -272,16 +275,16 @@ export const MyCattle = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="My Cattle"
-        description="Manage your cattle records, track individual health status, and initiate AI health checks."
-        breadcrumbs={['Home', 'Farmer', 'My Cattle']}
+        title={t('farmer:cattle.title', 'My Cattle')}
+        description={t('farmer:cattle.subtitle', 'Register and manage your livestock profiles, health records, and diagnostic scans.')}
+        breadcrumbs={[t('common:nav.home', 'Home'), t('common:roles.farmer', 'Farmer'), t('farmer:cattle.title', 'My Cattle')]}
         actions={
           <button
             onClick={handleOpenAdd}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl shadow-xs transition flex items-center space-x-1.5"
           >
             <Plus className="w-4 h-4" />
-            <span>Add Cattle</span>
+            <span>{t('farmer:cattle.registerBtn', 'Register New Cattle')}</span>
           </button>
         }
       />
@@ -305,46 +308,46 @@ export const MyCattle = () => {
       {/* Overview Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title="Total Registered Cattle"
+          title={t('farmer:dashboard.registeredCattle', 'Total Registered Cattle')}
           value={loading ? '...' : cattleList.length}
           icon={HeartPulse}
-          badgeText="Active Livestock"
+          badgeText={t('common:status.active', 'Active Livestock')}
           badgeType="success"
         />
         <StatCard
-          title="Healthy Cattle"
+          title={t('farmer:cattle.healthyCount', { count: healthyCount, defaultValue: 'Healthy Cattle' })}
           value={loading ? '...' : healthyCount}
           icon={CheckCircle2}
           badgeText={healthyCount === cattleList.length ? '100% Healthy' : 'Normal State'}
           badgeType="success"
         />
         <StatCard
-          title="Sick / In Treatment"
+          title={t('farmer:cattle.criticalCount', { count: sickCount, defaultValue: 'Sick / In Treatment' })}
           value={loading ? '...' : sickCount}
           icon={ShieldAlert}
-          badgeText={sickCount > 0 ? 'Requires Attention' : 'None'}
+          badgeText={sickCount > 0 ? t('common:actions.filter', 'Requires Attention') : t('common:status.healthy', 'None')}
           badgeType={sickCount > 0 ? 'amber' : 'neutral'}
         />
         <StatCard
-          title="Under Observation"
+          title={t('farmer:cattle.underObsCount', { count: observationCount, defaultValue: 'Under Observation' })}
           value={loading ? '...' : observationCount}
           icon={Activity}
-          badgeText={observationCount > 0 ? 'Monitoring' : 'None'}
+          badgeText={observationCount > 0 ? t('common:status.under_observation', 'Monitoring') : t('common:status.healthy', 'None')}
           badgeType="neutral"
         />
       </div>
 
       {/* Main Catalog Card */}
       <SectionCard
-        title="Cattle Directory"
-        subtitle="Search and manage your cattle"
+        title={t('farmer:cattle.title', 'Cattle Directory')}
+        subtitle={t('farmer:cattle.subtitle', 'Search and manage your cattle')}
         action={
           <div className="flex flex-wrap items-center gap-2">
             {/* Search Input */}
             <div className="relative">
               <input
                 type="text"
-                placeholder="Search name or breed..."
+                placeholder={t('common:actions.search', 'Search name or breed...')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-8 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg text-slate-800 outline-none focus:ring-2 focus:ring-blue-500 w-48 sm:w-60"
@@ -360,11 +363,11 @@ export const MyCattle = () => {
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="pl-8 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg text-slate-800 outline-none focus:ring-2 focus:ring-blue-500 capitalize"
               >
-                <option value="all">All Statuses</option>
-                <option value="healthy">Healthy</option>
-                <option value="sick">Sick</option>
-                <option value="under_observation">Under Observation</option>
-                <option value="treatment_ongoing">Treatment Ongoing</option>
+                <option value="all">{t('common:status.all', 'All Statuses')}</option>
+                <option value="healthy">{getStatusLabel('healthy', t)}</option>
+                <option value="sick">{getStatusLabel('sick', t)}</option>
+                <option value="under_observation">{getStatusLabel('under_observation', t)}</option>
+                <option value="treatment_ongoing">{getStatusLabel('treatment_ongoing', t)}</option>
               </select>
             </div>
           </div>
@@ -372,18 +375,18 @@ export const MyCattle = () => {
       >
         {loading ? (
           <div className="py-12 text-center text-slate-500 text-xs font-medium">
-            Loading your cattle records...
+            {t('common:status.loading', 'Loading your cattle records...')}
           </div>
         ) : filteredCattle.length === 0 ? (
           <EmptyState
-            title="No Cattle Found"
+            title={t('farmer:cattle.noCattleFound', 'No Cattle Found')}
             description={
               searchTerm || statusFilter !== 'all'
-                ? 'No cattle match your search filters.'
-                : 'You have not added any cattle to your livestock directory yet.'
+                ? t('farmer:cattle.noCattleFound', 'No cattle match your search filters.')
+                : t('farmer:dashboard.noCattleRegistered', 'You have not added any cattle to your livestock directory yet.')
             }
             icon={HeartPulse}
-            actionLabel={!searchTerm && statusFilter === 'all' ? '+ Add Your First Cattle' : ''}
+            actionLabel={!searchTerm && statusFilter === 'all' ? `+ ${t('farmer:cattle.registerBtn', 'Add Your First Cattle')}` : ''}
             onAction={handleOpenAdd}
           />
         ) : (
@@ -423,12 +426,12 @@ export const MyCattle = () => {
                   {/* Attributes Grid */}
                   <div className="grid grid-cols-2 gap-2 text-xs py-2.5 px-3 bg-slate-50 rounded-lg border border-slate-100">
                     <div>
-                      <span className="text-slate-400 block text-[10px] uppercase font-bold">Gender</span>
-                      <span className="font-semibold text-slate-700 capitalize">{cattle.gender}</span>
+                      <span className="text-slate-400 block text-[10px] uppercase font-bold">{t('farmer:cattle.gender', 'Gender')}</span>
+                      <span className="font-semibold text-slate-700 capitalize">{getGenderLabel(cattle.gender, t)}</span>
                     </div>
                     <div>
-                      <span className="text-slate-400 block text-[10px] uppercase font-bold">Age</span>
-                      <span className="font-semibold text-slate-700">{cattle.ageYears} Years</span>
+                      <span className="text-slate-400 block text-[10px] uppercase font-bold">{t('farmer:cattle.ageYears', 'Age')}</span>
+                      <span className="font-semibold text-slate-700">{cattle.ageYears} {t('farmer:cattle.ageYears', 'Years')}</span>
                     </div>
                   </div>
 
@@ -446,7 +449,7 @@ export const MyCattle = () => {
                     className="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg shadow-xs transition flex items-center justify-center space-x-1.5"
                   >
                     <Stethoscope className="w-3.5 h-3.5" />
-                    <span>Run AI Health Check</span>
+                    <span>{t('farmer:cattle.scanNow', 'Run AI Health Check')}</span>
                   </button>
 
                   <div className="grid grid-cols-3 gap-1.5">
@@ -455,21 +458,21 @@ export const MyCattle = () => {
                       className="py-1.5 px-2 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-medium rounded-lg border border-slate-200 transition flex items-center justify-center space-x-1"
                     >
                       <Eye className="w-3.5 h-3.5 text-slate-500" />
-                      <span>View</span>
+                      <span>{t('common:actions.view', 'View')}</span>
                     </button>
                     <button
                       onClick={() => handleOpenEdit(cattle)}
                       className="py-1.5 px-2 bg-slate-50 hover:bg-slate-100 text-blue-700 text-xs font-medium rounded-lg border border-slate-200 transition flex items-center justify-center space-x-1"
                     >
                       <Edit className="w-3.5 h-3.5 text-blue-600" />
-                      <span>Edit</span>
+                      <span>{t('common:actions.edit', 'Edit')}</span>
                     </button>
                     <button
                       onClick={() => handleOpenDelete(cattle)}
                       className="py-1.5 px-2 bg-slate-50 hover:bg-red-50 text-red-600 text-xs font-medium rounded-lg border border-slate-200 hover:border-red-200 transition flex items-center justify-center space-x-1"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
-                      <span>Delete</span>
+                      <span>{t('common:actions.delete', 'Delete')}</span>
                     </button>
                   </div>
                 </div>
@@ -481,16 +484,16 @@ export const MyCattle = () => {
 
       {/* ADD CATTLE MODAL */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-150">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-              <h3 className="text-base font-bold text-slate-900">Add Cattle Record</h3>
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md overflow-hidden my-auto max-h-[90vh] flex flex-col modal-animate">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50 shrink-0">
+              <h3 className="text-base font-bold text-slate-900">{t('farmer:cattle.addCattleRecord', 'Add Cattle Record')}</h3>
               <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-slate-600">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleCreateSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
               {formError && (
                 <div className="p-3 bg-red-50 text-red-700 text-xs rounded-xl border border-red-200">
                   {formError}
@@ -499,11 +502,11 @@ export const MyCattle = () => {
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Cattle Name / Tag Number <span className="text-red-500">*</span>
+                  {t('farmer:cattle.nameTag', 'Cattle Name / Tag Number')} <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Gauri / TAG-104"
+                  placeholder={t('farmer:cattle.nameTagPlaceholder', 'e.g. Gauri / TAG-104')}
                   value={formData.nameTag}
                   onChange={(e) => setFormData({ ...formData, nameTag: e.target.value })}
                   className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs text-slate-900 outline-none focus:ring-2 focus:ring-blue-500"
@@ -514,11 +517,11 @@ export const MyCattle = () => {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Breed <span className="text-red-500">*</span>
+                    {t('farmer:cattle.breed', 'Breed')} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. Gir, Sahiwal"
+                    placeholder={t('farmer:cattle.breedPlaceholder', 'e.g. Gir, Sahiwal')}
                     value={formData.breed}
                     onChange={(e) => setFormData({ ...formData, breed: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs text-slate-900 outline-none focus:ring-2 focus:ring-blue-500"
@@ -526,21 +529,21 @@ export const MyCattle = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Gender</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">{t('farmer:cattle.gender', 'Gender')}</label>
                   <select
                     value={formData.gender}
                     onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs text-slate-900 outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="female">Female (Cow)</option>
-                    <option value="male">Male (Bull)</option>
+                    <option value="female">{getGenderLabel('female', t)}</option>
+                    <option value="male">{getGenderLabel('male', t)}</option>
                   </select>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Age (Years)</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">{t('farmer:cattle.ageYears', 'Age (Years)')}</label>
                   <input
                     type="number"
                     min="0"
@@ -551,22 +554,22 @@ export const MyCattle = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Health Status</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">{t('farmer:cattle.healthStatus', 'Health Status')}</label>
                   <select
                     value={formData.healthStatus}
                     onChange={(e) => setFormData({ ...formData, healthStatus: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs text-slate-900 outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="healthy">Healthy</option>
-                    <option value="sick">Sick</option>
-                    <option value="under_observation">Under Observation</option>
-                    <option value="treatment_ongoing">Treatment Ongoing</option>
+                    <option value="healthy">{getStatusLabel('healthy', t)}</option>
+                    <option value="sick">{getStatusLabel('sick', t)}</option>
+                    <option value="under_observation">{getStatusLabel('under_observation', t)}</option>
+                    <option value="treatment_ongoing">{getStatusLabel('treatment_ongoing', t)}</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Cattle Photo (Upload from System)</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">{t('farmer:cattle.cattlePhotoUpload', 'Cattle Photo (Upload from System)')}</label>
                 <div className="flex items-center space-x-3">
                   {formData.imageUrl ? (
                     <img src={formData.imageUrl} alt="Cattle preview" className="w-12 h-12 object-cover rounded-xl border border-slate-200" />
@@ -585,10 +588,10 @@ export const MyCattle = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Notes / Medical History</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">{t('farmer:cattle.notesMedicalHistory', 'Notes / Medical History')}</label>
                 <textarea
                   rows="2"
-                  placeholder="Vaccination details, mark, or notes..."
+                  placeholder={t('farmer:cattle.notesPlaceholder', 'Vaccination details, mark, or notes...')}
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs text-slate-900 outline-none focus:ring-2 focus:ring-blue-500"
@@ -601,14 +604,14 @@ export const MyCattle = () => {
                   onClick={() => setShowAddModal(false)}
                   className="px-4 py-2 border border-slate-300 text-slate-700 text-xs font-semibold rounded-xl hover:bg-slate-50 transition"
                 >
-                  Cancel
+                  {t('common:actions.cancel', 'Cancel')}
                 </button>
                 <button
                   type="submit"
                   disabled={formLoading}
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl shadow-xs transition disabled:opacity-50"
                 >
-                  {formLoading ? 'Saving...' : 'Save Cattle'}
+                  {formLoading ? t('common:status.loading', 'Saving...') : t('common:actions.save', 'Save Cattle')}
                 </button>
               </div>
             </form>
@@ -618,16 +621,16 @@ export const MyCattle = () => {
 
       {/* EDIT CATTLE MODAL */}
       {showEditModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-              <h3 className="text-base font-bold text-slate-900">Edit Cattle Record</h3>
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md overflow-hidden my-auto max-h-[90vh] flex flex-col modal-animate">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50 shrink-0">
+              <h3 className="text-base font-bold text-slate-900">{t('farmer:cattle.editCattle', 'Edit Cattle Profile')}</h3>
               <button onClick={() => setShowEditModal(false)} className="text-slate-400 hover:text-slate-600">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleUpdateSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleUpdateSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
               {formError && (
                 <div className="p-3 bg-red-50 text-red-700 text-xs rounded-xl border border-red-200">
                   {formError}
@@ -636,7 +639,7 @@ export const MyCattle = () => {
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Cattle Name / Tag Number <span className="text-red-500">*</span>
+                  {t('farmer:cattle.nameTag', 'Cattle Name / Tag Number')} <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -649,7 +652,7 @@ export const MyCattle = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Breed</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">{t('farmer:cattle.breed', 'Breed')}</label>
                   <input
                     type="text"
                     value={formData.breed}
@@ -659,21 +662,21 @@ export const MyCattle = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Gender</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">{t('farmer:cattle.gender', 'Gender')}</label>
                   <select
                     value={formData.gender}
                     onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs text-slate-900 outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="female">Female</option>
-                    <option value="male">Male</option>
+                    <option value="female">{getGenderLabel('female', t)}</option>
+                    <option value="male">{getGenderLabel('male', t)}</option>
                   </select>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Age (Years)</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">{t('farmer:cattle.ageYears', 'Age (Years)')}</label>
                   <input
                     type="number"
                     value={formData.ageYears}
@@ -682,21 +685,21 @@ export const MyCattle = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Health Status</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">{t('farmer:cattle.healthStatus', 'Health Status')}</label>
                   <select
                     value={formData.healthStatus}
                     onChange={(e) => setFormData({ ...formData, healthStatus: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs text-slate-900 outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="healthy">Healthy</option>
-                    <option value="sick">Sick</option>
-                    <option value="under_observation">Under Observation</option>
-                    <option value="treatment_ongoing">Treatment Ongoing</option>
+                    <option value="healthy">{getStatusLabel('healthy', t)}</option>
+                    <option value="sick">{getStatusLabel('sick', t)}</option>
+                    <option value="under_observation">{getStatusLabel('under_observation', t)}</option>
+                    <option value="treatment_ongoing">{getStatusLabel('treatment_ongoing', t)}</option>
                   </select>
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Update Cattle Photo (Upload from System)</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">{t('farmer:cattle.updateCattlePhoto', 'Update Cattle Photo (Upload from System)')}</label>
                 <div className="flex items-center space-x-3">
                   {formData.imageUrl ? (
                     <img src={formData.imageUrl} alt="Cattle preview" className="w-12 h-12 object-cover rounded-xl border border-slate-200" />
@@ -715,7 +718,7 @@ export const MyCattle = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Notes</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">{t('common:labels.notes', 'Notes')}</label>
                 <textarea
                   rows="2"
                   value={formData.notes}
@@ -730,14 +733,14 @@ export const MyCattle = () => {
                   onClick={() => setShowEditModal(false)}
                   className="px-4 py-2 border border-slate-300 text-slate-700 text-xs font-semibold rounded-xl hover:bg-slate-50 transition"
                 >
-                  Cancel
+                  {t('common:actions.cancel', 'Cancel')}
                 </button>
                 <button
                   type="submit"
                   disabled={formLoading}
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl shadow-xs transition disabled:opacity-50"
                 >
-                  {formLoading ? 'Updating...' : 'Update Record'}
+                  {formLoading ? t('common:status.loading', 'Updating...') : t('common:actions.save', 'Update Record')}
                 </button>
               </div>
             </form>
@@ -747,10 +750,10 @@ export const MyCattle = () => {
 
       {/* DETAIL CATTLE MODAL */}
       {showDetailModal && selectedCattle && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-lg overflow-hidden">
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-lg overflow-hidden my-auto max-h-[90vh] flex flex-col modal-animate">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-              <h3 className="text-base font-bold text-slate-900">Cattle Profile & History</h3>
+              <h3 className="text-base font-bold text-slate-900">{t('farmer:cattle.cattleProfileHistory', 'Cattle Profile & History')}</h3>
               <button onClick={() => setShowDetailModal(false)} className="text-slate-400 hover:text-slate-600">
                 <X className="w-5 h-5" />
               </button>
@@ -763,37 +766,37 @@ export const MyCattle = () => {
                 </div>
                 <div>
                   <h4 className="text-lg font-bold text-slate-900">{selectedCattle.nameTag}</h4>
-                  <p className="text-xs text-slate-500 font-medium">Breed: {selectedCattle.breed}</p>
+                  <p className="text-xs text-slate-500 font-medium">{t('farmer:cattle.breed', 'Breed')}: {selectedCattle.breed}</p>
                   <div className="mt-1">{renderStatusBadge(selectedCattle.healthStatus)}</div>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3 text-xs bg-slate-50 p-3 rounded-xl border border-slate-100">
                 <div>
-                  <span className="text-slate-400 block font-bold text-[10px] uppercase">Gender</span>
-                  <span className="font-semibold text-slate-800 capitalize">{selectedCattle.gender}</span>
+                  <span className="text-slate-400 block font-bold text-[10px] uppercase">{t('farmer:cattle.gender', 'Gender')}</span>
+                  <span className="font-semibold text-slate-800 capitalize">{getGenderLabel(selectedCattle.gender, t)}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block font-bold text-[10px] uppercase">Age</span>
-                  <span className="font-semibold text-slate-800">{selectedCattle.ageYears} Years</span>
+                  <span className="text-slate-400 block font-bold text-[10px] uppercase">{t('common:labels.age', 'Age')}</span>
+                  <span className="font-semibold text-slate-800">{selectedCattle.ageYears} {t('common:labels.years', 'Years')}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block font-bold text-[10px] uppercase">Registered Owner</span>
+                  <span className="text-slate-400 block font-bold text-[10px] uppercase">{t('farmer:cattle.registeredOwner', 'Registered Owner')}</span>
                   <span className="font-semibold text-slate-800">{selectedCattle.farmer?.name || user?.name}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block font-bold text-[10px] uppercase">Last AI Health Check</span>
+                  <span className="text-slate-400 block font-bold text-[10px] uppercase">{t('farmer:cattle.lastAiHealthCheck', 'Last AI Health Check')}</span>
                   <span className="font-semibold text-slate-800">
                     {selectedCattle.lastHealthCheck
                       ? new Date(selectedCattle.lastHealthCheck).toLocaleDateString()
-                      : 'No scans yet'}
+                      : t('farmer:cattle.noScansYet', 'No scans yet')}
                   </span>
                 </div>
               </div>
 
               {selectedCattle.notes && (
                 <div>
-                  <h5 className="text-xs font-bold text-slate-700 mb-1">Notes / Characteristics</h5>
+                  <h5 className="text-xs font-bold text-slate-700 mb-1">{t('farmer:cattle.notesCharacteristics', 'Notes / Characteristics')}</h5>
                   <div className="p-3 bg-slate-50 rounded-xl text-xs text-slate-600 border border-slate-100">
                     {selectedCattle.notes}
                   </div>
@@ -805,7 +808,7 @@ export const MyCattle = () => {
                 <div className="flex items-center justify-between mb-2">
                   <h5 className="text-xs font-bold text-slate-700 flex items-center space-x-1.5">
                     <Stethoscope className="w-4 h-4 text-emerald-600" />
-                    <span>AI Health Screening History</span>
+                    <span>{t('farmer:cattle.aiHealthScreeningHistory', 'AI Health Screening History')}</span>
                   </h5>
                   <button
                     onClick={() => {
@@ -815,18 +818,18 @@ export const MyCattle = () => {
                     className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold rounded-lg transition flex items-center space-x-1"
                   >
                     <Plus className="w-3 h-3" />
-                    <span>Run Health Scan</span>
+                    <span>{t('farmer:cattle.runHealthScan', 'Run Health Scan')}</span>
                   </button>
                 </div>
 
                 {loadingScans ? (
                   <div className="p-4 bg-slate-50 rounded-xl text-xs text-slate-500 text-center">
                     <RefreshCw className="w-4 h-4 animate-spin mx-auto mb-1 text-emerald-600" />
-                    Loading health screening records...
+                    {t('farmer:cattle.loadingHealthRecords', 'Loading health screening records...')}
                   </div>
                 ) : cattleScans.length === 0 ? (
                   <div className="p-4 bg-slate-50 rounded-xl text-xs text-slate-500 border border-slate-100 text-center space-y-2">
-                    <p>No health screenings recorded yet for {selectedCattle.nameTag}.</p>
+                    <p>{t('farmer:cattle.noHealthScreeningsYet', 'No health screenings recorded yet for {{name}}.', { name: selectedCattle.nameTag })}</p>
                   </div>
                 ) : (
                   <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
@@ -858,7 +861,7 @@ export const MyCattle = () => {
                           }}
                           className="px-2.5 py-1 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-semibold text-[11px] rounded-lg transition"
                         >
-                          View Result
+                          {t('common:actions.view', 'View Result')}
                         </button>
                       </div>
                     ))}
@@ -871,7 +874,7 @@ export const MyCattle = () => {
                   onClick={() => setShowDetailModal(false)}
                   className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition"
                 >
-                  Close
+                  {t('common:actions.close', 'Close')}
                 </button>
               </div>
             </div>
@@ -881,14 +884,14 @@ export const MyCattle = () => {
 
       {/* DELETE CONFIRMATION DIALOG */}
       {showDeleteDialog && selectedCattle && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-sm overflow-hidden p-6 text-center space-y-4">
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-sm overflow-hidden p-6 text-center space-y-4 my-auto modal-animate">
             <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto text-xl">
               <AlertTriangle className="w-6 h-6" />
             </div>
 
             <div>
-              <h3 className="text-base font-bold text-slate-900 mb-1">Delete Cattle Record?</h3>
+              <h3 className="text-base font-bold text-slate-900 mb-1">{t('farmer:cattle.confirmDelete', 'Delete Cattle Record?')}</h3>
               <p className="text-xs text-slate-600">
                 Are you sure you want to delete cattle <strong className="text-slate-900 font-bold">"{selectedCattle.nameTag}"</strong>? This action cannot be undone.
               </p>
@@ -900,7 +903,7 @@ export const MyCattle = () => {
                 onClick={() => setShowDeleteDialog(false)}
                 className="w-1/2 py-2 border border-slate-300 text-slate-700 text-xs font-semibold rounded-xl hover:bg-slate-50 transition"
               >
-                Cancel
+                {t('common:actions.cancel', 'Cancel')}
               </button>
               <button
                 type="button"
@@ -908,7 +911,7 @@ export const MyCattle = () => {
                 disabled={formLoading}
                 className="w-1/2 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-xl shadow-xs transition disabled:opacity-50"
               >
-                {formLoading ? 'Deleting...' : 'Delete'}
+                {formLoading ? t('common:status.loading', 'Deleting...') : t('common:actions.delete', 'Delete')}
               </button>
             </div>
           </div>

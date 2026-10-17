@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { getStatusLabel } from '../../i18n/statusMap';
 import { useAuth } from '../../context/AuthContext';
 import { milkCollectionService } from '../../services/milkCollectionService';
 import { PageHeader } from '../../components/common/PageHeader';
@@ -23,6 +25,7 @@ import {
 import { Link } from 'react-router-dom';
 
 export const MilkCollections = () => {
+  const { t } = useTranslation(['farmer', 'common']);
   const { token } = useAuth();
 
   // Active Tab: 'history' or 'summary'
@@ -190,9 +193,9 @@ export const MilkCollections = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="My Milk Collections"
-        description="Inspect daily milk collections, fat percentages, rate payouts, and 10-day billing summaries recorded by your dairy."
-        breadcrumbs={['Home', 'Farmer Portal', 'Milk Collections']}
+        title={t('farmer:milkCollections.title', 'My Milk Collections')}
+        description={t('farmer:milk.subtitle', 'Inspect daily milk collections, fat percentages, rate payouts, and 10-day billing summaries recorded by your dairy.')}
+        breadcrumbs={[t('common:nav.home', 'Home'), t('common:roles.farmer', 'Farmer'), t('farmer:milkCollections.title', 'My Milk Collections')]}
         actions={
           <div className="flex items-center space-x-2">
             <button
@@ -202,7 +205,7 @@ export const MilkCollections = () => {
               }}
               disabled={loading}
               className="p-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-600 rounded-lg shadow-xs transition"
-              title="Refresh Collections"
+              title={t('farmer:milkCollections.refreshTooltip', 'Refresh Collections')}
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </button>
@@ -211,7 +214,7 @@ export const MilkCollections = () => {
               className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg shadow-xs transition flex items-center space-x-1.5"
             >
               <Wallet className="w-4 h-4" />
-              <span>Payments Ledger</span>
+              <span>{t('farmer:milkCollections.paymentsLedger', 'Payments Ledger')}</span>
             </Link>
           </div>
         }
@@ -240,13 +243,13 @@ export const MilkCollections = () => {
           </div>
           <div>
             <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
-              Total Quantity Supplied
+              {t('farmer:milkCollections.totalQuantity', 'Total Quantity Supplied')}
             </span>
             <span className="text-xl sm:text-2xl font-bold text-slate-900 font-mono">
               {overallStats.totalQty} L
             </span>
             <span className="text-[10px] text-slate-400 block mt-0.5 font-mono">
-              Avg Fat: {overallStats.avgFat}%
+              {t('farmer:milk.avgFat', 'Average Fat')}: {overallStats.avgFat}%
             </span>
           </div>
         </div>
@@ -257,13 +260,13 @@ export const MilkCollections = () => {
           </div>
           <div>
             <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
-              Total Milk Value Recorded
+              {t('farmer:milkCollections.totalValue', 'Total Milk Value Recorded')}
             </span>
             <span className="text-xl sm:text-2xl font-bold text-blue-700 font-mono">
               ₹ {overallStats.totalAmt.toFixed(2)}
             </span>
             <span className="text-[10px] text-slate-400 block mt-0.5">
-              Across {overallStats.count} total shifts
+              {t('farmer:milkCollections.recordsCount', { count: overallStats.count, defaultValue: '{{count}} Shift Records' })}
             </span>
           </div>
         </div>
@@ -274,13 +277,13 @@ export const MilkCollections = () => {
           </div>
           <div>
             <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
-              Settled Milk Funds
+              {t('farmer:milkCollections.settledFunds', 'Settled Milk Funds')}
             </span>
             <span className="text-xl sm:text-2xl font-bold text-emerald-700 font-mono">
               ₹ {overallStats.settledAmt.toFixed(2)}
             </span>
             <span className="text-[10px] text-emerald-600 font-semibold block mt-0.5">
-              Disbursed by Dairy Owner
+              {t('common:status.settled', 'Settled')}
             </span>
           </div>
         </div>
@@ -291,7 +294,7 @@ export const MilkCollections = () => {
           </div>
           <div>
             <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
-              Outstanding Unpaid Balance
+              {t('farmer:milkCollections.pendingBalance', 'Outstanding Unpaid Balance')}
             </span>
             <span
               className={`text-xl sm:text-2xl font-bold font-mono ${
@@ -301,7 +304,7 @@ export const MilkCollections = () => {
               ₹ {overallStats.unpaidAmt.toFixed(2)}
             </span>
             <span className="text-[10px] text-slate-400 block mt-0.5">
-              Awaiting Settlement
+              {t('common:status.pending', 'Awaiting Settlement')}
             </span>
           </div>
         </div>
@@ -318,7 +321,7 @@ export const MilkCollections = () => {
           }`}
         >
           <History className="w-4 h-4" />
-          <span>Recorded Collection Log</span>
+          <span>{t('farmer:milkCollections.historyTab', 'Recorded Collection Log')}</span>
         </button>
 
         <button
@@ -330,7 +333,7 @@ export const MilkCollections = () => {
           }`}
         >
           <Calendar className="w-4 h-4" />
-          <span>10-Day Billing Summary</span>
+          <span>{t('farmer:milkCollections.summaryTab', '10-Day Billing Summary')}</span>
         </button>
       </div>
 
@@ -339,56 +342,56 @@ export const MilkCollections = () => {
       {/* ============================================================ */}
       {activeTab === 'history' && (
         <SectionCard
-          title="Recorded Milk Collection Log"
-          subtitle="Read-only history of milk entries created by your connected dairy owners"
+          title={t('farmer:milkCollections.historyTab', 'Recorded Collection Log')}
+          subtitle={t('farmer:milk.subtitle', 'Read-only history of milk entries created by your connected dairy owners')}
         >
           {/* Filter Toolbar */}
           <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-3 mb-4">
             <div className="flex items-center space-x-2 text-xs font-bold text-slate-700 uppercase tracking-wider">
               <Filter className="w-3.5 h-3.5 text-slate-500" />
-              <span>Filter Collections:</span>
+              <span>{t('common:actions.filter', 'Filter')}:</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <label className="text-[11px] font-semibold text-slate-600 block mb-1">Shift</label>
+                <label className="text-[11px] font-semibold text-slate-600 block mb-1">{t('farmer:milkCollections.filterSession', 'Shift')}</label>
                 <select
                   value={filterSession}
                   onChange={(e) => setFilterSession(e.target.value)}
                   className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs"
                 >
-                  <option value="all">All Shifts</option>
-                  <option value="morning">Morning Only</option>
-                  <option value="evening">Evening Only</option>
+                  <option value="all">{t('farmer:milkCollections.allSessions', 'All Shifts')}</option>
+                  <option value="morning">{t('farmer:dashboard.morningSession', 'Morning')}</option>
+                  <option value="evening">{t('farmer:dashboard.eveningSession', 'Evening')}</option>
                 </select>
               </div>
 
               <div>
-                <label className="text-[11px] font-semibold text-slate-600 block mb-1">Payment Status</label>
+                <label className="text-[11px] font-semibold text-slate-600 block mb-1">{t('farmer:milkCollections.filterStatus', 'Payment Status')}</label>
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
                   className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs"
                 >
-                  <option value="all">All Statuses</option>
-                  <option value="unpaid">Unpaid Only</option>
-                  <option value="settled">Settled Only</option>
+                  <option value="all">{t('farmer:milkCollections.allStatuses', 'All Statuses')}</option>
+                  <option value="unpaid">{t('common:status.unpaid', 'Unpaid')}</option>
+                  <option value="settled">{t('common:status.settled', 'Settled')}</option>
                 </select>
               </div>
 
               <div>
-                <label className="text-[11px] font-semibold text-slate-600 block mb-1">Date Range</label>
+                <label className="text-[11px] font-semibold text-slate-600 block mb-1">{t('farmer:milkCollections.filterDatePreset', 'Date Range')}</label>
                 <select
                   value={filterDatePreset}
                   onChange={(e) => setFilterDatePreset(e.target.value)}
                   className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs"
                 >
-                  <option value="all">All Recorded Dates</option>
-                  <option value="today">Today</option>
-                  <option value="last7days">Last 7 Days</option>
-                  <option value="last10days">Last 10 Days</option>
-                  <option value="thisMonth">This Month</option>
-                  <option value="custom">Custom Date Range</option>
+                  <option value="all">{t('farmer:milkCollections.allDates', 'All Recorded Dates')}</option>
+                  <option value="today">{t('common:datePresets.today', 'Today')}</option>
+                  <option value="last7days">{t('common:datePresets.last7days', 'Last 7 Days')}</option>
+                  <option value="last10days">{t('farmer:milkCollections.last10Days', 'Last 10 Days')}</option>
+                  <option value="thisMonth">{t('common:datePresets.thisMonth', 'This Month')}</option>
+                  <option value="custom">{t('farmer:milkCollections.customRange', 'Custom Date Range')}</option>
                 </select>
               </div>
             </div>
@@ -396,7 +399,7 @@ export const MilkCollections = () => {
             {filterDatePreset === 'custom' && (
               <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-200">
                 <div>
-                  <label className="text-[11px] font-semibold text-slate-600 block mb-1">Start Date</label>
+                  <label className="text-[11px] font-semibold text-slate-600 block mb-1">{t('farmer:milk.startDate', 'Start Date')}</label>
                   <input
                     type="date"
                     value={filterStartDate}
@@ -405,7 +408,7 @@ export const MilkCollections = () => {
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-semibold text-slate-600 block mb-1">End Date</label>
+                  <label className="text-[11px] font-semibold text-slate-600 block mb-1">{t('farmer:milk.endDate', 'End Date')}</label>
                   <input
                     type="date"
                     value={filterEndDate}
@@ -420,12 +423,12 @@ export const MilkCollections = () => {
           {loading ? (
             <div className="py-12 text-center text-slate-500 text-xs">
               <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-blue-600" />
-              <span>Loading collection records...</span>
+              <span>{t('farmer:milkCollections.loadingCollections', 'Loading collection records...')}</span>
             </div>
           ) : filteredCollections.length === 0 ? (
             <EmptyState
-              title="No Milk Collections Recorded Yet"
-              description="When your connected Dairy Owner records your milk collections, they will appear here in real-time."
+              title={t('farmer:milkCollections.noCollectionsFound', 'No Milk Collections Recorded Yet')}
+              description={t('farmer:milkCollections.noCollectionsDesc', 'When your connected Dairy Owner records your milk collections, they will appear here in real-time.')}
               icon={Droplets}
             />
           ) : (
@@ -435,14 +438,14 @@ export const MilkCollections = () => {
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                      <th className="py-3 px-4">Date</th>
-                      <th className="py-3 px-4">Dairy Unit</th>
-                      <th className="py-3 px-4">Shift</th>
-                      <th className="py-3 px-4 text-right">Quantity (L)</th>
-                      <th className="py-3 px-4 text-right">Fat (%)</th>
-                      <th className="py-3 px-4 text-right">Rate (₹/L)</th>
-                      <th className="py-3 px-4 text-right">Total Amount</th>
-                      <th className="py-3 px-4 text-center">Payment Status</th>
+                      <th className="py-3 px-4">{t('farmer:milkCollections.date', 'Date')}</th>
+                      <th className="py-3 px-4">{t('farmer:milkCollections.dairyCenter', 'Dairy Unit')}</th>
+                      <th className="py-3 px-4">{t('farmer:milkCollections.filterSession', 'Shift')}</th>
+                      <th className="py-3 px-4 text-right">{t('farmer:milkCollections.totalQuantity', 'Quantity (L)')}</th>
+                      <th className="py-3 px-4 text-right">{t('farmer:milk.avgFat', 'Fat (%)')}</th>
+                      <th className="py-3 px-4 text-right">{t('dairyOwner:reportsPage.averageRate', 'Rate (₹/L)')}</th>
+                      <th className="py-3 px-4 text-right">{t('farmer:milk.totalEarnings', 'Total Amount')}</th>
+                      <th className="py-3 px-4 text-center">{t('farmer:milkCollections.filterStatus', 'Payment Status')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
@@ -504,7 +507,7 @@ export const MilkCollections = () => {
                                 : 'bg-amber-100 text-amber-800'
                             }`}
                           >
-                            {item.paymentStatus === 'settled' ? 'Settled' : 'Unpaid'}
+                            {getStatusLabel(item.paymentStatus, t)}
                           </span>
                         </td>
                       </tr>
@@ -549,22 +552,22 @@ export const MilkCollections = () => {
                               : 'bg-amber-100 text-amber-800'
                           }`}
                         >
-                          {item.paymentStatus === 'settled' ? 'Settled' : 'Unpaid'}
+                          {getStatusLabel(item.paymentStatus, t)}
                         </span>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-3 gap-2 py-2 border-y border-slate-200 text-center text-xs">
                       <div>
-                        <span className="text-[10px] text-slate-400 block uppercase">Qty</span>
+                        <span className="text-[10px] text-slate-400 block uppercase">{t('farmer:milk.qty', 'Qty')}</span>
                         <span className="font-mono font-bold text-slate-800">{item.quantityLiters} L</span>
                       </div>
                       <div>
-                        <span className="text-[10px] text-slate-400 block uppercase">Fat</span>
+                        <span className="text-[10px] text-slate-400 block uppercase">{t('farmer:milk.fat', 'Fat')}</span>
                         <span className="font-mono font-semibold text-slate-800">{item.fatPercentage}%</span>
                       </div>
                       <div>
-                        <span className="text-[10px] text-slate-400 block uppercase">Rate</span>
+                        <span className="text-[10px] text-slate-400 block uppercase">{t('farmer:milk.rate', 'Rate')}</span>
                         <span className="font-mono text-slate-800">₹{item.ratePerLiter}</span>
                       </div>
                     </div>
@@ -594,34 +597,34 @@ export const MilkCollections = () => {
       {/* ============================================================ */}
       {activeTab === 'summary' && (
         <SectionCard
-          title="My 10-Day Billing Summary"
-          subtitle="Detailed breakdown of milk intake and payout settlement for the selected billing period"
+          title={t('farmer:milkCollections.summaryCycleTitle', 'My 10-Day Billing Summary')}
+          subtitle={t('farmer:milk.subtitle', 'Detailed breakdown of milk intake and payout settlement for the selected billing period')}
         >
           {/* Cycle Selector Toolbar */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4 border-b border-slate-200">
             <div>
               <label className="text-xs font-semibold text-slate-700 flex items-center space-x-1 mb-1">
                 <Calendar className="w-3.5 h-3.5 text-indigo-600" />
-                <span>Select 10-Day Billing Cycle:</span>
+                <span>{t('farmer:milkCollections.summaryTab', 'Select 10-Day Billing Cycle')}:</span>
               </label>
               <select
                 value={summaryCycle}
                 onChange={(e) => setSummaryCycle(e.target.value)}
                 className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 text-xs sm:text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none"
               >
-                <option value="current">Current 10-Day Period</option>
-                <option value="cycle1">Cycle 1 (1st - 10th of Month)</option>
-                <option value="cycle2">Cycle 2 (11th - 20th of Month)</option>
-                <option value="cycle3">Cycle 3 (21st - End of Month)</option>
-                <option value="last10">Rolling Last 10 Days</option>
-                <option value="custom">Custom Date Range</option>
+                <option value="current">{t('farmer:milkCollections.currentCycle', 'Current 10-Day Period')}</option>
+                <option value="cycle1">{t('farmer:milkCollections.cycle1', 'Cycle 1 (1st - 10th)')}</option>
+                <option value="cycle2">{t('farmer:milkCollections.cycle2', 'Cycle 2 (11th - 20th)')}</option>
+                <option value="cycle3">{t('farmer:milkCollections.cycle3', 'Cycle 3 (21st - End)')}</option>
+                <option value="last10">{t('farmer:milkCollections.last10Days', 'Rolling Last 10 Days')}</option>
+                <option value="custom">{t('farmer:milk.customDateRange', 'Custom Date Range')}</option>
               </select>
             </div>
 
             {summaryCycle === 'custom' && (
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-[11px] font-semibold text-slate-600 block mb-1">Start Date</label>
+                  <label className="text-[11px] font-semibold text-slate-600 block mb-1">{t('farmer:milk.startDate', 'Start Date')}</label>
                   <input
                     type="date"
                     value={summaryCustomStart}
@@ -630,7 +633,7 @@ export const MilkCollections = () => {
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-semibold text-slate-600 block mb-1">End Date</label>
+                  <label className="text-[11px] font-semibold text-slate-600 block mb-1">{t('farmer:milk.endDate', 'End Date')}</label>
                   <input
                     type="date"
                     value={summaryCustomEnd}
@@ -652,12 +655,12 @@ export const MilkCollections = () => {
           {loadingSummary ? (
             <div className="py-12 text-center text-slate-500 text-xs">
               <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-indigo-600" />
-              <span>Generating your 10-day billing summary...</span>
+              <span>{t('farmer:milkCollections.loadingSummary', 'Generating your 10-day billing summary...')}</span>
             </div>
           ) : !summaryData ? (
             <EmptyState
-              title="No Summary Available"
-              description="Could not generate 10-day summary for the selected period."
+              title={t('farmer:milkCollections.noSummaryAvailable', 'No Summary Available')}
+              description={t('farmer:milkCollections.noSummaryDesc', 'Could not generate 10-day summary for the selected period.')}
               icon={Calendar}
             />
           ) : (
@@ -734,14 +737,14 @@ export const MilkCollections = () => {
               {/* Day-by-day table */}
               {summaryData.dailyRecords?.length === 0 ? (
                 <EmptyState
-                  title="No Collections Recorded in Period"
-                  description="No morning or evening milk records exist in the selected 10-day period."
+                  title={t('farmer:milkCollections.noCollectionsInPeriod', 'No Collections Recorded in Period')}
+                  description={t('farmer:milkCollections.noCollectionsInPeriodDesc', 'No morning or evening milk records exist in the selected 10-day period.')}
                   icon={Droplets}
                 />
               ) : (
                 <div>
                   <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">
-                    Daily Shift Entries ({summaryData.dailyRecords?.length} Days)
+                    {t('farmer:milkCollections.dailyShiftEntries', { count: summaryData.dailyRecords?.length, defaultValue: `Daily Shift Entries (${summaryData.dailyRecords?.length} Days)` })}
                   </h4>
 
                   {/* Desktop Table */}
@@ -749,12 +752,12 @@ export const MilkCollections = () => {
                     <table className="w-full text-left border-collapse">
                       <thead>
                         <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                          <th className="py-2.5 px-3">Date</th>
-                          <th className="py-2.5 px-3">Morning Shift</th>
-                          <th className="py-2.5 px-3">Evening Shift</th>
-                          <th className="py-2.5 px-3 text-right">Daily Total Qty</th>
-                          <th className="py-2.5 px-3 text-right">Daily Total Amount</th>
-                          <th className="py-2.5 px-3 text-center">Settlement Status</th>
+                          <th className="py-2.5 px-3">{t('farmer:milk.date', 'Date')}</th>
+                          <th className="py-2.5 px-3">{t('farmer:milk.morningShift', 'Morning Shift')}</th>
+                          <th className="py-2.5 px-3">{t('farmer:milk.eveningShift', 'Evening Shift')}</th>
+                          <th className="py-2.5 px-3 text-right">{t('farmer:milk.dailyTotalQty', 'Daily Total Qty')}</th>
+                          <th className="py-2.5 px-3 text-right">{t('farmer:milk.dailyTotalAmount', 'Daily Total Amount')}</th>
+                          <th className="py-2.5 px-3 text-center">{t('farmer:milk.settlementStatus', 'Settlement Status')}</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
@@ -805,7 +808,7 @@ export const MilkCollections = () => {
                                     : 'bg-amber-100 text-amber-800'
                                 }`}
                               >
-                                {d.isFullySettled ? 'Settled' : 'Unpaid'}
+                                {getStatusLabel(d.isFullySettled ? 'settled' : 'unpaid', t)}
                               </span>
                             </td>
                           </tr>
@@ -833,7 +836,7 @@ export const MilkCollections = () => {
                                 : 'bg-amber-100 text-amber-800'
                             }`}
                           >
-                            {d.isFullySettled ? 'Settled' : 'Unpaid'}
+                            {getStatusLabel(d.isFullySettled ? 'settled' : 'unpaid', t)}
                           </span>
                         </div>
 

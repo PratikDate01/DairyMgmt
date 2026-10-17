@@ -30,10 +30,13 @@ import { AdminReports } from './pages/admin/Reports';
 import { Inventory } from './pages/medical/Inventory';
 import MedicalMedicineRequests from './pages/medical/MedicineRequests';
 import { Complaints } from './pages/common/Complaints';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 
 const ProtectedShell = ({ children }) => (
   <ProtectedRoute>
-    <DashboardLayout>{children}</DashboardLayout>
+    <DashboardLayout>
+      <ErrorBoundary>{children}</ErrorBoundary>
+    </DashboardLayout>
   </ProtectedRoute>
 );
 

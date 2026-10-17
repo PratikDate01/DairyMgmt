@@ -144,7 +144,9 @@ export const getProviderRequests = async (req, res) => {
   try {
     const { status, search, startDate, endDate, page = 1, limit = 10 } = req.query;
 
-    const query = { medicalProvider: req.user.id };
+    const query = req.user.role === 'admin'
+      ? (req.query.medicalProvider ? { medicalProvider: req.query.medicalProvider } : {})
+      : { medicalProvider: req.user.id };
 
     if (status && status !== 'all') {
       query.status = status;

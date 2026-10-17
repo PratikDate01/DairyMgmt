@@ -1,0 +1,10 @@
+{
+  "required": "This field is required.",
+  "invalidEmail": "Please enter a valid email address.",
+  "invalidPhone": "Please enter a valid 10-digit mobile number.",
+  "invalidNumber": "Please enter a valid numeric value.",
+  "positiveNumber": "Value must be greater than zero.",
+  "invalidOtp": "Please enter a valid 6-digit code.",
+  "selectRequired": "Please select an option.",
+  "confirmAction": "Are you sure you want to perform this action?"
+}

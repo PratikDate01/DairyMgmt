@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { getStatusLabel } from '../../i18n/statusMap';
 import {
   Stethoscope,
   X,
@@ -21,6 +23,7 @@ import {
 import { PrescriptionProcurementModal } from './PrescriptionProcurementModal';
 
 export const FarmerCaseDetailModal = ({ requestItem, onClose }) => {
+  const { t } = useTranslation(['farmer', 'common']);
   const [activeTab, setActiveTab] = useState('clinical_summary'); // 'clinical_summary' | 'prescription' | 'timeline'
   const [showProcurementModal, setShowProcurementModal] = useState(false);
 
@@ -56,13 +59,15 @@ export const FarmerCaseDetailModal = ({ requestItem, onClose }) => {
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <h2 className="text-base font-extrabold text-slate-900">Veterinary Clinical Case Record</h2>
+                <h2 className="text-base font-extrabold text-slate-900">
+                  {t('farmer:caseDetailsModal.title', 'Veterinary Clinical Case Record')}
+                </h2>
                 <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 uppercase">
-                  {requestItem.status.replace('_', ' ')}
+                  {getStatusLabel(requestItem.status, t)}
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
-                Cattle Tag: <strong>{requestItem.cattle?.nameTag || 'Animal'}</strong> • Assigned Doctor: <strong>Dr. {requestItem.veterinarian?.name || 'Veterinarian'}</strong>
+                {t('farmer:caseDetailsModal.cattleTag', 'Cattle Tag:')} <strong>{requestItem.cattle?.nameTag || t('common:labels.cattle', 'Animal')}</strong> • {t('farmer:caseDetailsModal.assignedDoctor', 'Assigned Doctor:')} <strong>Dr. {requestItem.veterinarian?.name || t('common:roles.veterinarian', 'Veterinarian')}</strong>
               </p>
             </div>
           </div>
@@ -72,11 +77,11 @@ export const FarmerCaseDetailModal = ({ requestItem, onClose }) => {
         <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 shrink-0">
           <div className="grid grid-cols-5 gap-1 text-center text-[10px] sm:text-[11px]">
             {[
-              { id: 'accepted', label: 'Accepted' },
-              { id: 'examination', label: 'Exam' },
-              { id: 'diagnosed', label: 'Diagnosis' },
-              { id: 'prescription_created', label: 'Prescription' },
-              { id: 'completed', label: 'Complete' }
+              { id: 'accepted', label: t('farmer:caseDetailsModal.stepperAccepted', 'Accepted') },
+              { id: 'examination', label: t('farmer:caseDetailsModal.stepperExam', 'Exam') },
+              { id: 'diagnosed', label: t('farmer:caseDetailsModal.stepperDiagnosis', 'Diagnosis') },
+              { id: 'prescription_created', label: t('farmer:caseDetailsModal.stepperRx', 'Prescription') },
+              { id: 'completed', label: t('farmer:caseDetailsModal.stepperComplete', 'Complete') }
             ].map(step => {
               const st = getStepStatus(step.id);
               return (
@@ -109,7 +114,7 @@ export const FarmerCaseDetailModal = ({ requestItem, onClose }) => {
             }`}
           >
             <ShieldCheck className="w-3.5 h-3.5" />
-            <span>Doctor Diagnosis & Findings</span>
+            <span>{t('farmer:caseDetailsModal.tabFindings', 'Doctor Diagnosis & Findings')}</span>
           </button>
           <button
             onClick={() => setActiveTab('prescription')}
@@ -120,7 +125,7 @@ export const FarmerCaseDetailModal = ({ requestItem, onClose }) => {
             }`}
           >
             <Pill className="w-3.5 h-3.5" />
-            <span>Prescription & Medicines</span>
+            <span>{t('farmer:caseDetailsModal.tabPrescription', 'Prescription & Medicines')}</span>
           </button>
           <button
             onClick={() => setActiveTab('timeline')}
@@ -131,7 +136,7 @@ export const FarmerCaseDetailModal = ({ requestItem, onClose }) => {
             }`}
           >
             <Clock className="w-3.5 h-3.5" />
-            <span>Case Audit History</span>
+            <span>{t('farmer:caseDetailsModal.tabTimeline', 'Case Audit History')}</span>
           </button>
         </div>
 
@@ -146,7 +151,9 @@ export const FarmerCaseDetailModal = ({ requestItem, onClose }) => {
                     <div className="flex items-center space-x-2">
                       <span className="p-1.5 bg-emerald-600 text-white rounded-lg font-bold">👨‍⚕️</span>
                       <div>
-                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 block">Verified Veterinarian Diagnosis</span>
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 block">
+                          {t('farmer:caseDetailsModal.verifiedDiagnosis', 'Verified Veterinarian Diagnosis')}
+                        </span>
                         <h3 className="text-base font-extrabold text-slate-900">{requestItem.finalDiagnosis.diagnosis}</h3>
                       </div>
                     </div>
@@ -154,28 +161,34 @@ export const FarmerCaseDetailModal = ({ requestItem, onClose }) => {
                       <span className={`px-2.5 py-1 rounded-full font-bold text-[10px] ${
                         requestItem.finalDiagnosis.severity === 'Critical' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-800'
                       }`}>
-                        Severity: {requestItem.finalDiagnosis.severity}
+                        {t('farmer:caseDetailsModal.severity', { level: requestItem.finalDiagnosis.severity, defaultValue: `Severity: ${requestItem.finalDiagnosis.severity}` })}
                       </span>
                     )}
                   </div>
 
                   {requestItem.finalDiagnosis.notes && (
                     <div className="p-3 bg-white rounded-xl border border-emerald-100 text-slate-700 space-y-1">
-                      <strong className="text-slate-900 block font-bold">Doctor Clinical Observations & Notes:</strong>
+                      <strong className="text-slate-900 block font-bold">
+                        {t('farmer:caseDetailsModal.doctorNotes', 'Doctor Clinical Observations & Notes:')}
+                      </strong>
                       <p className="leading-relaxed">{requestItem.finalDiagnosis.notes}</p>
                     </div>
                   )}
 
                   {requestItem.finalDiagnosis.treatmentAdvice && (
                     <div className="p-3 bg-white rounded-xl border border-emerald-100 text-slate-700 space-y-1">
-                      <strong className="text-slate-900 block font-bold">Treatment Protocol:</strong>
+                      <strong className="text-slate-900 block font-bold">
+                        {t('farmer:caseDetailsModal.treatmentProtocol', 'Treatment Protocol:')}
+                      </strong>
                       <p className="leading-relaxed">{requestItem.finalDiagnosis.treatmentAdvice}</p>
                     </div>
                   )}
 
                   {requestItem.finalDiagnosis.additionalAdvice && (
                     <div className="p-3 bg-white rounded-xl border border-emerald-100 text-slate-700 space-y-1">
-                      <strong className="text-slate-900 block font-bold">Care Advice for Farmer:</strong>
+                      <strong className="text-slate-900 block font-bold">
+                        {t('farmer:caseDetailsModal.careAdvice', 'Care Advice for Farmer:')}
+                      </strong>
                       <p className="leading-relaxed">{requestItem.finalDiagnosis.additionalAdvice}</p>
                     </div>
                   )}
@@ -184,8 +197,15 @@ export const FarmerCaseDetailModal = ({ requestItem, onClose }) => {
                 <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl text-amber-900 flex items-center space-x-3">
                   <Clock className="w-5 h-5 text-amber-600 shrink-0" />
                   <div>
-                    <h4 className="font-bold">Doctor Final Diagnosis Pending</h4>
-                    <p className="text-slate-600 mt-0.5">Dr. {requestItem.veterinarian?.name || 'Veterinarian'} has accepted your case and is conducting clinical examination.</p>
+                    <h4 className="font-bold">
+                      {t('farmer:caseDetailsModal.diagnosisPendingTitle', 'Doctor Final Diagnosis Pending')}
+                    </h4>
+                    <p className="text-slate-600 mt-0.5">
+                      {t('farmer:caseDetailsModal.diagnosisPendingDesc', {
+                        name: requestItem.veterinarian?.name || t('common:roles.veterinarian', 'Veterinarian'),
+                        defaultValue: `Dr. ${requestItem.veterinarian?.name || 'Veterinarian'} has accepted your case and is conducting clinical examination.`
+                      })}
+                    </p>
                   </div>
                 </div>
               )}
@@ -195,14 +215,14 @@ export const FarmerCaseDetailModal = ({ requestItem, onClose }) => {
                 <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
                   <h4 className="font-extrabold text-slate-900 flex items-center space-x-1.5">
                     <Activity className="w-4 h-4 text-teal-600" />
-                    <span>Doctor Examination Findings</span>
+                    <span>{t('farmer:caseDetailsModal.examFindingsTitle', 'Doctor Examination Findings')}</span>
                   </h4>
                   <div className="grid grid-cols-2 gap-2 text-slate-600">
-                    <p>Temperature: <strong className="text-slate-800">{requestItem.clinicalExamination.temperature || 'Recorded'}</strong></p>
-                    <p>Appetite: <strong className="text-slate-800">{requestItem.clinicalExamination.appetite || 'Recorded'}</strong></p>
+                    <p>{t('farmer:caseDetailsModal.temperature', 'Temperature:')} <strong className="text-slate-800">{requestItem.clinicalExamination.temperature || 'Recorded'}</strong></p>
+                    <p>{t('farmer:caseDetailsModal.appetite', 'Appetite:')} <strong className="text-slate-800">{requestItem.clinicalExamination.appetite || 'Recorded'}</strong></p>
                   </div>
                   <p className="text-slate-700 pt-1">
-                    <strong>Physical Findings:</strong> {requestItem.clinicalExamination.physicalSymptoms}
+                    <strong>{t('farmer:caseDetailsModal.physicalSymptoms', 'Physical Findings:')}</strong> {requestItem.clinicalExamination.physicalSymptoms}
                   </p>
                 </div>
               )}
@@ -212,9 +232,14 @@ export const FarmerCaseDetailModal = ({ requestItem, onClose }) => {
                 <div className="flex items-start space-x-2.5">
                   <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
                   <div className="space-y-1">
-                    <h4 className="font-extrabold text-blue-950">Preliminary AI Photo Scan Reference</h4>
+                    <h4 className="font-extrabold text-blue-950">
+                      {t('farmer:caseDetailsModal.aiRefTitle', 'Preliminary AI Photo Scan Reference')}
+                    </h4>
                     <p className="text-slate-600 leading-relaxed text-[11px]">
-                      <em>Note: The AI scan below was used for initial screening. The final diagnosis above is provided directly by Dr. {requestItem.veterinarian?.name}.</em>
+                      <em>{t('farmer:caseDetailsModal.aiRefNote', {
+                        name: requestItem.veterinarian?.name || t('common:roles.veterinarian', 'the doctor'),
+                        defaultValue: `Note: The AI scan below was used for initial screening. The final diagnosis above is provided directly by Dr. ${requestItem.veterinarian?.name}.`
+                      })}</em>
                     </p>
                   </div>
                 </div>
@@ -228,9 +253,9 @@ export const FarmerCaseDetailModal = ({ requestItem, onClose }) => {
                     />
                   )}
                   <div className="sm:col-span-2 space-y-1 text-slate-700">
-                    <p>AI Suggested Condition: <strong className="text-slate-900">{requestItem.aiCondition || requestItem.diseaseScan?.detectedCondition}</strong></p>
-                    <p>Confidence: <strong className="text-blue-700">{requestItem.diseaseScan?.confidence}%</strong></p>
-                    <p>Reported Symptoms: <span>{requestItem.symptoms || 'None'}</span></p>
+                    <p>{t('farmer:caseDetailsModal.aiCondition', 'AI Suggested Condition:')} <strong className="text-slate-900">{requestItem.aiCondition || requestItem.diseaseScan?.detectedCondition}</strong></p>
+                    <p>{t('farmer:caseDetailsModal.confidence', 'Confidence:')} <strong className="text-blue-700">{requestItem.diseaseScan?.confidence}%</strong></p>
+                    <p>{t('farmer:caseDetailsModal.symptoms', 'Reported Symptoms:')} <span>{requestItem.symptoms || 'None'}</span></p>
                   </div>
                 </div>
               </div>
@@ -240,11 +265,16 @@ export const FarmerCaseDetailModal = ({ requestItem, onClose }) => {
                 <div className="p-4 bg-blue-50 border border-blue-300 rounded-2xl space-y-1 text-blue-950">
                   <div className="flex items-center space-x-2">
                     <Calendar className="w-4 h-4 text-blue-600" />
-                    <h4 className="font-extrabold">Scheduled Follow-Up Examination</h4>
+                    <h4 className="font-extrabold">{t('farmer:caseDetailsModal.scheduledFollowUp', 'Scheduled Follow-Up Examination')}</h4>
                   </div>
-                  <p>Follow-Up Date: <strong>{requestItem.followUp.date ? new Date(requestItem.followUp.date).toLocaleDateString() : 'To be arranged'}</strong></p>
+                  <p>{t('farmer:caseDetailsModal.followUpDate', {
+                    date: requestItem.followUp.date ? new Date(requestItem.followUp.date).toLocaleDateString() : 'To be arranged',
+                    defaultValue: `Follow-Up Date: ${requestItem.followUp.date ? new Date(requestItem.followUp.date).toLocaleDateString() : 'To be arranged'}`
+                  })}</p>
                   {requestItem.followUp.instructions && (
-                    <p className="text-slate-700 pt-1"><strong>Doctor Instructions:</strong> {requestItem.followUp.instructions}</p>
+                    <p className="text-slate-700 pt-1">
+                      <strong>{t('farmer:caseDetailsModal.followUpInstructions', 'Doctor Instructions:')}</strong> {requestItem.followUp.instructions}
+                    </p>
                   )}
                 </div>
               )}
@@ -258,14 +288,14 @@ export const FarmerCaseDetailModal = ({ requestItem, onClose }) => {
                   <div className="flex items-center space-x-2 text-purple-950">
                     <Pill className="w-5 h-5 text-purple-600 shrink-0" />
                     <div>
-                      <h3 className="font-extrabold text-sm">Official Veterinary Prescription</h3>
+                      <h3 className="font-extrabold text-sm">{t('farmer:vetRequests.prescription', 'Official Veterinary Prescription')}</h3>
                       <p className="text-[11px] text-purple-700">Issued by Dr. {requestItem.veterinarian?.name}</p>
                     </div>
                   </div>
 
                   {requestItem.prescription?.medicines?.length > 0 && (
                     <div className="space-y-2">
-                      <h4 className="font-extrabold text-slate-900">Prescribed Medicines</h4>
+                      <h4 className="font-extrabold text-slate-900">{t('veterinarian:clinicalWorkspace.medicinesList', 'Prescribed Medicines')}</h4>
                       <div className="space-y-2">
                         {requestItem.prescription.medicines.map((m, i) => (
                           <div key={i} className="p-3 bg-white rounded-xl border border-purple-100 space-y-1">
@@ -276,12 +306,12 @@ export const FarmerCaseDetailModal = ({ requestItem, onClose }) => {
                               </span>
                             </div>
                             <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-600">
-                              <p>Dosage: <strong className="text-slate-800">{m.dosage || 'N/A'}</strong></p>
-                              <p>Duration: <strong className="text-slate-800">{m.duration || 'N/A'}</strong></p>
+                              <p>{t('farmer:caseDetailsModal.dosage', 'Dosage:')} <strong className="text-slate-800">{m.dosage || 'N/A'}</strong></p>
+                              <p>{t('farmer:caseDetailsModal.duration', 'Duration:')} <strong className="text-slate-800">{m.duration || 'N/A'}</strong></p>
                             </div>
                             {m.instructions && (
                               <p className="text-[11px] text-slate-700 italic pt-0.5">
-                                Instructions: "{m.instructions}"
+                                {t('farmer:caseDetailsModal.instructions', 'Instructions:')} "{m.instructions}"
                               </p>
                             )}
                           </div>
@@ -292,14 +322,14 @@ export const FarmerCaseDetailModal = ({ requestItem, onClose }) => {
 
                   {requestItem.prescription?.generalInstructions && (
                     <div className="p-3 bg-white rounded-xl border border-purple-100 space-y-1">
-                      <strong className="text-slate-900 block font-bold">General Treatment Instructions:</strong>
+                      <strong className="text-slate-900 block font-bold">{t('veterinarian:clinicalWorkspace.generalInstructions', 'General Treatment Instructions:')}</strong>
                       <p className="text-slate-700 leading-relaxed">{requestItem.prescription.generalInstructions}</p>
                     </div>
                   )}
 
                   {requestItem.prescription?.dietaryAdvice && (
                     <div className="p-3 bg-white rounded-xl border border-purple-100 space-y-1">
-                      <strong className="text-slate-900 block font-bold">Dietary & Feed Advice:</strong>
+                      <strong className="text-slate-900 block font-bold">{t('veterinarian:clinicalWorkspace.dietaryAdvice', 'Dietary & Feed Advice:')}</strong>
                       <p className="text-slate-700 leading-relaxed">{requestItem.prescription.dietaryAdvice}</p>
                     </div>
                   )}
@@ -311,15 +341,15 @@ export const FarmerCaseDetailModal = ({ requestItem, onClose }) => {
                       className="w-full py-3 px-4 bg-purple-600 hover:bg-purple-700 text-white font-extrabold rounded-xl shadow-xs transition flex items-center justify-center space-x-2"
                     >
                       <ShoppingBag className="w-4 h-4" />
-                      <span>Find & Compare Prescribed Medicines in Registered Stores</span>
+                      <span>{t('farmer:caseDetailsModal.procureMedicinesBtn', 'Procure Prescribed Medicines')}</span>
                     </button>
                   </div>
                 </div>
               ) : (
                 <div className="p-8 text-center bg-slate-50 border border-slate-200 rounded-2xl space-y-2 text-slate-500">
                   <Pill className="w-8 h-8 text-slate-400 mx-auto" />
-                  <h4 className="font-bold text-slate-800">No Prescription Issued Yet</h4>
-                  <p>Prescribed medications will appear here once Dr. {requestItem.veterinarian?.name || 'Veterinarian'} completes clinical evaluation.</p>
+                  <h4 className="font-bold text-slate-800">{t('farmer:caseDetailsModal.noPrescriptionIssued', 'No Prescription Issued Yet')}</h4>
+                  <p>{t('farmer:caseDetailsModal.prescriptionPendingDoctor', 'Prescribed medications will appear here once Dr. {{name}} completes clinical evaluation.', { name: requestItem.veterinarian?.name || 'Veterinarian' })}</p>
                 </div>
               )}
             </div>
@@ -328,18 +358,18 @@ export const FarmerCaseDetailModal = ({ requestItem, onClose }) => {
           {activeTab === 'timeline' && (
             <div className="space-y-4">
               <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800">
-                Clinical Progression Audit History
+                {t('farmer:caseDetailsModal.tabTimeline', 'Clinical Progression Audit History')}
               </div>
 
               {requestItem.escalationHistory && requestItem.escalationHistory.length > 0 && (
                 <div className="p-3.5 bg-indigo-50 border border-indigo-200 rounded-xl space-y-1 text-indigo-950">
                   <h4 className="font-bold flex items-center space-x-1">
                     <RotateCw className="w-3.5 h-3.5 text-indigo-600" />
-                    <span>Referral History</span>
+                    <span>{t('farmer:caseDetailsModal.referralHistory', 'Referral History')}</span>
                   </h4>
                   {requestItem.escalationHistory.map((h, i) => (
                     <p key={i} className="text-[11px] text-slate-700">
-                      • Reassigned from Dr. {h.veterinarian?.name || 'Doctor'} ({h.reason || 'Unavailable'})
+                      • {t('farmer:caseDetailsModal.reassignedFrom', 'Reassigned from Dr. {{name}} ({{reason}})', { name: h.veterinarian?.name || 'Doctor', reason: h.reason || 'Unavailable' })}
                     </p>
                   ))}
                 </div>
@@ -362,7 +392,7 @@ export const FarmerCaseDetailModal = ({ requestItem, onClose }) => {
                     </div>
                   ))
                 ) : (
-                  <div className="p-4 text-center text-slate-400">Request pending doctor response.</div>
+                  <div className="p-4 text-center text-slate-400">{t('farmer:caseDetailsModal.pendingDoctorResponse', 'Request pending doctor response.')}</div>
                 )}
               </div>
             </div>
@@ -375,7 +405,7 @@ export const FarmerCaseDetailModal = ({ requestItem, onClose }) => {
             onClick={onClose}
             className="px-5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition"
           >
-            Close Record
+            {t('common:actions.close', 'Close')}
           </button>
         </div>
       </div>

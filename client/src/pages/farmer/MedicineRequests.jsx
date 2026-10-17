@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { getStatusLabel } from '../../i18n/statusMap';
 import {
   ShoppingBag,
   CheckCircle,
@@ -24,6 +26,7 @@ const statusBadges = {
 };
 
 export default function FarmerMedicineRequests() {
+  const { t } = useTranslation(['farmer', 'common']);
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -81,9 +84,9 @@ export default function FarmerMedicineRequests() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="My Medicine Requests"
-        description="Track the status of your submitted medicine requests and pickup schedules."
-        breadcrumbs={['Home', 'Farmer Portal', 'My Requests']}
+        title={t('farmer:medicineRequests.title', 'My Medicine Requests')}
+        description={t('farmer:medicineRequests.subtitle', 'Track the status of your submitted medicine requests and pickup schedules.')}
+        breadcrumbs={[t('common:nav.home', 'Home'), t('common:roles.farmer', 'Farmer'), t('farmer:medicineRequests.title', 'My Requests')]}
         actions={
           <button
             onClick={fetchRequests}
@@ -91,7 +94,7 @@ export default function FarmerMedicineRequests() {
             className="px-3 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg shadow-xs transition flex items-center space-x-1.5"
           >
             <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${loading ? 'animate-spin' : ''}`} />
-            <span>Refresh</span>
+            <span>{t('common:actions.refresh', 'Refresh')}</span>
           </button>
         }
       />
@@ -102,7 +105,7 @@ export default function FarmerMedicineRequests() {
             <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
             <span>{error}</span>
           </div>
-          <button onClick={() => setError('')} className="text-red-500 font-bold text-xs">Dismiss</button>
+          <button onClick={() => setError('')} className="text-red-500 font-bold text-xs">{t('common:actions.dismiss', 'Dismiss')}</button>
         </div>
       )}
 
@@ -112,7 +115,7 @@ export default function FarmerMedicineRequests() {
             <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" />
             <span>{successMsg}</span>
           </div>
-          <button onClick={() => setSuccessMsg('')} className="text-emerald-600 font-bold text-xs">Dismiss</button>
+          <button onClick={() => setSuccessMsg('')} className="text-emerald-600 font-bold text-xs">{t('common:actions.dismiss', 'Dismiss')}</button>
         </div>
       )}
 
@@ -129,7 +132,7 @@ export default function FarmerMedicineRequests() {
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
-              {st}
+              {st === 'all' ? t('common:status.all', 'All') : getStatusLabel(st, t)}
             </button>
           ))}
         </div>
@@ -140,13 +143,13 @@ export default function FarmerMedicineRequests() {
         {loading ? (
           <div className="p-12 text-center text-slate-400 flex flex-col items-center gap-2">
             <RefreshCw className="w-6 h-6 animate-spin text-blue-600" />
-            <span className="text-xs">Loading requests...</span>
+            <span className="text-xs">{t('common:status.loading', 'Loading requests...')}</span>
           </div>
         ) : requests.length === 0 ? (
           <div className="p-12 text-center text-slate-400 space-y-2">
             <ShoppingBag className="w-10 h-10 mx-auto text-slate-300" />
-            <p className="text-sm font-semibold text-slate-700">No requests found</p>
-            <p className="text-xs text-slate-400">You have not submitted any medicine requests in this status.</p>
+            <p className="text-sm font-semibold text-slate-700">{t('common:status.noData', 'No requests found')}</p>
+            <p className="text-xs text-slate-400">{t('farmer:medicineRequests.noOrders', 'You have not submitted any medicine requests in this status.')}</p>
           </div>
         ) : (
           <>
@@ -154,13 +157,13 @@ export default function FarmerMedicineRequests() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    <th className="p-4">Medicine Requested</th>
-                    <th className="p-4">Medical Provider</th>
-                    <th className="p-4">Quantity</th>
-                    <th className="p-4">Total Price</th>
-                    <th className="p-4">Date</th>
-                    <th className="p-4">Status</th>
-                    <th className="p-4 text-right">Actions</th>
+                    <th className="p-4">{t('farmer:medicines.medicineName', 'Medicine Requested')}</th>
+                    <th className="p-4">{t('farmer:medicines.provider', 'Medical Provider')}</th>
+                    <th className="p-4">{t('common:fields.quantity', 'Quantity')}</th>
+                    <th className="p-4">{t('common:fields.totalPrice', 'Total Price')}</th>
+                    <th className="p-4">{t('common:fields.date', 'Date')}</th>
+                    <th className="p-4">{t('common:fields.status', 'Status')}</th>
+                    <th className="p-4 text-right">{t('common:actions.actions', 'Actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-xs">
@@ -174,7 +177,7 @@ export default function FarmerMedicineRequests() {
                         </td>
 
                         <td className="p-4">
-                          <div className="font-semibold text-slate-800">{req.medicalProvider?.name || 'Provider'}</div>
+                          <div className="font-semibold text-slate-800">{req.medicalProvider?.name || t('farmer:medicines.provider', 'Provider')}</div>
                           <div className="text-[11px] text-slate-400">{req.medicalProvider?.phone || 'N/A'}</div>
                         </td>
 
@@ -192,7 +195,7 @@ export default function FarmerMedicineRequests() {
 
                         <td className="p-4">
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium border ${badge.bg} ${badge.text} ${badge.border}`}>
-                            {badge.label}
+                            {getStatusLabel(req.status, t)}
                           </span>
                         </td>
 
@@ -249,11 +252,11 @@ export default function FarmerMedicineRequests() {
 
       {/* Details & Status Timeline Modal */}
       {selectedRequest && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-100 space-y-5 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-100 space-y-5 my-auto max-h-[90vh] overflow-y-auto modal-animate">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
-                <h3 className="text-base font-bold text-slate-800">Request Timeline & Details</h3>
+                <h3 className="text-base font-bold text-slate-800">{t('farmer:medicineRequests.detailsTitle', 'Request Timeline & Details')}</h3>
                 <p className="text-[11px] text-slate-400">ID: {selectedRequest._id}</p>
               </div>
               <button onClick={() => setSelectedRequest(null)} className="text-slate-400 hover:text-slate-600 p-1">
@@ -263,39 +266,39 @@ export default function FarmerMedicineRequests() {
 
             <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 space-y-1 text-xs">
               <p className="font-bold text-slate-900">{selectedRequest.medicineNameSnapshot}</p>
-              <p className="text-slate-500">Provider: <span className="font-semibold text-slate-700">{selectedRequest.medicalProvider?.name}</span> ({selectedRequest.medicalProvider?.phone})</p>
+              <p className="text-slate-500">{t('farmer:medicineRequests.provider', 'Provider')}: <span className="font-semibold text-slate-700">{selectedRequest.medicalProvider?.name}</span> ({selectedRequest.medicalProvider?.phone})</p>
               <div className="flex justify-between pt-1 border-t border-slate-200 text-slate-700 font-medium">
-                <span>Qty: {selectedRequest.quantity} units @ ₹{selectedRequest.unitPriceSnapshot}</span>
-                <span className="font-bold text-slate-900">Total: ₹{selectedRequest.totalAmount}</span>
+                <span>{t('common:labels.quantity', 'Qty')}: {selectedRequest.quantity} units @ ₹{selectedRequest.unitPriceSnapshot}</span>
+                <span className="font-bold text-slate-900">{t('common:labels.totalAmount', 'Total')}: ₹{selectedRequest.totalAmount}</span>
               </div>
             </div>
 
             {selectedRequest.notes && (
               <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg text-xs text-amber-800">
-                <span className="font-semibold">My Notes:</span> {selectedRequest.notes}
+                <span className="font-semibold">{t('farmer:medicineRequests.myNotes', 'My Notes')}:</span> {selectedRequest.notes}
               </div>
             )}
 
             {selectedRequest.providerRemarks && (
               <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg text-xs text-blue-800">
-                <span className="font-semibold">Provider Remarks:</span> {selectedRequest.providerRemarks}
+                <span className="font-semibold">{t('farmer:medicineRequests.providerRemarks', 'Provider Remarks')}:</span> {selectedRequest.providerRemarks}
               </div>
             )}
 
             {/* Timeline */}
             <div className="space-y-3 border-t border-slate-100 pt-3">
-              <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Status Timeline</h4>
+              <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t('farmer:medicineRequests.timelineTitle', 'Status Timeline')}</h4>
               <div className="space-y-4 relative pl-4 border-l-2 border-slate-200 ml-2 text-xs">
                 <div className="relative">
                   <div className="absolute -left-[21px] top-0.5 w-3 h-3 rounded-full bg-blue-500 border-2 border-white" />
-                  <p className="font-semibold text-slate-800">Requested</p>
+                  <p className="font-semibold text-slate-800">{t('farmer:medicineRequests.timelineRequested', 'Requested')}</p>
                   <p className="text-[10px] text-slate-400">{new Date(selectedRequest.requestedAt || selectedRequest.createdAt).toLocaleString()}</p>
                 </div>
 
                 {selectedRequest.acceptedAt && (
                   <div className="relative">
                     <div className="absolute -left-[21px] top-0.5 w-3 h-3 rounded-full bg-blue-600 border-2 border-white" />
-                    <p className="font-semibold text-slate-800">Accepted by Provider</p>
+                    <p className="font-semibold text-slate-800">{t('farmer:medicineRequests.timelineAccepted', 'Accepted by Provider')}</p>
                     <p className="text-[10px] text-slate-400">{new Date(selectedRequest.acceptedAt).toLocaleString()}</p>
                   </div>
                 )}
@@ -303,7 +306,7 @@ export default function FarmerMedicineRequests() {
                 {selectedRequest.packedAt && (
                   <div className="relative">
                     <div className="absolute -left-[21px] top-0.5 w-3 h-3 rounded-full bg-purple-600 border-2 border-white" />
-                    <p className="font-semibold text-slate-800">Medicine Packed</p>
+                    <p className="font-semibold text-slate-800">{t('farmer:medicineRequests.timelinePacked', 'Medicine Packed')}</p>
                     <p className="text-[10px] text-slate-400">{new Date(selectedRequest.packedAt).toLocaleString()}</p>
                   </div>
                 )}
@@ -311,7 +314,7 @@ export default function FarmerMedicineRequests() {
                 {selectedRequest.readyAt && (
                   <div className="relative">
                     <div className="absolute -left-[21px] top-0.5 w-3 h-3 rounded-full bg-teal-600 border-2 border-white" />
-                    <p className="font-semibold text-slate-800">Ready for Collection</p>
+                    <p className="font-semibold text-slate-800">{t('farmer:medicineRequests.timelineReady', 'Ready for Collection')}</p>
                     <p className="text-[10px] text-slate-400">{new Date(selectedRequest.readyAt).toLocaleString()}</p>
                   </div>
                 )}
@@ -319,7 +322,7 @@ export default function FarmerMedicineRequests() {
                 {selectedRequest.completedAt && (
                   <div className="relative">
                     <div className="absolute -left-[21px] top-0.5 w-3 h-3 rounded-full bg-emerald-600 border-2 border-white" />
-                    <p className="font-semibold text-slate-800">Completed</p>
+                    <p className="font-semibold text-slate-800">{t('farmer:medicineRequests.timelineCompleted', 'Completed')}</p>
                     <p className="text-[10px] text-slate-400">{new Date(selectedRequest.completedAt).toLocaleString()}</p>
                   </div>
                 )}
@@ -327,7 +330,7 @@ export default function FarmerMedicineRequests() {
                 {selectedRequest.cancelledAt && (
                   <div className="relative">
                     <div className="absolute -left-[21px] top-0.5 w-3 h-3 rounded-full bg-gray-500 border-2 border-white" />
-                    <p className="font-semibold text-gray-800">Cancelled</p>
+                    <p className="font-semibold text-gray-800">{t('farmer:medicineRequests.timelineCancelled', 'Cancelled')}</p>
                     <p className="text-[10px] text-slate-400">{new Date(selectedRequest.cancelledAt).toLocaleString()}</p>
                   </div>
                 )}
@@ -335,7 +338,7 @@ export default function FarmerMedicineRequests() {
                 {selectedRequest.rejectedAt && (
                   <div className="relative">
                     <div className="absolute -left-[21px] top-0.5 w-3 h-3 rounded-full bg-red-500 border-2 border-white" />
-                    <p className="font-semibold text-red-800">Rejected</p>
+                    <p className="font-semibold text-red-800">{t('farmer:medicineRequests.timelineRejected', 'Rejected')}</p>
                     <p className="text-[10px] text-slate-400">{new Date(selectedRequest.rejectedAt).toLocaleString()}</p>
                   </div>
                 )}
@@ -347,7 +350,7 @@ export default function FarmerMedicineRequests() {
                 onClick={() => setSelectedRequest(null)}
                 className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition"
               >
-                Close
+                {t('common:actions.close', 'Close')}
               </button>
             </div>
           </div>

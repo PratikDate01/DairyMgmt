@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { reportService } from '../../services/reportService';
 import { PageHeader } from '../../components/common/PageHeader';
@@ -17,6 +18,7 @@ import {
 } from 'lucide-react';
 
 export const AdminReports = () => {
+  const { t } = useTranslation(['admin', 'common']);
   const { token } = useAuth();
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -50,20 +52,20 @@ export const AdminReports = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="System Administration & Global Reports"
-        description="Read-only high-level analytics across system users, milk collections, and payment volumes."
-        breadcrumbs={['Home', 'Admin Panel', 'Reports']}
+        title={t('admin:reportsPage.title', 'System Administration & Global Reports')}
+        description={t('admin:reportsPage.subtitle', 'Read-only high-level analytics across system users, milk collections, and payment volumes.')}
+        breadcrumbs={[t('common:nav.home', 'Home'), t('common:roles.admin', 'Admin'), t('admin:reportsPage.title', 'Reports')]}
         actions={
           <div className="flex items-center space-x-2">
             <span className="px-2.5 py-1 bg-amber-50 text-amber-800 border border-amber-200 text-xs font-semibold rounded-lg flex items-center">
-              <Lock className="w-3.5 h-3.5 mr-1 text-amber-600" /> Read-Only Admin Console
+              <Lock className="w-3.5 h-3.5 mr-1 text-amber-600" /> {t('admin:reportsPage.readOnlyBadge', 'Read-Only Admin Console')}
             </span>
             <button
               onClick={fetchAdminReports}
               className="px-3 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg shadow-xs transition flex items-center space-x-1.5"
             >
               <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${loading ? 'animate-spin' : ''}`} />
-              <span>Refresh Metrics</span>
+              <span>{t('admin:reportsPage.refreshBtn', 'Refresh Metrics')}</span>
             </button>
           </div>
         }
@@ -82,31 +84,31 @@ export const AdminReports = () => {
       )}
 
       {/* User Statistics */}
-      <SectionCard title="System Registered User Demographics" subtitle="Aggregated count of active registered accounts across system roles">
+      <SectionCard title={t('admin:reportsPage.userDemographics', 'System Registered User Demographics')} subtitle={t('admin:reportsPage.userDemographicsSubtitle', 'Aggregated count of active registered accounts across system roles')}>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
-            title="Total Registered Accounts"
+            title={t('admin:reportsPage.totalRegisteredAccounts', 'Total Registered Accounts')}
             value={loading ? '...' : `${metrics.users.totalUsers} Users`}
             icon={Users}
             badgeText="System Ecosystem"
             badgeType="neutral"
           />
           <StatCard
-            title="Total Farmers"
+            title={t('admin:reportsPage.totalFarmers', 'Total Farmers')}
             value={loading ? '...' : `${metrics.users.totalFarmers} Farmers`}
             icon={Users}
             badgeText="Registered Milk Producers"
             badgeType="success"
           />
           <StatCard
-            title="Total Dairy Owners"
+            title={t('admin:reportsPage.totalDairies', 'Total Dairy Owners')}
             value={loading ? '...' : `${metrics.users.totalDairyOwners} Dairies`}
             icon={Building2}
             badgeText="Registered Processing Units"
             badgeType="neutral"
           />
           <StatCard
-            title="Total Medical Providers"
+            title={t('admin:reportsPage.totalMedicalStores', 'Total Medical Providers')}
             value={loading ? '...' : `${metrics.users.totalMedicalProviders} Doctors`}
             icon={Stethoscope}
             badgeText="Healthcare Specialists"
@@ -116,11 +118,11 @@ export const AdminReports = () => {
       </SectionCard>
 
       {/* Global Milk Collection Statistics */}
-      <SectionCard title="System-Wide Milk Intake Volume & Valuation" subtitle="Cumulative metrics for all milk collections recorded in the database">
+      <SectionCard title={t('admin:reportsPage.milkMetricsTitle', 'System-Wide Milk Intake Volume & Valuation')} subtitle={t('admin:reportsPage.milkMetricsSubtitle', 'Cumulative metrics for all milk collections recorded in the database')}>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="p-4 bg-blue-50/60 border border-blue-200 rounded-xl flex items-center justify-between">
             <div>
-              <span className="text-xs font-semibold text-blue-700 uppercase tracking-wider block">Total Milk Volume Intake</span>
+              <span className="text-xs font-semibold text-blue-700 uppercase tracking-wider block">{t('admin:reportsPage.totalVolume', 'Total Milk Volume Intake')}</span>
               <span className="font-mono font-bold text-slate-900 text-2xl mt-1 block">
                 {metrics.milk.totalQuantity.toLocaleString('en-IN')} Liters
               </span>
@@ -132,7 +134,7 @@ export const AdminReports = () => {
 
           <div className="p-4 bg-emerald-50/60 border border-emerald-200 rounded-xl flex items-center justify-between">
             <div>
-              <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider block">Total Cumulative Milk Valuation</span>
+              <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider block">{t('admin:reportsPage.totalValuation', 'Total Cumulative Milk Valuation')}</span>
               <span className="font-mono font-bold text-slate-900 text-2xl mt-1 block">
                 ₹ {metrics.milk.totalValue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
               </span>
@@ -145,27 +147,27 @@ export const AdminReports = () => {
       </SectionCard>
 
       {/* Global Settlement & Ledger Statistics */}
-      <SectionCard title="System-Wide Financial Settlement Ledger Summary" subtitle="Total gross, disbursed paid, and outstanding remaining balances">
+      <SectionCard title={t('admin:reportsPage.paymentsMetricsTitle', 'System-Wide Financial Settlement Ledger Summary')} subtitle={t('admin:reportsPage.paymentsMetricsSubtitle', 'Total gross, disbursed paid, and outstanding remaining balances')}>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <StatCard
-            title="Gross Settlement Volume"
+            title={t('admin:reportsPage.grossSettlementVolume', 'Gross Settlement Volume')}
             value={loading ? '...' : `₹ ${metrics.payments.totalGross.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`}
             icon={Wallet}
             badgeText={`${metrics.payments.totalPayments} Payment Settlements`}
             badgeType="neutral"
           />
           <StatCard
-            title="Total Disbursed Funds"
+            title={t('admin:reportsPage.totalDisbursements', 'Total Disbursed Funds')}
             value={loading ? '...' : `₹ ${metrics.payments.totalPaid.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`}
             icon={CheckCircle2}
-            badgeText="Total Paid Out"
+            badgeText={t('dairyOwner:payments.totalPaid', 'Total Paid Out')}
             badgeType="success"
           />
           <StatCard
-            title="Total Outstanding Balance"
+            title={t('admin:reportsPage.outstandingBalances', 'Total Outstanding Balance')}
             value={loading ? '...' : `₹ ${metrics.payments.totalOutstanding.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`}
             icon={CreditCard}
-            badgeText={metrics.payments.totalOutstanding > 0 ? 'Pending System Settlement' : 'Clear System Balance'}
+            badgeText={metrics.payments.totalOutstanding > 0 ? t('dairyOwner:reports.pendingSystemSettlement', 'Pending System Settlement') : t('dairyOwner:reports.clearSystemBalance', 'Clear System Balance')}
             badgeType={metrics.payments.totalOutstanding > 0 ? 'amber' : 'success'}
           />
         </div>

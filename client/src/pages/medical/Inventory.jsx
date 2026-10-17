@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { medicineService } from '../../services/medicineService';
+import { getStatusLabel } from '../../i18n/statusMap';
 import { PageHeader } from '../../components/common/PageHeader';
 import { SectionCard } from '../../components/common/SectionCard';
 import { StatCard } from '../../components/common/StatCard';
@@ -43,6 +45,7 @@ const UNIT_OPTIONS = [
 ];
 
 export const Inventory = () => {
+  const { t } = useTranslation(['medicalProvider', 'common']);
   const { token } = useAuth();
 
   // Summary Metrics
@@ -298,16 +301,16 @@ export const Inventory = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Medical Inventory Management"
-        description="Manage medicines, track stock levels, and set product availability for your medical store."
-        breadcrumbs={['Home', 'Medical Console', 'Inventory']}
+        title={t('medicalProvider:inventory.title', 'Medical Inventory Management')}
+        description={t('medicalProvider:inventory.subtitle', 'Manage medicines, track stock levels, and set product availability for your medical store.')}
+        breadcrumbs={[t('common:nav.home', 'Home'), t('common:roles.medicalProvider', 'Medical Console'), t('medicalProvider:inventory.title', 'Inventory')]}
         actions={
           <button
             onClick={handleOpenAddModal}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center space-x-1.5"
           >
             <PlusCircle className="w-4 h-4" />
-            <span>+ Add Medicine</span>
+            <span>+ {t('medicalProvider:inventory.addMedicineBtn', 'Add New Medicine')}</span>
           </button>
         }
       />
@@ -339,28 +342,28 @@ export const Inventory = () => {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title="Total Medicines"
+          title={t('medicalProvider:dashboard.totalInventory', 'Total Medicines')}
           value={`${summary.totalMedicines} Items`}
           icon={Pill}
           badgeText={`${summary.totalStockUnits} Total Units`}
           badgeType="neutral"
         />
         <StatCard
-          title="Available in Catalog"
+          title={t('medicalProvider:inventory.availableInCatalog', 'Available in Catalog')}
           value={`${summary.availableMedicines} Items`}
           icon={CheckCircle2}
           badgeText="Active & In-Stock"
           badgeType="success"
         />
         <StatCard
-          title="Out of Stock"
+          title={t('medicalProvider:inventory.outOfStock', 'Out of Stock')}
           value={`${summary.outOfStockMedicines} Items`}
           icon={XCircle}
           badgeText={summary.outOfStockMedicines > 0 ? 'Action Required' : 'All In Stock'}
           badgeType={summary.outOfStockMedicines > 0 ? 'red' : 'success'}
         />
         <StatCard
-          title="Low Stock Warning"
+          title={t('medicalProvider:inventory.lowStockWarning', 'Low Stock Warning')}
           value={`${summary.lowStockMedicines} Items`}
           icon={AlertTriangle}
           badgeText={`Stock ≤ ${summary.lowStockThreshold || 10}`}
@@ -376,7 +379,7 @@ export const Inventory = () => {
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
             <input
               type="text"
-              placeholder="Search by name, generic, category..."
+              placeholder={t('medicalProvider:inventory.searchPlaceholder', 'Search by name, generic, category...')}
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -396,7 +399,7 @@ export const Inventory = () => {
               }}
               className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-800 outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">All Categories</option>
+              <option value="">{t('medicalProvider:inventory.allCategories', 'All Categories')}</option>
               {CATEGORY_OPTIONS.map((c) => (
                 <option key={c} value={c}>{c}</option>
               ))}
@@ -413,9 +416,9 @@ export const Inventory = () => {
               }}
               className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-800 outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">All Availability</option>
-              <option value="available">Available</option>
-              <option value="unavailable">Unavailable</option>
+              <option value="">{t('medicalProvider:inventory.allAvailability', 'All Availability')}</option>
+              <option value="available">{t('medicalProvider:inventory.available', 'Available')}</option>
+              <option value="unavailable">{t('medicalProvider:inventory.unavailable', 'Unavailable')}</option>
             </select>
           </div>
 
@@ -429,9 +432,9 @@ export const Inventory = () => {
               }}
               className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-800 outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="true">Active Items Only</option>
-              <option value="false">Deactivated Items Only</option>
-              <option value="all">All Items</option>
+              <option value="true">{t('medicalProvider:inventory.activeItemsOnly', 'Active Items Only')}</option>
+              <option value="false">{t('medicalProvider:inventory.deactivatedItemsOnly', 'Deactivated Items Only')}</option>
+              <option value="all">{t('medicalProvider:inventory.allItems', 'All Items')}</option>
             </select>
           </div>
         </div>
@@ -447,7 +450,7 @@ export const Inventory = () => {
               }}
               className="w-4 h-4 text-amber-600 rounded border-slate-300 focus:ring-amber-500"
             />
-            <span>Show Low Stock Items Only (Stock ≤ 10)</span>
+            <span>{t('medicalProvider:inventory.showLowStockOnly', 'Show Low Stock Items Only (Stock ≤ 10)')}</span>
           </label>
 
           <button
@@ -455,31 +458,31 @@ export const Inventory = () => {
             onClick={handleClearFilters}
             className="text-xs text-blue-600 hover:text-blue-800 font-semibold"
           >
-            Clear All Filters
+            {t('common:actions.clearFilters', 'Clear All Filters')}
           </button>
         </div>
       </div>
 
       {/* Inventory Table */}
       <SectionCard
-        title="Medicine Inventory Register"
+        title={t('medicalProvider:inventory.registerTitle', 'Medicine Inventory Register')}
         subtitle={`Showing ${medicines.length} medicine entries`}
         action={
           <button
             onClick={fetchInventory}
             className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded-lg transition"
-            title="Refresh List"
+            title={t('common:actions.refresh', 'Refresh List')}
           >
             <RefreshCw className="w-4 h-4" />
           </button>
         }
       >
         {loading ? (
-          <div className="py-8 text-center text-slate-500 text-xs">Loading medicine inventory...</div>
+          <div className="py-8 text-center text-slate-500 text-xs">{t('medicalProvider:inventory.loadingInventory', 'Loading medicine inventory...')}</div>
         ) : medicines.length === 0 ? (
           <EmptyState
-            title="No Medicine Records Found"
-            description="No items match your filter criteria or no medicines have been added yet."
+            title={t('medicalProvider:inventory.noRecordsFound', 'No Medicine Records Found')}
+            description={t('medicalProvider:inventory.noRecordsFoundDesc', 'No items match your filter criteria or no medicines have been added yet.')}
             icon={Pill}
           />
         ) : (
@@ -489,14 +492,14 @@ export const Inventory = () => {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                    <th className="py-3 px-4">Medicine Name</th>
-                    <th className="py-3 px-4">Category</th>
-                    <th className="py-3 px-4 text-right">Price (₹)</th>
-                    <th className="py-3 px-4 text-right">Stock</th>
-                    <th className="py-3 px-4 text-center">Unit</th>
-                    <th className="py-3 px-4 text-center">Availability</th>
-                    <th className="py-3 px-4 text-center">Active Status</th>
-                    <th className="py-3 px-4 text-center">Actions</th>
+                    <th className="py-3 px-4">{t('medicalProvider:inventory.medicineNameRequired', 'Medicine Name')}</th>
+                    <th className="py-3 px-4">{t('common:labels.category', 'Category')}</th>
+                    <th className="py-3 px-4 text-right">{t('common:labels.price', 'Price (₹)')}</th>
+                    <th className="py-3 px-4 text-right">{t('common:labels.stock', 'Stock')}</th>
+                    <th className="py-3 px-4 text-center">{t('medicalProvider:inventory.unit', 'Unit')}</th>
+                    <th className="py-3 px-4 text-center">{t('medicalProvider:inventory.availability', 'Availability')}</th>
+                    <th className="py-3 px-4 text-center">{t('medicalProvider:inventory.activeStatus', 'Active Status')}</th>
+                    <th className="py-3 px-4 text-center">{t('common:labels.actions', 'Actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
@@ -524,14 +527,10 @@ export const Inventory = () => {
                           <div className="inline-flex items-center space-x-1.5">
                             <span className="font-bold text-slate-900">{m.stockQuantity}</span>
                             {isOutOfStock && (
-                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-red-100 text-red-800">
-                                Out of Stock
-                              </span>
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-red-100 text-red-800">{t('medicalProvider:inventory.outOfStock', 'Out of Stock')}</span>
                             )}
                             {isLowStock && (
-                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-100 text-amber-800">
-                                Low Stock
-                              </span>
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-100 text-amber-800">{t('medicalProvider:inventory.lowStockWarning', 'Low Stock')}</span>
                             )}
                           </div>
                         </td>
@@ -547,9 +546,9 @@ export const Inventory = () => {
                                 ? 'bg-green-100 text-green-800 hover:bg-green-200'
                                 : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
                             }`}
-                            title="Click to toggle availability"
+                            title={t('medicalProvider:inventory.toggleAvailability', 'Click to toggle availability')}
                           >
-                            {m.availability}
+                            {getStatusLabel(m.availability, t)}
                           </button>
                         </td>
                         <td className="py-3 px-4 text-center">
@@ -558,7 +557,7 @@ export const Inventory = () => {
                               m.isActive ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-500'
                             }`}
                           >
-                            {m.isActive ? 'Active' : 'Inactive'}
+                            {getStatusLabel(m.isActive ? 'active' : 'inactive', t)}
                           </span>
                         </td>
                         <td className="py-3 px-4 text-center">
@@ -566,14 +565,14 @@ export const Inventory = () => {
                             <button
                               onClick={() => handleOpenEditModal(m)}
                               className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition"
-                              title="Edit Details"
+                              title={t('medicalProvider:inventory.editDetails', 'Edit Details')}
                             >
                               <Edit className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleOpenStockModal(m)}
                               className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition"
-                              title="Update Stock"
+                              title={t('medicalProvider:inventory.updateStock', 'Update Stock')}
                             >
                               <Package className="w-4 h-4" />
                             </button>
@@ -581,7 +580,7 @@ export const Inventory = () => {
                               <button
                                 onClick={() => handleDeactivate(m)}
                                 className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition"
-                                title="Deactivate Item"
+                                title={t('medicalProvider:inventory.deactivateItem', 'Deactivate Item')}
                               >
                                 <Power className="w-4 h-4" />
                               </button>
@@ -615,12 +614,12 @@ export const Inventory = () => {
 
                   <div className="flex items-center justify-between py-2 border-y border-slate-200 font-mono">
                     <div>
-                      <span className="text-slate-500 block text-[10px] uppercase font-sans">Stock Quantity</span>
+                      <span className="text-slate-500 block text-[10px] uppercase font-sans">{t('medicalProvider:inventory.stockQuantity', 'Stock Quantity')}</span>
                       <span className="font-bold text-slate-900">{m.stockQuantity} {m.unit}s</span>
                     </div>
                     <div>
-                      {m.stockQuantity === 0 && <span className="px-2 py-0.5 bg-red-100 text-red-800 text-[10px] font-bold rounded">OUT OF STOCK</span>}
-                      {m.stockQuantity > 0 && m.stockQuantity <= 10 && <span className="px-2 py-0.5 bg-amber-100 text-amber-800 text-[10px] font-bold rounded">LOW STOCK</span>}
+                      {m.stockQuantity === 0 && <span className="px-2 py-0.5 bg-red-100 text-red-800 text-[10px] font-bold rounded">{t('medicalProvider:inventory.outOfStockBadge', 'OUT OF STOCK')}</span>}
+                      {m.stockQuantity > 0 && m.stockQuantity <= 10 && <span className="px-2 py-0.5 bg-amber-100 text-amber-800 text-[10px] font-bold rounded">{t('medicalProvider:inventory.lowStockBadge', 'LOW STOCK')}</span>}
                     </div>
                   </div>
 
@@ -674,8 +673,8 @@ export const Inventory = () => {
 
       {/* ADD / EDIT MEDICINE MODAL */}
       {showAddEditModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-xs">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-xl border border-slate-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/40 backdrop-xs overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-xl border border-slate-200 my-auto max-h-[90vh] overflow-y-auto modal-animate">
             <div className="flex items-center justify-between border-b pb-3">
               <h3 className="text-base font-bold text-slate-900 flex items-center space-x-2">
                 <Pill className="w-5 h-5 text-blue-600" />
@@ -689,10 +688,10 @@ export const Inventory = () => {
             <form onSubmit={handleSaveMedicine} className="space-y-4 text-xs">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="font-semibold text-slate-700">Medicine Name *</label>
+                  <label className="font-semibold text-slate-700">{t('medicalProvider:inventory.medicineNameRequired', 'Medicine Name *')}</label>
                   <input
                     type="text"
-                    placeholder="e.g. Amoxicillin 500mg"
+                    placeholder={t('medicalProvider:inventory.namePlaceholder', 'e.g. Amoxicillin 500mg')}
                     value={formName}
                     onChange={(e) => setFormName(e.target.value)}
                     className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-900 font-medium outline-none focus:ring-2 focus:ring-blue-500"
@@ -701,10 +700,10 @@ export const Inventory = () => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="font-semibold text-slate-700">Generic Name</label>
+                  <label className="font-semibold text-slate-700">{t('medicalProvider:inventory.genericName', 'Generic Name')}</label>
                   <input
                     type="text"
-                    placeholder="e.g. Amoxicillin Trihydrate"
+                    placeholder={t('medicalProvider:inventory.genericPlaceholder', 'e.g. Amoxicillin Trihydrate')}
                     value={formGeneric}
                     onChange={(e) => setFormGeneric(e.target.value)}
                     className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 outline-none focus:ring-2 focus:ring-blue-500"
@@ -714,7 +713,7 @@ export const Inventory = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="space-y-1">
-                  <label className="font-semibold text-slate-700">Category *</label>
+                  <label className="font-semibold text-slate-700">{t('medicalProvider:inventory.categoryRequired', 'Category *')}</label>
                   <select
                     value={formCategory}
                     onChange={(e) => setFormCategory(e.target.value)}
@@ -728,12 +727,12 @@ export const Inventory = () => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="font-semibold text-slate-700">Price (₹) *</label>
+                  <label className="font-semibold text-slate-700">{t('medicalProvider:inventory.priceRequired', 'Price (₹) *')}</label>
                   <input
                     type="number"
                     step="0.5"
                     min="0"
-                    placeholder="e.g. 45.00"
+                    placeholder={t('medicalProvider:inventory.pricePlaceholder', 'e.g. 45.00')}
                     value={formPrice}
                     onChange={(e) => setFormPrice(e.target.value)}
                     className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-900 font-mono font-bold outline-none focus:ring-2 focus:ring-blue-500"
@@ -742,7 +741,7 @@ export const Inventory = () => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="font-semibold text-slate-700">Unit Type *</label>
+                  <label className="font-semibold text-slate-700">{t('medicalProvider:inventory.unitTypeRequired', 'Unit Type *')}</label>
                   <select
                     value={formUnit}
                     onChange={(e) => setFormUnit(e.target.value)}
@@ -757,11 +756,11 @@ export const Inventory = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="font-semibold text-slate-700">Stock Quantity *</label>
+                  <label className="font-semibold text-slate-700">{t('medicalProvider:inventory.stockQuantityRequired', 'Stock Quantity *')}</label>
                   <input
                     type="number"
                     min="0"
-                    placeholder="e.g. 100"
+                    placeholder={t('medicalProvider:inventory.stockPlaceholder', 'e.g. 100')}
                     value={formStock}
                     onChange={(e) => setFormStock(e.target.value)}
                     className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-900 font-mono font-bold outline-none focus:ring-2 focus:ring-blue-500"
@@ -770,23 +769,23 @@ export const Inventory = () => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="font-semibold text-slate-700">Initial Availability *</label>
+                  <label className="font-semibold text-slate-700">{t('medicalProvider:inventory.initialAvailability', 'Initial Availability *')}</label>
                   <select
                     value={formAvailability}
                     onChange={(e) => setFormAvailability(e.target.value)}
                     className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 font-medium outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="available">Available</option>
-                    <option value="unavailable">Unavailable</option>
+                    <option value="available">{t('medicalProvider:inventory.available', 'Available')}</option>
+                    <option value="unavailable">{t('medicalProvider:inventory.unavailable', 'Unavailable')}</option>
                   </select>
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="font-semibold text-slate-700">Description / Usage Notes</label>
+                <label className="font-semibold text-slate-700">{t('medicalProvider:inventory.descriptionNotes', 'Description / Usage Notes')}</label>
                 <textarea
                   rows="2"
-                  placeholder="e.g. Broad-spectrum antibiotic for livestock treatment"
+                  placeholder={t('medicalProvider:inventory.descriptionPlaceholder', 'e.g. Broad-spectrum antibiotic for livestock treatment')}
                   value={formDescription}
                   onChange={(e) => setFormDescription(e.target.value)}
                   className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 outline-none focus:ring-2 focus:ring-blue-500"
@@ -816,12 +815,12 @@ export const Inventory = () => {
 
       {/* STOCK UPDATE MODAL */}
       {showStockModal && stockTargetItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-xs">
-          <div className="bg-white rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-xl border border-slate-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/40 backdrop-xs overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-xl border border-slate-200 my-auto max-h-[90vh] overflow-y-auto modal-animate">
             <div className="flex items-center justify-between border-b pb-3">
               <h3 className="text-base font-bold text-slate-900 flex items-center space-x-2">
                 <Package className="w-5 h-5 text-emerald-600" />
-                <span>Update Stock Quantity</span>
+                <span>{t('medicalProvider:inventory.updateStockTitle', 'Update Stock Quantity')}</span>
               </h3>
               <button onClick={() => setShowStockModal(false)} className="text-slate-400 hover:text-slate-700">
                 <XCircle className="w-5 h-5" />
@@ -831,11 +830,11 @@ export const Inventory = () => {
             <form onSubmit={handleSaveStock} className="space-y-4 text-xs">
               <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-1">
                 <div className="font-bold text-slate-900">{stockTargetItem.name}</div>
-                <div className="text-[11px] text-slate-500">Current Stock: <span className="font-mono font-bold text-slate-800">{stockTargetItem.stockQuantity} {stockTargetItem.unit}s</span></div>
+                <div className="text-[11px] text-slate-500">{t('medicalProvider:inventory.currentStock', 'Current Stock:')} <span className="font-mono font-bold text-slate-800">{stockTargetItem.stockQuantity} {stockTargetItem.unit}s</span></div>
               </div>
 
               <div className="space-y-1">
-                <label className="font-semibold text-slate-700">New Stock Quantity *</label>
+                <label className="font-semibold text-slate-700">{t('medicalProvider:inventory.newStockQuantityRequired', 'New Stock Quantity *')}</label>
                 <input
                   type="number"
                   min="0"

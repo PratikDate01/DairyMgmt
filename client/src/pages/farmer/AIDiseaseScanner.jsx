@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { diseaseScanService } from '../../services/diseaseScanService';
 import { cattleService } from '../../services/cattleService';
+import { getStatusLabel, getGenderLabel } from '../../i18n/statusMap';
 import { VeterinarianRecommendations } from '../../components/farmer/VeterinarianRecommendations';
 import {
   Scan,
@@ -21,6 +23,7 @@ import {
 } from 'lucide-react';
 
 export const AIDiseaseScanner = () => {
+  const { t } = useTranslation(['farmer', 'common']);
   const { token } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -143,9 +146,9 @@ export const AIDiseaseScanner = () => {
   };
 
   const getRiskLevel = (confidence) => {
-    if (confidence >= 88) return { label: 'High Priority', color: 'bg-red-100 text-red-800 border-red-200' };
-    if (confidence >= 80) return { label: 'Moderate Risk', color: 'bg-amber-100 text-amber-800 border-amber-200' };
-    return { label: 'Low Risk', color: 'bg-green-100 text-green-800 border-green-200' };
+    if (confidence >= 88) return { label: t('farmer:aiScanner.highRisk', 'High / Critical Risk'), color: 'bg-red-100 text-red-800 border-red-200' };
+    if (confidence >= 80) return { label: t('farmer:aiScanner.moderateRisk', 'Moderate Risk'), color: 'bg-amber-100 text-amber-800 border-amber-200' };
+    return { label: t('farmer:aiScanner.lowRisk', 'Low Risk'), color: 'bg-green-100 text-green-800 border-green-200' };
   };
 
   return (
@@ -158,8 +161,8 @@ export const AIDiseaseScanner = () => {
               <Scan className="w-6 h-6 text-blue-300" />
             </div>
             <div>
-              <span className="text-xs uppercase tracking-wider text-blue-300 font-bold block">Gauseva HealthTech</span>
-              <h1 className="text-2xl font-extrabold tracking-tight">AI Health Screening</h1>
+              <span className="text-xs uppercase tracking-wider text-blue-300 font-bold block">{t('farmer:aiScanner.healthTechBrand', 'Gauseva HealthTech')}</span>
+              <h1 className="text-2xl font-extrabold tracking-tight">{t('farmer:aiScanner.title', 'AI Cattle Disease Scanner')}</h1>
             </div>
           </div>
           <Link
@@ -167,11 +170,11 @@ export const AIDiseaseScanner = () => {
             className="px-3.5 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-semibold backdrop-sm transition flex items-center space-x-1.5"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>My Cattle</span>
+            <span>{t('farmer:cattle.title', 'My Cattle')}</span>
           </Link>
         </div>
         <p className="text-xs text-blue-100 max-w-2xl mt-1">
-          Select your cattle, upload a health/disease image, and enter observed symptoms for instant preliminary AI screening.
+          {t('farmer:aiScanner.subtitle', 'Upload a photo of your cattle affected area or symptoms for immediate preliminary AI screening.')}
         </p>
       </div>
 
@@ -192,12 +195,12 @@ export const AIDiseaseScanner = () => {
             <h3 className="text-sm font-bold text-slate-900 flex items-center justify-between">
               <span className="flex items-center space-x-2">
                 <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold">1</span>
-                <span>Target Cattle for Screening</span>
+                <span>{t('farmer:aiScanner.selectCattle', 'Target Cattle for Screening')}</span>
               </span>
 
               {cattleList.length > 0 && (
                 <span className="text-xs font-normal text-slate-500">
-                  {cattleList.length} Registered Cattle Available
+                  {cattleList.length} {t('farmer:dashboard.registeredCattle', 'Registered Cattle')}
                 </span>
               )}
             </h3>
@@ -205,19 +208,19 @@ export const AIDiseaseScanner = () => {
             {loadingCattle ? (
               <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 text-center text-xs text-slate-500">
                 <RefreshCw className="w-4 h-4 animate-spin mx-auto mb-1 text-blue-600" />
-                Loading cattle records...
+                {t('common:status.loading', 'Loading cattle records...')}
               </div>
             ) : cattleList.length === 0 ? (
               <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <Info className="w-4 h-4 text-amber-600 shrink-0" />
-                  <span>You have no cattle registered yet. Please register a cattle first to perform a health check.</span>
+                  <span>{t('farmer:dashboard.noCattleRegistered', 'You have no cattle registered yet. Please register a cattle first to perform a health check.')}</span>
                 </div>
                 <Link
                   to="/farmer/cattle"
                   className="px-3 py-1.5 bg-amber-600 text-white rounded-lg font-bold hover:bg-amber-700 transition shrink-0 ml-2"
                 >
-                  + Add Cattle
+                  + {t('farmer:cattle.registerBtn', 'Add Cattle')}
                 </Link>
               </div>
             ) : (
@@ -225,7 +228,7 @@ export const AIDiseaseScanner = () => {
                 {/* Cattle Dropdown Select */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                    Select Cattle
+                    {t('farmer:aiScanner.selectCattle', 'Select Cattle')}
                   </label>
                   <select
                     value={selectedCattle ? selectedCattle._id : ''}
@@ -237,7 +240,7 @@ export const AIDiseaseScanner = () => {
                   >
                     {cattleList.map((c) => (
                       <option key={c._id} value={c._id}>
-                        🐄 {c.nameTag} — {c.breed} ({c.gender}, {c.ageYears} yrs)
+                        🐄 {c.nameTag} — {c.breed} ({getGenderLabel(c.gender, t)}, {c.ageYears} yrs)
                       </option>
                     ))}
                   </select>
@@ -262,14 +265,14 @@ export const AIDiseaseScanner = () => {
                           </span>
                         </div>
                         <p className="text-xs text-slate-600 mt-0.5">
-                          {selectedCattle.gender === 'female' ? 'Female Cow' : 'Male Bull'} • {selectedCattle.ageYears} Years Old
+                          {getGenderLabel(selectedCattle.gender, t)} • {selectedCattle.ageYears} {t('farmer:cattle.ageYears', 'Years')}
                         </p>
                       </div>
                     </div>
 
                     <div className="text-right text-xs">
-                      <span className="text-[10px] font-bold uppercase text-slate-400 block">Current Status</span>
-                      <span className="font-bold text-slate-800 capitalize">{selectedCattle.healthStatus.replace('_', ' ')}</span>
+                      <span className="text-[10px] font-bold uppercase text-slate-400 block">{t('farmer:cattle.healthStatus', 'Current Status')}</span>
+                      <span className="font-bold text-slate-800 capitalize">{getStatusLabel(selectedCattle.healthStatus, t)}</span>
                     </div>
                   </div>
                 )}
@@ -281,7 +284,7 @@ export const AIDiseaseScanner = () => {
           <div className="space-y-4 pt-4 border-t border-slate-100">
             <h3 className="text-sm font-bold text-slate-900 flex items-center space-x-2">
               <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold">2</span>
-              <span>Upload Disease / Health Image <span className="text-red-500">*</span></span>
+              <span>{t('farmer:aiScanner.uploadPhoto', 'Upload Disease / Health Image')} <span className="text-red-500">*</span></span>
             </h3>
 
             {imagePreview ? (
@@ -292,13 +295,13 @@ export const AIDiseaseScanner = () => {
                     type="button"
                     onClick={handleClearImage}
                     className="p-2 bg-red-600/90 text-white rounded-xl hover:bg-red-700 transition shadow-md"
-                    title="Remove Image"
+                    title={t('common:actions.delete', 'Remove Image')}
                   >
                     <X className="w-4 h-4" />
                   </button>
                 </div>
                 <div className="absolute bottom-3 left-3 right-3 bg-black/60 backdrop-sm p-2 rounded-xl text-white text-xs text-center font-medium">
-                  Image Selected for {selectedCattle?.nameTag || 'Cattle'}
+                  {selectedCattle?.nameTag || 'Cattle'}
                 </div>
               </div>
             ) : (
@@ -307,8 +310,12 @@ export const AIDiseaseScanner = () => {
                   <div className="w-12 h-12 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center mb-3">
                     <Upload className="w-6 h-6" />
                   </div>
-                  <span className="text-xs font-bold text-slate-800 block mb-1">Click to Upload or Capture Health Image</span>
-                  <span className="text-[11px] text-slate-500 block">Select an image file directly from your device (JPG, PNG, WEBP, Max 10MB)</span>
+                  <span className="text-xs font-bold text-slate-800 block mb-1">
+                    {t('farmer:aiScanner.uploadPhoto', 'Click to Upload or Capture Health Image')}
+                  </span>
+                  <span className="text-[11px] text-slate-500 block">
+                    (JPG, PNG, WEBP, Max 10MB)
+                  </span>
                   <input
                     type="file"
                     accept="image/*"
@@ -325,11 +332,11 @@ export const AIDiseaseScanner = () => {
           <div className="space-y-3 pt-4 border-t border-slate-100">
             <h3 className="text-sm font-bold text-slate-900 flex items-center space-x-2">
               <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold">3</span>
-              <span>Observed Symptoms / Notes</span>
+              <span>{t('farmer:aiScanner.describeSymptoms', 'Observed Symptoms / Notes')}</span>
             </h3>
             <textarea
               rows="3"
-              placeholder="Enter symptoms (e.g. skin rash, udder swelling, limping, fever, loss of appetite)..."
+              placeholder={t('farmer:aiScanner.symptomsPlaceholder', 'Enter symptoms (e.g. skin rash, udder swelling, limping, fever, loss of appetite)...')}
               value={symptoms}
               onChange={(e) => setSymptoms(e.target.value)}
               className="w-full p-3 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
@@ -346,12 +353,12 @@ export const AIDiseaseScanner = () => {
               {loading ? (
                 <>
                   <RefreshCw className="w-4 h-4 animate-spin" />
-                  <span>Analyzing Health Status...</span>
+                  <span>{t('farmer:aiScanner.analyzing', 'Analyzing Health Status...')}</span>
                 </>
               ) : (
                 <>
                   <Scan className="w-4 h-4" />
-                  <span>Analyze Cattle Health</span>
+                  <span>{t('farmer:aiScanner.startScan', 'Analyze Cattle Health')}</span>
                 </>
               )}
             </button>
@@ -367,13 +374,13 @@ export const AIDiseaseScanner = () => {
                 <CheckCircle className="w-6 h-6" />
               </div>
               <div>
-                <h2 className="text-base font-bold text-slate-900">AI Screening Completed</h2>
+                <h2 className="text-base font-bold text-slate-900">{t('farmer:aiScanner.resultsTitle', 'AI Screening Completed')}</h2>
                 <span className="text-xs text-slate-500">Scan ID: #{scanResult._id?.slice(-8)}</span>
               </div>
             </div>
             <span className="px-3 py-1 bg-amber-50 text-amber-800 border border-amber-200 text-xs font-bold rounded-full flex items-center space-x-1">
               <Stethoscope className="w-3.5 h-3.5 text-amber-600" />
-              <span>Pending Vet Review</span>
+              <span>{getStatusLabel(scanResult.veterinarianReviewStatus || 'pending_review', t)}</span>
             </span>
           </div>
 
@@ -384,15 +391,15 @@ export const AIDiseaseScanner = () => {
                 🐄
               </div>
               <div>
-                <span className="text-[10px] uppercase font-bold text-blue-600 block">Screened Cattle</span>
+                <span className="text-[10px] uppercase font-bold text-blue-600 block">{t('farmer:aiScanner.selectCattle', 'Screened Cattle')}</span>
                 <h3 className="text-sm font-bold text-slate-900">{selectedCattle?.nameTag}</h3>
                 <p className="text-xs text-slate-500">
-                  {selectedCattle?.breed} • {selectedCattle?.gender === 'female' ? 'Female' : 'Male'} • {selectedCattle?.ageYears} Years
+                  {selectedCattle?.breed} • {getGenderLabel(selectedCattle?.gender, t)} • {selectedCattle?.ageYears} {t('farmer:cattle.ageYears', 'Years')}
                 </p>
               </div>
             </div>
             <div className="text-right">
-              <span className="text-[10px] text-slate-400 font-bold uppercase block">Screening Date</span>
+              <span className="text-[10px] text-slate-400 font-bold uppercase block">{t('farmer:scanHistory.scanDate', 'Screening Date')}</span>
               <span className="text-xs font-bold text-slate-700">{new Date(scanResult.createdAt).toLocaleDateString()}</span>
             </div>
           </div>
@@ -405,10 +412,10 @@ export const AIDiseaseScanner = () => {
 
             <div className="space-y-4">
               <div className="p-4 bg-blue-50/80 border border-blue-200 rounded-2xl space-y-2">
-                <span className="text-[10px] uppercase font-extrabold tracking-wider text-blue-600 block">Possible Condition Detected</span>
+                <span className="text-[10px] uppercase font-extrabold tracking-wider text-blue-600 block">{t('farmer:aiScanner.detectedCondition', 'Possible Condition Detected')}</span>
                 <h3 className="text-lg font-extrabold text-blue-950">{scanResult.detectedCondition}</h3>
                 <div className="flex items-center space-x-2 pt-1">
-                  <span className="text-xs text-slate-600 font-semibold">AI Confidence:</span>
+                  <span className="text-xs text-slate-600 font-semibold">{t('farmer:aiScanner.confidence', 'AI Confidence')}:</span>
                   <span className="px-2.5 py-0.5 bg-blue-600 text-white font-bold text-xs rounded-lg">
                     {scanResult.confidence}%
                   </span>
@@ -419,14 +426,14 @@ export const AIDiseaseScanner = () => {
               </div>
 
               <div className="space-y-2">
-                <span className="text-xs font-bold text-slate-700 block">Symptoms / Observations:</span>
+                <span className="text-xs font-bold text-slate-700 block">{t('farmer:aiScanner.describeSymptoms', 'Symptoms / Observations')}:</span>
                 <p className="text-xs text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-200 leading-relaxed">
-                  {scanResult.symptoms || 'No additional symptoms reported.'}
+                  {scanResult.symptoms || '—'}
                 </p>
               </div>
 
               <div className="space-y-2">
-                <span className="text-xs font-bold text-slate-700 block">Preliminary AI Guidance:</span>
+                <span className="text-xs font-bold text-slate-700 block">{t('farmer:aiScanner.recommendations', 'Preliminary AI Guidance')}:</span>
                 <p className="text-xs text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-200 leading-relaxed">
                   {scanResult.recommendations}
                 </p>
@@ -438,11 +445,9 @@ export const AIDiseaseScanner = () => {
           <div className="p-4 bg-amber-50 border border-amber-300 text-amber-950 rounded-2xl flex items-start space-x-3 text-xs shadow-xs">
             <Info className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
             <div>
-              <span className="font-bold block text-amber-900 mb-0.5">Important Medical Disclaimer</span>
+              <span className="font-bold block text-amber-900 mb-0.5">{t('farmer:aiScanner.disclaimer', 'Important Medical Disclaimer')}</span>
               <span>
-                This AI health check is a preliminary screening tool and is <strong>NOT a final medical diagnosis</strong>. 
-                For clinical diagnosis, treatment, or prescription, please consult a qualified veterinarian. 
-                Your scan has been added to your cattle's medical record and queued for professional review.
+                {t('farmer:aiScanner.disclaimer', 'Medical Disclaimer: AI diagnostic screening provides preliminary guidance and does not replace professional examination by a licensed veterinarian.')}
               </span>
             </div>
           </div>
@@ -461,7 +466,7 @@ export const AIDiseaseScanner = () => {
               className="w-full sm:w-auto px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition flex items-center justify-center space-x-2"
             >
               <RefreshCw className="w-4 h-4" />
-              <span>Run Another Scan</span>
+              <span>{t('farmer:dashboard.scanDisease', 'Run Another Scan')}</span>
             </button>
 
             <div className="flex items-center space-x-2 w-full sm:w-auto">
@@ -469,13 +474,13 @@ export const AIDiseaseScanner = () => {
                 to="/farmer/cattle"
                 className="w-full sm:w-auto px-5 py-2.5 border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl transition flex items-center justify-center"
               >
-                Back to My Cattle
+                {t('farmer:cattle.title', 'Back to My Cattle')}
               </Link>
               <button
                 onClick={() => navigate('/farmer/scan-history')}
                 className="w-full sm:w-auto px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center justify-center space-x-2"
               >
-                <span>View Health History</span>
+                <span>{t('farmer:scanHistory.title', 'View Health History')}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>

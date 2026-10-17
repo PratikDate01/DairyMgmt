@@ -457,10 +457,71 @@ Phase 28 establishes seamless, end-to-end user navigation and role-based consist
 
 ---
 
-## 13. Developer Map: "Where Do I Change X?"
+## 13. Phase 29 — Complete English & Marathi Bilingual Architecture
+
+### Overview & Objective
+Phase 29 delivers comprehensive, production-grade bilingual localization supporting **English (`en`)** and **Marathi (`mr`)** throughout the entire Gauseva platform. Users can switch language at any moment across desktop and mobile, on public authentication pages, and across all five role consoles (**Farmer**, **Dairy Owner**, **Veterinarian**, **Medical Provider**, and **Administrator**).
+
+### Architectural Design & Core Principles
+1. **Zero Backend Mutation:** Backend API contracts, MongoDB documents, JWT payloads, role identifiers, enum states (`pending`, `completed`, `healthy`, `morning`, etc.), and monetary/milk arithmetic are 100% preserved. Localization affects visual presentation only.
+2. **Centralized Enum Mapping (`statusMap.js`):** Display text for statuses, roles, sessions, and payment methods is mapped via pure functions (`getStatusLabel`, `getRoleLabel`, `getSessionLabel`, `getPaymentMethodLabel`, `getGenderLabel`), preventing raw backend enum strings from being sent to the database or rendered in translated forms.
+3. **Static Resource Bundling:** Language catalogs are statically bundled into `client/src/i18n/index.js` to eliminate asynchronous HTTP fetch delays, raw key flashes, and 404 network errors during production builds.
+4. **Resilient Fallback Hierarchy:** Fallback language is hard-set to `en`, with `fallbackNS: 'common'` ensuring that any missing key in a domain namespace safely resolves to the English default without exposing raw translation keys.
+5. **Persistence & Session Continuity:** Selected language is persisted in `localStorage` under `'gauseva_language'`. The selection survives page reloads, navigation, and logout/login without clearing active form data or triggering authentication side effects.
+6. **Devanagari Typography:** Font fallbacks (`'Noto Sans Devanagari', 'Nirmala UI', 'Mangal'`) were integrated in `index.css` to guarantee clean rendering of Marathi conjuncts (जोडाक्षरे) across mobile and desktop browsers.
+
+### Translation Directory Structure
+```
+client/src/i18n/
+├── index.js                      # i18next & react-i18next central bootstrap
+├── statusMap.js                  # Central backend enum ➔ localized presentation mapper
+├── locales/
+│   ├── en/                       # English Catalogs (Default & Fallback)
+│   │   ├── common.json           # Layout, nav, buttons, roles, statuses, empty states
+│   │   ├── auth.json             # Login, registration, role selection, OTP timers
+│   │   ├── farmer.json           # Dashboard, cattle, AI scanner, requests, fodder
+│   │   ├── dairyOwner.json       # Dashboard, shift collections, settlements, ledger
+│   │   ├── veterinarian.json     # Dashboard, clinical triage, examinations, prescriptions
+│   │   ├── medicalProvider.json  # Dashboard, inventory management, order fulfillment
+│   │   ├── admin.json            # Dashboard, KPIs, user directory, verifications
+│   │   ├── complaints.json       # Grievance desk, categories, resolution notes
+│   │   └── validation.json       # Required field hints, pattern constraints
+│   └── mr/                       # Marathi Catalogs (पूर्ण मराठी भाषांतर)
+│       ├── common.json           # सामान्य नेव्हिगेशन, क्रिया, भूमिका आणि स्थिती
+│       ├── auth.json             # प्रवेश, नोंदणी, ओटीपी आणि ओळख पडताळणी
+│       ├── farmer.json           # शेतकरी डॅशबोर्ड, जनावरे, AI स्कॅनर, चारा बाजार
+│       ├── dairyOwner.json       # डेअरी संकलन, 10-दिवसीय बिलिंग, पेमेंट लेजर
+│       ├── veterinarian.json     # पशुवैद्यकीय तपासणी, निदान आणि औषधोपचार
+│       ├── medicalProvider.json  # औषध साठा व्यवस्थापन, प्रिस्क्रिप्शन ऑर्डर्स
+│       ├── admin.json            # प्रशासक केंद्र, पडताळणी आणि प्रणाली अहवाल
+│       ├── complaints.json       # तक्रार निवारण कक्ष आणि प्रशासकीय शेरे
+│       └── validation.json       # फॉर्म प्रमाणीकरण आणि त्रुटी संदेश
+```
+
+### Language Switcher Component
+The `LanguageSwitcher.jsx` component renders a modern segmented pill toggle (`English` | `मराठी`) with active visual indicators. Embedded in:
+- Main desktop `Header.jsx`
+- Mobile navigation drawer in `MobileNavigation.jsx`
+- Public authentication card in `LoginPage.jsx`
+
+All buttons declare explicit `type="button"` preventing accidental form submission.
+
+### How to Add New Translations
+1. Open the target namespace JSON file in both `client/src/i18n/locales/en/<namespace>.json` and `client/src/i18n/locales/mr/<namespace>.json`.
+2. Add the key pair matching your component's needs.
+3. In your React component, call `const { t } = useTranslation(['<namespace>', 'common']);` and access the translated string via `t('<namespace>:key.name', 'English Fallback')`.
+4. If rendering dynamic values (e.g. counts, names), use translation interpolation: `t('key.name', { count: total, name: user.name })`.
+
+---
+
+## 14. Developer Map: "Where Do I Change X?"
 
 | If you want to modify... | Target File(s) |
 | :--- | :--- |
+| **Bilingual i18n Core Config** | `client/src/i18n/index.js` |
+| **Language Catalogs & Strings** | `client/src/i18n/locales/en/` & `client/src/i18n/locales/mr/` |
+| **Status & Role Presentation Mapper** | `client/src/i18n/statusMap.js` |
+| **Language Switcher UI** | `client/src/components/common/LanguageSwitcher.jsx` |
 | **Multi-Role Switching Engine** | `server/src/controllers/authController.js` (`switchRole`) & `Header.jsx` |
 | **Universal Complaints Portal** | `client/src/pages/common/Complaints.jsx` & `complaintService.js` |
 | **Admin Control Center UI & Tabs** | `client/src/pages/dashboards/AdminDashboard.jsx` & `adminService.js` |
@@ -479,7 +540,7 @@ Phase 28 establishes seamless, end-to-end user navigation and role-based consist
 
 ---
 
-## 14. Project Viva Questions & Answers
+## 15. Project Viva Questions & Answers
 
 ### Advanced Phase Questions (10)
 1. **Q: How does in-session multi-role switching work in Phase 28?**
@@ -507,12 +568,29 @@ Phase 28 establishes seamless, end-to-end user navigation and role-based consist
 
 ---
 
-## 13. Student & Viva Summary
+## 16. Phase 29 — Complete English & Marathi Localization Coverage
 
-> "Our project is a **Dairy & Medical Management System** built using the MERN stack (MongoDB, Express, React, Node.js). It solves manual milk logging friction, financial settlement disputes, veterinary medicine supply gaps, cattle health tracking, and veterinarian referral bottlenecks in rural communities.
-> 
-> The platform supports five distinct user roles (**Farmers, Dairy Owners, Medical Providers, Veterinarians, and Administrators**) with single-email multi-role account switching.
-> 
-> Dairy Owners log daily shift milk collections and settle unpaid dues through a transparent payment ledger. Farmers manage cattle profiles, track earnings, order veterinary medicines, and scan cattle photos using an AI disease screening tool. 
-> 
-> Scanned cases generate ranked veterinarian recommendations based on a 100-point suitability engine. When a farmer submits a consultation request, the assigned veterinarian can accept or decline. Declines or response timeouts automatically trigger our **Basic Veterinarian Escalation Engine**, which excludes attempted doctors, selects the next top-ranked veterinarian, updates the request history, and forwards the case seamlessly without duplicate records or complex background workers."
+### Architecture & Coverage Summary
+- **i18n Engine**: `i18next` + `react-i18next` with `LanguageDetector` and `localStorage` caching (`i18nextLng`).
+- **Resource Key Parity**: 1,032 English keys and 1,032 Marathi keys (100% parity across 9 namespaces: `admin`, `auth`, `common`, `complaints`, `dairyOwner`, `farmer`, `medicalProvider`, `validation`, `veterinarian`).
+- **Status & Risk Mapping**: Managed via [statusMap.js](file:///c:/Users/Pratik/Downloads/DairyMedicalManagement/client/src/i18n/statusMap.js) (`getStatusLabel`, `getRiskLabel`, `getRoleLabel`, `getGenderLabel`). Backend enums (`pending`, `settled`, `review_completed`, etc.) remain untranslated for API fidelity while display labels immediately update upon switching to Marathi.
+- **Coverage**: All five roles (Farmer, Dairy Owner, Veterinarian, Medical Store, Administrator), authentication flows, clinical case workspace, AI scanners, prescription procurement, milk collections, 10-day summaries, fodder marketplace, and admin oversight.
+
+---
+
+## 18. Phase 30 — Global UI/UX Polish, Accessibility & Responsiveness
+
+### Polish & Responsiveness Summary
+- **Universal Accessibility (`:focus-visible`)**: Enhanced high-contrast keyboard navigation rings across all interactive buttons, inputs, tabs, and selects with consistent 2px blue outlines.
+- **Devanagari / Marathi Typography**: Added `:lang(mr)` line-height (1.625) and letter-spacing rules ensuring Marathi conjuncts (जोडाक्षरे) and diacritics are crisp and never cut off vertically.
+- **Responsive Dialog & Modal Architecture**: Standardized every modal across all 5 roles with `p-3 sm:p-4 overflow-y-auto` overlays and `max-h-[90vh] overflow-y-auto my-auto modal-animate` containers, preventing form button clipping on mobile viewports (360×800 and 390×844).
+- **Navigation & Layout Alignment**:
+  - `Header.jsx`: Streamlined mobile spacing by hiding secondary subtitle text on screens `<640px` to guarantee zero horizontal scroll.
+  - `Sidebar.jsx` & `MobileNavigation.jsx`: Enforced `shrink-0` on icons and `min-w-0 truncate` on navigation labels so long Marathi strings never distort drawer items.
+  - `LanguageSwitcher.jsx`: Standardized active button states to high-contrast `bg-blue-600 text-white font-bold` with responsive padding.
+  - `EmptyState.jsx`: Cleaned up empty states without hardcoded "Module In Progress" tags on production data filters.
+- **Automated Validation**:
+  - `npm test` (`statusMap.test.js`): 10/10 tests pass.
+  - `npm run build`: Production bundle compiles cleanly with 0 errors in 1.07s.
+
+

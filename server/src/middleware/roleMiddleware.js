@@ -12,7 +12,14 @@ export const requireRole = (...allowedRoles) => {
       });
     }
 
-    if (!allowedRoles.includes(req.user.role)) {
+    const userRoles = Array.isArray(req.user.roles) ? req.user.roles : [req.user.role].filter(Boolean);
+    const hasRole =
+      allowedRoles.includes(req.user.role) ||
+      allowedRoles.some((role) => userRoles.includes(role)) ||
+      req.user.role === 'admin' ||
+      userRoles.includes('admin');
+
+    if (!hasRole) {
       return res.status(403).json({
         success: false,
         message: `Forbidden. Role '${req.user.role}' is not authorized to access this resource.`

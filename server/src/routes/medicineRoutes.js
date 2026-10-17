@@ -23,11 +23,11 @@ router.use(authMiddleware);
 // Process Prescription Search (Farmer, Admin)
 router.post('/process-prescription', requireRole('farmer', 'admin'), processPrescription);
 
-// 1. Create Medicine (Medical Provider only)
-router.post('/', requireRole('medicalProvider'), createMedicine);
+// 1. Create Medicine (Medical Provider and Admin)
+router.post('/', requireRole('medicalProvider', 'admin'), createMedicine);
 
-// 2. Get My Medicines Inventory (Medical Provider only)
-router.get('/my', requireRole('medicalProvider'), getMyMedicines);
+// 2. Get My Medicines Inventory (Medical Provider and Admin)
+router.get('/my', requireRole('medicalProvider', 'admin'), getMyMedicines);
 
 // 3. Public Read-Only Catalog (Farmer, Medical Provider, Admin)
 router.get('/available', requireRole('farmer', 'medicalProvider', 'admin'), getAvailableMedicines);
@@ -35,22 +35,22 @@ router.get('/available', requireRole('farmer', 'medicalProvider', 'admin'), getA
 // 4. Inventory Summary (Medical Provider, Admin)
 router.get('/summary', requireRole('medicalProvider', 'admin'), getInventorySummary);
 
-// 5. Low Stock Medicines (Medical Provider only)
-router.get('/low-stock', requireRole('medicalProvider'), getLowStockMedicines);
+// 5. Low Stock Medicines (Medical Provider and Admin)
+router.get('/low-stock', requireRole('medicalProvider', 'admin'), getLowStockMedicines);
 
 // 6. Get Medicine By ID (Medical Provider, Farmer, Admin)
 router.get('/:medicineId', requireRole('medicalProvider', 'farmer', 'admin'), getMedicineById);
 
-// 7. Update Medicine Details (Medical Provider only)
-router.patch('/:medicineId', requireRole('medicalProvider'), updateMedicine);
+// 7. Update Medicine Details (Medical Provider and Admin)
+router.patch('/:medicineId', requireRole('medicalProvider', 'admin'), updateMedicine);
 
-// 8. Update Stock (Medical Provider only)
-router.patch('/:medicineId/stock', requireRole('medicalProvider'), updateStock);
+// 8. Update Stock (Medical Provider and Admin)
+router.patch('/:medicineId/stock', requireRole('medicalProvider', 'admin'), updateStock);
 
-// 9. Update Availability (Medical Provider only)
-router.patch('/:medicineId/availability', requireRole('medicalProvider'), updateAvailability);
+// 9. Update Availability (Medical Provider and Admin)
+router.patch('/:medicineId/availability', requireRole('medicalProvider', 'admin'), updateAvailability);
 
-// 10. Deactivate Medicine (Medical Provider only)
-router.patch('/:medicineId/deactivate', requireRole('medicalProvider'), deactivateMedicine);
+// 10. Deactivate Medicine (Medical Provider and Admin)
+router.patch('/:medicineId/deactivate', requireRole('medicalProvider', 'admin'), deactivateMedicine);
 
 export default router;

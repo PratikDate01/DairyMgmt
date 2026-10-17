@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { dairyFarmerService } from '../../services/dairyFarmerService';
 import { milkCollectionService } from '../../services/milkCollectionService';
@@ -7,6 +8,7 @@ import { PageHeader } from '../../components/common/PageHeader';
 import { StatCard } from '../../components/common/StatCard';
 import { SectionCard } from '../../components/common/SectionCard';
 import { EmptyState } from '../../components/common/EmptyState';
+import { getStatusLabel, getPaymentMethodLabel } from '../../i18n/statusMap';
 import {
   Milk,
   Users,
@@ -28,6 +30,7 @@ import { Link } from 'react-router-dom';
 
 export const DairyOwnerDashboard = () => {
   const { user, token } = useAuth();
+  const { t } = useTranslation();
   const [connections, setConnections] = useState([]);
   const [collections, setCollections] = useState([]);
   const [payments, setPayments] = useState([]);
@@ -54,11 +57,11 @@ export const DairyOwnerDashboard = () => {
       }
     } catch (err) {
       console.warn('Failed to fetch dairy owner data:', err.message);
-      setError(err.message || 'Failed to load dashboard data. Please try again.');
+      setError(err.message || t('empty.noData'));
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, t]);
 
   useEffect(() => {
     loadData();
@@ -72,7 +75,6 @@ export const DairyOwnerDashboard = () => {
     if (!dateStr) return false;
     const d = new Date(dateStr);
     const now = new Date();
-    // Compare both UTC and local date formats
     const matchUtc =
       d.getUTCFullYear() === now.getFullYear() &&
       d.getUTCMonth() === now.getMonth() &&
@@ -114,16 +116,16 @@ export const DairyOwnerDashboard = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Dairy Owner Console"
-        description={`Welcome, ${user?.name || 'Dairy Owner'}. Real-time monitoring of connected farmers, daily milk intake, and payment settlements.`}
-        breadcrumbs={['Home', 'Dairy Console']}
+        title={t('dairyOwner:dashboard.title')}
+        description={t('dairyOwner:dashboard.welcome', { name: user?.name || t('roles.dairyOwner') })}
+        breadcrumbs={[t('home'), t('dairyOwner:dashboard.title')]}
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={loadData}
               disabled={loading}
               className="p-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-600 rounded-lg shadow-xs transition"
-              title="Refresh Data"
+              title={t('actions.refresh')}
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </button>
@@ -132,28 +134,28 @@ export const DairyOwnerDashboard = () => {
               className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-xs transition flex items-center space-x-1.5"
             >
               <PlusCircle className="w-4 h-4" />
-              <span>Record Milk</span>
+              <span>{t('dairyOwner:dashboard.recordMilk')}</span>
             </Link>
             <Link
               to="/dairy-owner/milk-collection?tab=summary"
               className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-xs transition flex items-center space-x-1.5"
             >
               <Calendar className="w-4 h-4" />
-              <span>10-Day Summary</span>
+              <span>{t('dairyOwner:reports.billingCycle')}</span>
             </Link>
             <Link
               to="/dairy-owner/payments"
               className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg shadow-xs transition flex items-center space-x-1.5"
             >
               <Wallet className="w-4 h-4" />
-              <span>Payment Ledger</span>
+              <span>{t('dairyOwner:dashboard.processPayment')}</span>
             </Link>
             <Link
               to="/dairy-owner/farmers"
               className="px-3.5 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg shadow-xs transition flex items-center space-x-1.5"
             >
               <UserPlus className="w-4 h-4 text-slate-500" />
-              <span>Connect Farmer</span>
+              <span>{t('dairyOwner:dashboard.viewFarmers')}</span>
             </Link>
           </div>
         }
@@ -169,7 +171,7 @@ export const DairyOwnerDashboard = () => {
             onClick={() => setError('')}
             className="text-red-600 hover:text-red-800 font-semibold text-xs ml-4"
           >
-            Dismiss
+            {t('actions.close')}
           </button>
         </div>
       )}
@@ -177,39 +179,39 @@ export const DairyOwnerDashboard = () => {
       {/* KPI Overview Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title="Connected Farmers"
-          value={loading ? 'Loading...' : `${activeFarmers.length} Farmers`}
+          title={t('dairyOwner:dashboard.activeFarmers')}
+          value={loading ? t('actions.loading') : `${activeFarmers.length} ${t('roles.farmer')}`}
           icon={Users}
-          badgeText={activeFarmers.length > 0 ? `${activeFarmers.length} Active` : 'No Farmers Linked'}
+          badgeText={activeFarmers.length > 0 ? `${activeFarmers.length} ${t('status.active')}` : t('dairyOwner:farmers.noActive')}
           badgeType={activeFarmers.length > 0 ? 'success' : 'neutral'}
         />
         <StatCard
-          title="Today's Milk Intake"
-          value={loading ? 'Loading...' : `${todayTotalLiters} L`}
+          title={t('dairyOwner:dashboard.todayIntake')}
+          value={loading ? t('actions.loading') : `${todayTotalLiters} ${t('labels.litersShort')}`}
           icon={Milk}
           badgeText={
             todayCollections.length > 0
-              ? `₹${todayTotalValue.toFixed(2)} (${todayCollections.length} logs)`
-              : 'No Logs Today'
+              ? `₹${todayTotalValue.toFixed(2)} (${todayCollections.length})`
+              : t('empty.noData')
           }
           badgeType={todayCollections.length > 0 ? 'success' : 'neutral'}
         />
         <StatCard
-          title="Today's Recorded Payments"
-          value={loading ? 'Loading...' : `₹ ${todayPaidAmount.toFixed(2)}`}
+          title={t('dairyOwner:reports.totalDisbursed')}
+          value={loading ? t('actions.loading') : `₹ ${todayPaidAmount.toFixed(2)}`}
           icon={CreditCard}
           badgeText={
             todayPayments.length > 0
-              ? `${todayPayments.length} Disbursed Today`
-              : 'No Disbursal Today'
+              ? `${todayPayments.length} ${t('status.paid')}`
+              : t('empty.noData')
           }
           badgeType={todayPaidAmount > 0 ? 'success' : 'neutral'}
         />
         <StatCard
-          title="Pending Settlements"
-          value={loading ? 'Loading...' : `₹ ${paymentMetrics.totalPending.toFixed(2)}`}
+          title={t('dairyOwner:dashboard.pendingPayouts')}
+          value={loading ? t('actions.loading') : `₹ ${paymentMetrics.totalPending.toFixed(2)}`}
           icon={Wallet}
-          badgeText={paymentMetrics.totalPending > 0 ? 'Outstanding Ledger' : 'All Clear'}
+          badgeText={paymentMetrics.totalPending > 0 ? t('status.unpaid') : t('status.paid')}
           badgeType={paymentMetrics.totalPending > 0 ? 'amber' : 'success'}
         />
       </div>
@@ -222,10 +224,10 @@ export const DairyOwnerDashboard = () => {
           </div>
           <div>
             <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-              Morning Shift Intake
+              {t('dairyOwner:dashboard.morningShift')}
             </div>
             <div className="text-sm sm:text-base font-bold text-slate-800 font-mono">
-              {todayMorningLiters} Liters
+              {todayMorningLiters} {t('labels.liters')}
             </div>
           </div>
         </div>
@@ -236,10 +238,10 @@ export const DairyOwnerDashboard = () => {
           </div>
           <div>
             <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-              Evening Shift Intake
+              {t('dairyOwner:dashboard.eveningShift')}
             </div>
             <div className="text-sm sm:text-base font-bold text-slate-800 font-mono">
-              {todayEveningLiters} Liters
+              {todayEveningLiters} {t('labels.liters')}
             </div>
           </div>
         </div>
@@ -250,7 +252,7 @@ export const DairyOwnerDashboard = () => {
           </div>
           <div>
             <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-              Today's Gross Milk Value
+              {t('dairyOwner:dashboard.todayValue')}
             </div>
             <div className="text-sm sm:text-base font-bold text-emerald-700 font-mono">
               ₹ {todayTotalValue.toFixed(2)}
@@ -264,14 +266,14 @@ export const DairyOwnerDashboard = () => {
         {/* Left Column: Recent Milk Collections (2 cols wide on desktop) */}
         <div className="lg:col-span-2 space-y-6">
           <SectionCard
-            title="Recent Milk Collection Records"
-            subtitle="Real-time intake entries logged for your connected farmers"
+            title={t('dairyOwner:collection.recentLogs')}
+            subtitle={t('dairyOwner:collection.subtitle')}
             action={
               <Link
                 to="/dairy-owner/milk-collection"
                 className="text-xs text-blue-600 hover:text-blue-800 font-semibold flex items-center space-x-1"
               >
-                <span>Full History</span>
+                <span>{t('actions.view')}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             }
@@ -279,12 +281,12 @@ export const DairyOwnerDashboard = () => {
             {loading ? (
               <div className="py-12 text-center text-slate-500 text-xs">
                 <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-blue-600" />
-                <span>Loading milk collections...</span>
+                <span>{t('actions.loading')}</span>
               </div>
             ) : collections.length === 0 ? (
               <EmptyState
-                title="No Milk Collections Recorded Yet"
-                description="Use the 'Record Milk' button to enter daily morning and evening shift collections from connected farmers."
+                title={t('dairyOwner:collection.noEntriesToday')}
+                description={t('empty.noRecordsFound')}
                 icon={Milk}
               />
             ) : (
@@ -301,7 +303,7 @@ export const DairyOwnerDashboard = () => {
                             ? 'bg-amber-100 text-amber-800 border border-amber-200'
                             : 'bg-indigo-100 text-indigo-800 border border-indigo-200'
                         }`}
-                        title={item.session === 'morning' ? 'Morning Shift' : 'Evening Shift'}
+                        title={item.session === 'morning' ? t('status.morning') : t('status.evening')}
                       >
                         {item.session === 'morning' ? (
                           <Sun className="w-4 h-4" />
@@ -312,7 +314,7 @@ export const DairyOwnerDashboard = () => {
                       <div>
                         <div className="flex items-center space-x-2">
                           <h4 className="font-bold text-slate-900">
-                            {item.farmer?.name || 'Connected Farmer'}
+                            {item.farmer?.name || t('roles.farmer')}
                           </h4>
                           <span
                             className={`px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase ${
@@ -321,7 +323,7 @@ export const DairyOwnerDashboard = () => {
                                 : 'bg-amber-100 text-amber-800'
                             }`}
                           >
-                            {item.paymentStatus === 'settled' ? 'Settled' : 'Unpaid'}
+                            {getStatusLabel(item.paymentStatus === 'settled' ? 'paid' : 'unpaid', t)}
                           </span>
                         </div>
                         <p className="text-[11px] text-slate-500 font-mono mt-0.5">
@@ -330,7 +332,7 @@ export const DairyOwnerDashboard = () => {
                             month: 'short',
                             year: 'numeric'
                           })}{' '}
-                          • Fat: {item.fatPercentage}% • Rate: ₹{item.ratePerLiter}/L
+                          • {t('labels.fat')}: {item.fatPercentage}% • {t('labels.rate')}: ₹{item.ratePerLiter}/L
                         </p>
                       </div>
                     </div>
@@ -338,7 +340,7 @@ export const DairyOwnerDashboard = () => {
                     <div className="flex items-center justify-between sm:justify-end sm:space-x-4 border-t sm:border-t-0 pt-2 sm:pt-0">
                       <div className="text-left sm:text-right">
                         <div className="font-mono font-bold text-slate-900 text-sm">
-                          {item.quantityLiters} L
+                          {item.quantityLiters} {t('labels.litersShort')}
                         </div>
                         <div className="font-mono text-emerald-700 font-bold text-xs">
                           ₹{item.totalAmount?.toFixed(2)}
@@ -353,24 +355,24 @@ export const DairyOwnerDashboard = () => {
 
           {/* Recent Settlement Activity */}
           <SectionCard
-            title="Recent Settlement Activity"
-            subtitle="Payments disbursed to farmers from the payment ledger"
+            title={t('dairyOwner:payments.pastSettlements')}
+            subtitle={t('dairyOwner:payments.subtitle')}
             action={
               <Link
                 to="/dairy-owner/payments"
                 className="text-xs text-blue-600 hover:text-blue-800 font-semibold flex items-center space-x-1"
               >
-                <span>View Ledger</span>
+                <span>{t('dairyOwner:dashboard.processPayment')}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             }
           >
             {loading ? (
-              <div className="py-8 text-center text-slate-500 text-xs">Loading payment ledger...</div>
+              <div className="py-8 text-center text-slate-500 text-xs">{t('actions.loading')}</div>
             ) : payments.length === 0 ? (
               <EmptyState
-                title="No Payment Settlements Yet"
-                description="When you generate payment settlements for unpaid collections, records will be logged here."
+                title={t('dairyOwner:payments.noUnsettled')}
+                description={t('empty.noRecordsFound')}
                 icon={Wallet}
               />
             ) : (
@@ -385,13 +387,13 @@ export const DairyOwnerDashboard = () => {
                         ₹
                       </div>
                       <div>
-                        <h4 className="font-bold text-slate-900">{p.farmer?.name || 'Farmer'}</h4>
+                        <h4 className="font-bold text-slate-900">{p.farmer?.name || t('roles.farmer')}</h4>
                         <p className="text-[10px] text-slate-500 font-mono">
                           {new Date(p.paymentDate || p.createdAt).toLocaleDateString('en-IN', {
                             day: 'numeric',
                             month: 'short'
                           })}{' '}
-                          • Method: <span className="uppercase font-semibold">{p.paymentMethod}</span>
+                          • {t('dairyOwner:payments.paymentMode')}: <span className="uppercase font-semibold">{getPaymentMethodLabel(p.paymentMethod, t)}</span>
                         </p>
                       </div>
                     </div>
@@ -409,11 +411,7 @@ export const DairyOwnerDashboard = () => {
                             : 'bg-slate-100 text-slate-700'
                         }`}
                       >
-                        {p.paymentStatus === 'paid'
-                          ? 'Fully Paid'
-                          : p.paymentStatus === 'partiallyPaid'
-                          ? 'Partial'
-                          : p.paymentStatus}
+                        {getStatusLabel(p.paymentStatus, t)}
                       </span>
                     </div>
                   </div>
@@ -426,23 +424,23 @@ export const DairyOwnerDashboard = () => {
         {/* Right Column: Connected Farmers & Quick Actions */}
         <div className="space-y-6">
           <SectionCard
-            title="Connected Farmers"
-            subtitle="Farmers actively linked to your collection center"
+            title={t('dairyOwner:dashboard.activeFarmers')}
+            subtitle={t('dairyOwner:farmers.subtitle')}
             action={
               <Link
                 to="/dairy-owner/farmers"
                 className="text-xs text-blue-600 hover:text-blue-800 font-semibold"
               >
-                Manage ({activeFarmers.length}) →
+                {t('actions.view')} ({activeFarmers.length}) →
               </Link>
             }
           >
             {loading ? (
-              <div className="py-8 text-center text-slate-500 text-xs">Loading farmers...</div>
+              <div className="py-8 text-center text-slate-500 text-xs">{t('actions.loading')}</div>
             ) : activeFarmers.length === 0 ? (
               <EmptyState
-                title="No Active Farmers Linked"
-                description="Send connection requests to registered farmers by their mobile number."
+                title={t('dairyOwner:farmers.noActive')}
+                description={t('empty.noRecordsFound')}
                 icon={Users}
               />
             ) : (
@@ -469,9 +467,9 @@ export const DairyOwnerDashboard = () => {
                     <Link
                       to={`/dairy-owner/milk-collection?farmerId=${item.farmer?._id}`}
                       className="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-[11px] font-semibold rounded-lg transition"
-                      title="Record Milk for this Farmer"
+                      title={t('dairyOwner:collection.newEntry')}
                     >
-                      Record
+                      {t('actions.add')}
                     </Link>
                   </div>
                 ))}
@@ -481,8 +479,8 @@ export const DairyOwnerDashboard = () => {
 
           {/* Quick Shortcuts Card */}
           <SectionCard
-            title="Quick Shortcuts"
-            subtitle="Frequently accessed dairy management workflows"
+            title={t('farmer:dashboard.quickActions')}
+            subtitle={t('dairyOwner:dashboard.subtitle')}
           >
             <div className="space-y-2">
               <Link
@@ -491,7 +489,7 @@ export const DairyOwnerDashboard = () => {
               >
                 <div className="flex items-center space-x-2">
                   <PlusCircle className="w-4 h-4 text-blue-600" />
-                  <span>Record Shift Milk</span>
+                  <span>{t('dairyOwner:dashboard.recordMilk')}</span>
                 </div>
                 <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
               </Link>
@@ -502,7 +500,7 @@ export const DairyOwnerDashboard = () => {
               >
                 <div className="flex items-center space-x-2">
                   <Calendar className="w-4 h-4 text-indigo-600" />
-                  <span>10-Day Billing Summary</span>
+                  <span>{t('dairyOwner:reports.billingCycle')}</span>
                 </div>
                 <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
               </Link>
@@ -513,7 +511,7 @@ export const DairyOwnerDashboard = () => {
               >
                 <div className="flex items-center space-x-2">
                   <Wallet className="w-4 h-4 text-emerald-600" />
-                  <span>Settle Farmer Payouts</span>
+                  <span>{t('dairyOwner:dashboard.processPayment')}</span>
                 </div>
                 <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
               </Link>
@@ -524,7 +522,7 @@ export const DairyOwnerDashboard = () => {
               >
                 <div className="flex items-center space-x-2">
                   <TrendingUp className="w-4 h-4 text-purple-600" />
-                  <span>Analytics & Reports</span>
+                  <span>{t('dairyOwner:dashboard.viewReports')}</span>
                 </div>
                 <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
               </Link>

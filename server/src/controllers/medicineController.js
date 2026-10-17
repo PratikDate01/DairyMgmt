@@ -10,7 +10,7 @@ export const LOW_STOCK_THRESHOLD = 10;
  */
 export const createMedicine = async (req, res) => {
   try {
-    const medicalProviderId = req.user.id;
+    const medicalProviderId = req.user.role === 'admin' ? (req.body.medicalProvider || req.user.id) : req.user.id;
     const {
       name,
       genericName = '',
@@ -93,10 +93,14 @@ export const createMedicine = async (req, res) => {
  */
 export const getMyMedicines = async (req, res) => {
   try {
-    const medicalProviderId = req.user.id;
     const { search, category, availability, isActive, lowStock, page = 1, limit = 50 } = req.query;
 
-    const query = { medicalProvider: medicalProviderId };
+    const query = {};
+    if (req.user.role === 'medicalProvider') {
+      query.medicalProvider = req.user.id;
+    } else if (req.query.medicalProvider) {
+      query.medicalProvider = req.query.medicalProvider;
+    }
 
     if (isActive !== undefined) {
       query.isActive = isActive === 'true';
@@ -257,13 +261,18 @@ export const getInventorySummary = async (req, res) => {
  */
 export const getLowStockMedicines = async (req, res) => {
   try {
-    const medicalProviderId = req.user.id;
-
-    const medicines = await Medicine.find({
-      medicalProvider: medicalProviderId,
+    const query = {
       isActive: true,
       stockQuantity: { $gt: 0, $lte: LOW_STOCK_THRESHOLD }
-    })
+    };
+
+    if (req.user.role === 'medicalProvider') {
+      query.medicalProvider = req.user.id;
+    } else if (req.query.medicalProvider) {
+      query.medicalProvider = req.query.medicalProvider;
+    }
+
+    const medicines = await Medicine.find(query)
       .sort({ stockQuantity: 1 })
       .populate('medicalProvider', '_id name phone');
 
@@ -362,7 +371,7 @@ export const updateMedicine = async (req, res) => {
       });
     }
 
-    if (medicine.medicalProvider.toString() !== medicalProviderId) {
+    if (medicine.medicalProvider.toString() !== medicalProviderId && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
         message: 'Forbidden. You are not authorized to modify another provider’s medicine.'
@@ -454,7 +463,7 @@ export const updateStock = async (req, res) => {
       });
     }
 
-    if (medicine.medicalProvider.toString() !== medicalProviderId) {
+    if (medicine.medicalProvider.toString() !== medicalProviderId && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
         message: 'Forbidden. You are not authorized to modify this inventory.'
@@ -517,7 +526,7 @@ export const updateAvailability = async (req, res) => {
       });
     }
 
-    if (medicine.medicalProvider.toString() !== medicalProviderId) {
+    if (medicine.medicalProvider.toString() !== medicalProviderId && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
         message: 'Forbidden. You are not authorized to modify this medicine.'
@@ -574,7 +583,7 @@ export const deactivateMedicine = async (req, res) => {
       });
     }
 
-    if (medicine.medicalProvider.toString() !== medicalProviderId) {
+    if (medicine.medicalProvider.toString() !== medicalProviderId && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
         message: 'Forbidden. You are not authorized to deactivate this medicine.'

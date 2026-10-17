@@ -25,15 +25,15 @@ router.post('/', requireRole('farmer'), createMedicineRequest);
 router.get('/my', requireRole('farmer'), getMyRequests);
 
 // Medical Provider request list & summary
-router.get('/provider', requireRole('medicalProvider'), getProviderRequests);
+router.get('/provider', requireRole('medicalProvider', 'admin'), getProviderRequests);
 router.get('/provider/summary', requireRole('medicalProvider', 'admin'), getProviderRequestsSummary);
 
-// Status transition routes (Medical Provider)
-router.patch('/:requestId/accept', requireRole('medicalProvider'), acceptMedicineRequest);
-router.patch('/:requestId/reject', requireRole('medicalProvider'), rejectMedicineRequest);
-router.patch('/:requestId/pack', requireRole('medicalProvider'), packMedicineRequest);
-router.patch('/:requestId/ready', requireRole('medicalProvider'), readyMedicineRequest);
-router.patch('/:requestId/complete', requireRole('medicalProvider'), completeMedicineRequest);
+// Status transition routes (Medical Provider & Admin)
+router.patch('/:requestId/accept', requireRole('medicalProvider', 'admin'), acceptMedicineRequest);
+router.patch('/:requestId/reject', requireRole('medicalProvider', 'admin'), rejectMedicineRequest);
+router.patch('/:requestId/pack', requireRole('medicalProvider', 'admin'), packMedicineRequest);
+router.patch('/:requestId/ready', requireRole('medicalProvider', 'admin'), readyMedicineRequest);
+router.patch('/:requestId/complete', requireRole('medicalProvider', 'admin'), completeMedicineRequest);
 
 // Cancellation (Farmer or Medical Provider)
 router.patch('/:requestId/cancel', requireRole('farmer', 'medicalProvider'), cancelMedicineRequest);

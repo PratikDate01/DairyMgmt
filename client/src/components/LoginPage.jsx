@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { authService } from '../services/authService';
 import { useAuth } from '../context/AuthContext';
+import { LanguageSwitcher } from './common/LanguageSwitcher';
 import { 
   User, 
   Phone, 
@@ -21,10 +23,7 @@ import {
 
 export const LoginPage = () => {
   const { isAuthenticated, loginWithOTP } = useAuth();
-
-  if (isAuthenticated) {
-    return <Navigate to="/" replace />;
-  }
+  const { t } = useTranslation();
 
   const [mode, setMode] = useState('login'); // 'login' | 'register'
   const [identityType, setIdentityType] = useState('email'); // 'email' | 'phone'
@@ -66,7 +65,7 @@ export const LoginPage = () => {
       timer = setInterval(() => {
         setOtpExpiryTime((prev) => {
           if (prev <= 1) {
-            setError('OTP expired. Please request a new OTP.');
+            setError(t('auth:errors.otpExpired'));
             return 0;
           }
           return prev - 1;
@@ -74,7 +73,7 @@ export const LoginPage = () => {
       }, 1000);
     }
     return () => clearInterval(timer);
-  }, [step, otpExpiryTime]);
+  }, [step, otpExpiryTime, t]);
 
   // Format Seconds to MM:SS
   const formatTime = (seconds) => {
@@ -84,11 +83,11 @@ export const LoginPage = () => {
   };
 
   const roleLabels = {
-    farmer: { label: 'Farmer', icon: '🌾', desc: 'Manage milk supply & medical requests' },
-    dairyOwner: { label: 'Dairy Owner', icon: '🥛', desc: 'Manage milk intake & farmer payouts' },
-    medicalProvider: { label: 'Medical Provider', icon: '🩺', desc: 'Fulfill veterinary medicine orders' },
-    veterinarian: { label: 'Veterinarian', icon: '👨‍⚕️', desc: 'Cattle disease screening & case reviews' },
-    admin: { label: 'Administrator', icon: '🛡️', desc: 'System management & security' }
+    farmer: { label: t('roles.farmer'), icon: '🌾', desc: t('auth:roleDescriptions.farmer') },
+    dairyOwner: { label: t('roles.dairyOwner'), icon: '🥛', desc: t('auth:roleDescriptions.dairyOwner') },
+    medicalProvider: { label: t('roles.medicalProvider'), icon: '🩺', desc: t('auth:roleDescriptions.medicalProvider') },
+    veterinarian: { label: t('roles.veterinarian'), icon: '👨‍⚕️', desc: t('auth:roleDescriptions.veterinarian') },
+    admin: { label: t('roles.admin'), icon: '🛡️', desc: t('auth:roleDescriptions.admin') }
   };
 
   // Step 1: Check Email & Fetch Registered Roles
@@ -100,8 +99,8 @@ export const LoginPage = () => {
     if (!identity || !identity.trim()) {
       setError(
         identityType === 'email'
-          ? 'Please enter your email address.'
-          : 'Please enter your mobile number.'
+          ? t('auth:errors.enterEmail')
+          : t('auth:errors.enterMobile')
       );
       return;
     }
@@ -112,14 +111,14 @@ export const LoginPage = () => {
       normalizedIdentity = normalizedIdentity.toLowerCase();
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(normalizedIdentity)) {
-        setError('Please enter a valid email address.');
+        setError(t('auth:errors.validEmail'));
         return;
       }
     } else {
       const cleaned = normalizedIdentity.replace(/[\s\-()]/g, '');
       const phoneRegex = /^(?:\+91|91|0)?([6-9]\d{9})$/;
       if (!phoneRegex.test(cleaned)) {
-        setError('Please enter a valid 10-digit mobile number.');
+        setError(t('auth:errors.validMobile'));
         return;
       }
     }
@@ -130,7 +129,7 @@ export const LoginPage = () => {
       const checkRes = await authService.checkEmail(normalizedIdentity);
       
       if (!checkRes.exists) {
-        setError('No account found for this mobile number or email address. Please register a new account.');
+        setError(t('auth:errors.noAccount'));
         return;
       }
 
@@ -143,7 +142,7 @@ export const LoginPage = () => {
         setSelectedRole(singleRole);
         
         const otpData = await authService.requestOTP(normalizedIdentity, singleRole);
-        setSuccessMsg(otpData.message || `OTP sent for ${roleLabels[singleRole]?.label || singleRole}!`);
+        setSuccessMsg(otpData.message || t('auth:messages.otpSent', { role: roleLabels[singleRole]?.label || singleRole }));
         if (otpData.devOtp) setDevOtp(otpData.devOtp);
 
         setStep(3);
@@ -157,7 +156,7 @@ export const LoginPage = () => {
       }
 
     } catch (err) {
-      setError(err.message || 'Failed to check account. Please try again.');
+      setError(err.message || t('auth:errors.checkFailed'));
     } finally {
       setLoading(false);
     }
@@ -170,7 +169,7 @@ export const LoginPage = () => {
     setSuccessMsg('');
 
     if (!selectedRole) {
-      setError('Please select a role to continue.');
+      setError(t('auth:errors.selectRole'));
       return;
     }
 
@@ -183,7 +182,7 @@ export const LoginPage = () => {
 
     try {
       const data = await authService.requestOTP(normalizedIdentity, selectedRole);
-      setSuccessMsg(data.message || `OTP sent for ${roleLabels[selectedRole]?.label || selectedRole}!`);
+      setSuccessMsg(data.message || t('auth:messages.otpSent', { role: roleLabels[selectedRole]?.label || selectedRole }));
       if (data.devOtp) {
         setDevOtp(data.devOtp);
       }
@@ -192,7 +191,7 @@ export const LoginPage = () => {
       setOtpExpiryTime(300);
       setOtp('');
     } catch (err) {
-      setError(err.message || 'Failed to send OTP. Please try again.');
+      setError(err.message || t('auth:errors.sendFailed'));
     } finally {
       setLoading(false);
     }
@@ -205,7 +204,7 @@ export const LoginPage = () => {
     setSuccessMsg('');
 
     if (!identity || !identity.trim()) {
-      setError('Please enter your email address or mobile number.');
+      setError(t('auth:errors.validIdentity'));
       return;
     }
 
@@ -217,7 +216,7 @@ export const LoginPage = () => {
       const cleaned = normalizedIdentity.replace(/[\s\-()]/g, '');
       const phoneRegex = /^(?:\+91|91|0)?([6-9]\d{9})$/;
       if (!phoneRegex.test(cleaned)) {
-        setError('Please enter a valid 10-digit mobile number or email address.');
+        setError(t('auth:errors.validMobileOrEmail'));
         return;
       }
     }
@@ -226,7 +225,7 @@ export const LoginPage = () => {
 
     try {
       const data = await authService.register(name, normalizedIdentity, selectedRole);
-      setSuccessMsg(data.message || 'Role registration successful! OTP sent.');
+      setSuccessMsg(data.message || t('auth:messages.regSuccess'));
       if (data.devOtp) {
         setDevOtp(data.devOtp);
       }
@@ -235,7 +234,7 @@ export const LoginPage = () => {
       setOtpExpiryTime(300);
       setOtp('');
     } catch (err) {
-      setError(err.message || 'Registration failed. Please check details.');
+      setError(err.message || t('auth:errors.registerFailed'));
     } finally {
       setLoading(false);
     }
@@ -249,7 +248,7 @@ export const LoginPage = () => {
 
     const cleanOtp = otp.trim();
     if (!cleanOtp || cleanOtp.length !== 6) {
-      setError('Please enter a valid 6-digit verification code.');
+      setError(t('auth:errors.validOtp'));
       return;
     }
 
@@ -262,9 +261,9 @@ export const LoginPage = () => {
 
     try {
       await loginWithOTP(normalizedIdentity, cleanOtp, selectedRole);
-      setSuccessMsg('Logged in successfully!');
+      setSuccessMsg(t('auth:messages.loginSuccess'));
     } catch (err) {
-      setError(err.message || 'OTP verification failed. Please try again.');
+      setError(err.message || t('auth:errors.verifyFailed'));
     } finally {
       setLoading(false);
     }
@@ -285,7 +284,7 @@ export const LoginPage = () => {
 
     try {
       const data = await authService.requestOTP(normalizedIdentity, selectedRole);
-      setSuccessMsg(data.message || 'New OTP sent successfully!');
+      setSuccessMsg(data.message || t('auth:messages.newOtpSent'));
       if (data.devOtp) {
         setDevOtp(data.devOtp);
       }
@@ -293,23 +292,32 @@ export const LoginPage = () => {
       setResendCooldown(60);
       setOtpExpiryTime(300);
     } catch (err) {
-      setError(err.message || 'Failed to resend OTP. Please try again.');
+      setError(err.message || t('auth:errors.resendFailed'));
     } finally {
       setLoadingResend(false);
     }
   };
 
+  if (isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
         
+        {/* Top bar with Language Switcher */}
+        <div className="flex justify-end mb-2">
+          <LanguageSwitcher />
+        </div>
+
         {/* Brand Header */}
         <div className="text-center mb-6">
           <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl font-bold shadow-xs">
             🐄
           </div>
-          <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">Gauseva HealthTech</h2>
-          <p className="text-xs text-slate-500 mt-1 font-medium">Cattle Healthcare & Management System</p>
+          <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">{t('auth:brandTitle')}</h2>
+          <p className="text-xs text-slate-500 mt-1 font-medium">{t('auth:brandSubtitle')}</p>
         </div>
 
         {/* Mode Switcher Tabs (Only visible on Step 1) */}
@@ -329,7 +337,7 @@ export const LoginPage = () => {
               }`}
             >
               <LogIn className="w-3.5 h-3.5" />
-              <span>Login</span>
+              <span>{t('auth:tabLogin')}</span>
             </button>
             <button
               type="button"
@@ -345,7 +353,7 @@ export const LoginPage = () => {
               }`}
             >
               <UserPlus className="w-3.5 h-3.5" />
-              <span>New Role / Account</span>
+              <span>{t('auth:tabRegister')}</span>
             </button>
           </div>
         )}
@@ -355,7 +363,7 @@ export const LoginPage = () => {
           <div className="mb-4 p-3.5 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl flex items-start space-x-2.5">
             <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 shrink-0" />
             <div className="flex-1">
-              <span className="font-bold block mb-0.5">Notice</span>
+              <span className="font-bold block mb-0.5">{t('labels.notice')}</span>
               <span>{error}</span>
             </div>
           </div>
@@ -366,7 +374,7 @@ export const LoginPage = () => {
           <div className="mb-4 p-3.5 bg-green-50 border border-green-200 text-green-700 text-xs rounded-xl flex items-start space-x-2.5">
             <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 shrink-0" />
             <div className="flex-1">
-              <span className="font-bold block mb-0.5">Success</span>
+              <span className="font-bold block mb-0.5">{t('labels.success')}</span>
               <span>{successMsg}</span>
             </div>
           </div>
@@ -376,8 +384,8 @@ export const LoginPage = () => {
         {devOtp && step === 3 && (
           <div className="mb-5 p-3.5 bg-amber-50 border border-amber-200 text-amber-900 text-xs rounded-xl flex items-center justify-between">
             <div>
-              <span className="font-bold block text-amber-800">🔑 Development Mode OTP</span>
-              <span>Verification code:</span>
+              <span className="font-bold block text-amber-800">{t('auth:devOtpBanner')}</span>
+              <span>{t('auth:devOtpLabel')}</span>
             </div>
             <code className="bg-amber-100 text-amber-900 px-3 py-1 rounded-lg font-mono text-base font-extrabold border border-amber-300">
               {devOtp}
@@ -408,7 +416,7 @@ export const LoginPage = () => {
                   }`}
                 >
                   <Mail className="w-3.5 h-3.5" />
-                  <span>Email Address</span>
+                  <span>{t('auth:emailAddress')}</span>
                 </button>
                 <button
                   type="button"
@@ -425,20 +433,20 @@ export const LoginPage = () => {
                   }`}
                 >
                   <Phone className="w-3.5 h-3.5" />
-                  <span>Mobile Number</span>
+                  <span>{t('auth:mobileNumber')}</span>
                 </button>
               </div>
 
               <div>
                 <label htmlFor="login-identity" className="block text-xs font-semibold text-slate-700 mb-1.5">
-                  {identityType === 'email' ? 'Registered Email Address' : 'Registered Mobile Number'}
+                  {identityType === 'email' ? t('auth:registeredEmail') : t('auth:registeredMobile')}
                 </label>
                 <div className="relative">
                   <input
                     id="login-identity"
                     type={identityType === 'email' ? 'email' : 'tel'}
                     autoComplete={identityType === 'email' ? 'email' : 'tel'}
-                    placeholder={identityType === 'email' ? 'abc@gmail.com' : 'Enter 10-digit mobile number'}
+                    placeholder={identityType === 'email' ? t('auth:emailPlaceholder') : t('auth:mobilePlaceholder')}
                     value={identity}
                     onChange={(e) => setIdentity(e.target.value)}
                     className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition"
@@ -457,13 +465,13 @@ export const LoginPage = () => {
                 disabled={loading}
                 className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl shadow-xs transition disabled:opacity-50 flex justify-center items-center space-x-2"
               >
-                <span>{loading ? 'Checking Account...' : 'Continue'}</span>
+                <span>{loading ? t('auth:checkingAccount') : t('auth:continueBtn')}</span>
                 <ChevronRight className="w-4 h-4" />
               </button>
 
-              {error && error.toLowerCase().includes('no account found') && (
+              {error && error.toLowerCase().includes('no account') && (
                 <div className="pt-2 text-center border-t border-slate-100">
-                  <p className="text-xs text-slate-500 mb-2">Need a new user account?</p>
+                  <p className="text-xs text-slate-500 mb-2">{t('auth:needAccount')}</p>
                   <button
                     type="button"
                     onClick={() => {
@@ -472,7 +480,7 @@ export const LoginPage = () => {
                     }}
                     className="text-xs font-bold text-blue-600 hover:text-blue-800 underline transition"
                   >
-                    👉 Click here to register your account now
+                    {t('auth:clickToRegister')}
                   </button>
                 </div>
               )}
@@ -482,13 +490,13 @@ export const LoginPage = () => {
             <form onSubmit={handleRegister} className="space-y-4">
               <div>
                 <label htmlFor="reg-name" className="block text-xs font-semibold text-slate-700 mb-1">
-                  Full Name
+                  {t('auth:fullName')}
                 </label>
                 <div className="relative">
                   <input
                     id="reg-name"
                     type="text"
-                    placeholder="Enter your full name"
+                    placeholder={t('auth:fullNamePlaceholder')}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     className="w-full pl-10 pr-4 py-2 bg-white border border-slate-300 rounded-xl text-slate-900 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition"
@@ -500,13 +508,13 @@ export const LoginPage = () => {
 
               <div>
                 <label htmlFor="reg-identity" className="block text-xs font-semibold text-slate-700 mb-1">
-                  Email Address or Mobile Number
+                  {t('auth:emailAddress')} / {t('auth:mobileNumber')}
                 </label>
                 <div className="relative">
                   <input
                     id="reg-identity"
                     type="text"
-                    placeholder="abc@gmail.com or Mobile Number"
+                    placeholder={t('auth:identityPlaceholder')}
                     value={identity}
                     onChange={(e) => setIdentity(e.target.value)}
                     className="w-full pl-10 pr-4 py-2 bg-white border border-slate-300 rounded-xl text-slate-900 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition"
@@ -514,12 +522,12 @@ export const LoginPage = () => {
                   />
                   <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5" />
                 </div>
-                <p className="text-[11px] text-slate-500 mt-1">If this email is already registered, the new role will be added to your account.</p>
+                <p className="text-[11px] text-slate-500 mt-1">{t('auth:identityHelp')}</p>
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                  Select Role to Register
+                  {t('auth:selectRoleToRegister')}
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   {Object.entries(roleLabels)
@@ -550,7 +558,7 @@ export const LoginPage = () => {
                 className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl shadow-xs transition disabled:opacity-50 flex justify-center items-center space-x-2"
               >
                 <UserPlus className="w-4 h-4" />
-                <span>{loading ? 'Processing...' : 'Register & Request OTP'}</span>
+                <span>{loading ? t('auth:processing') : t('auth:registerAndRequestOtp')}</span>
               </button>
 
               <div className="pt-2 text-center border-t border-slate-100">
@@ -562,7 +570,7 @@ export const LoginPage = () => {
                   }}
                   className="text-xs font-semibold text-slate-500 hover:text-slate-800 transition"
                 >
-                  Already registered? <span className="text-blue-600 font-bold underline">Log in here</span>
+                  {t('auth:alreadyRegistered')} <span className="text-blue-600 font-bold underline">{t('auth:loginHere')}</span>
                 </button>
               </div>
             </form>
@@ -573,15 +581,15 @@ export const LoginPage = () => {
         {step === 2 && (
           <form onSubmit={handleRoleSubmit} className="space-y-4">
             <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-900">
-              <div className="font-bold text-sm mb-1">Select How You Want to Continue</div>
+              <div className="font-bold text-sm mb-1">{t('auth:multiRolePromptTitle')}</div>
               <p className="text-blue-700">
-                This account (<strong className="font-mono">{identity.trim()}</strong>) is registered with multiple roles.
+                {identity.trim()}
               </p>
             </div>
 
             <div className="space-y-2.5 my-4">
               {availableRoles.map((r) => {
-                const info = roleLabels[r] || { label: r, icon: '👤', desc: 'Registered Role' };
+                const info = roleLabels[r] || { label: r, icon: '👤', desc: '' };
                 const isSelected = selectedRole === r;
                 return (
                   <button
@@ -615,7 +623,7 @@ export const LoginPage = () => {
               className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl shadow-xs transition disabled:opacity-50 flex justify-center items-center space-x-2"
             >
               <KeyRound className="w-4 h-4" />
-              <span>{loading ? 'Sending OTP...' : 'Continue / Request OTP'}</span>
+              <span>{loading ? t('auth:sendingOtp') : t('auth:continueRequestOtp')}</span>
             </button>
 
             <button
@@ -627,7 +635,7 @@ export const LoginPage = () => {
               }}
               className="w-full text-center text-xs text-slate-500 hover:text-slate-800 transition py-1 font-medium"
             >
-              ← Back to email input
+              {t('auth:backToEmail')}
             </button>
           </form>
         )}
@@ -637,13 +645,13 @@ export const LoginPage = () => {
           <form onSubmit={handleVerifyOTP} className="space-y-4">
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 space-y-1">
               <div className="flex items-center justify-between">
-                <span>Selected Role:</span>
+                <span>{t('auth:selectedRoleLabel')}</span>
                 <span className="font-extrabold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-md text-xs">
                   {roleLabels[selectedRole]?.icon} {roleLabels[selectedRole]?.label || selectedRole}
                 </span>
               </div>
               <div className="flex items-center justify-between pt-1 border-t border-slate-200/60">
-                <span>OTP Sent to:</span>
+                <span>{t('auth:otpSentToLabel')}</span>
                 <strong className="font-mono text-slate-900">{identity.trim()}</strong>
               </div>
             </div>
@@ -654,9 +662,11 @@ export const LoginPage = () => {
                 <Clock className="w-3.5 h-3.5 text-slate-400" />
                 <span>
                   {otpExpiryTime > 0 ? (
-                    <>Code expires in <strong className="font-mono text-slate-700">{formatTime(otpExpiryTime)}</strong></>
+                    <>
+                      {t('auth:codeExpiresIn', { time: formatTime(otpExpiryTime) })}
+                    </>
                   ) : (
-                    <strong className="text-red-600">Code Expired</strong>
+                    <strong className="text-red-600">{t('auth:codeExpired')}</strong>
                   )}
                 </span>
               </div>
@@ -664,7 +674,7 @@ export const LoginPage = () => {
 
             <div>
               <label htmlFor="otp-input" className="block text-xs font-semibold text-slate-700 mb-1.5 text-center">
-                Enter 6-Digit Verification Code
+                {t('auth:enterVerificationCode')}
               </label>
               <input
                 id="otp-input"
@@ -684,12 +694,12 @@ export const LoginPage = () => {
               className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl shadow-xs transition disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center space-x-2"
             >
               <ShieldCheck className="w-4 h-4" />
-              <span>{loading ? 'Verifying Code...' : 'Verify OTP & Login'}</span>
+              <span>{loading ? t('auth:verifyingCode') : t('auth:verifyAndLogin')}</span>
             </button>
 
             {/* Resend OTP Action */}
             <div className="pt-2 border-t border-slate-100 flex flex-col items-center justify-center space-y-2">
-              <div className="text-xs text-slate-500">Didn't receive the code?</div>
+              <div className="text-xs text-slate-500">{t('auth:didntReceiveCode')}</div>
               <button
                 type="button"
                 onClick={handleResendOTP}
@@ -703,10 +713,10 @@ export const LoginPage = () => {
                 <RotateCw className={`w-3.5 h-3.5 ${loadingResend ? 'animate-spin text-blue-600' : ''}`} />
                 <span>
                   {loadingResend
-                    ? 'Resending OTP...'
+                    ? t('auth:resendingOtp')
                     : resendCooldown > 0
-                    ? `Resend OTP in ${resendCooldown}s`
-                    : 'Resend OTP'}
+                    ? t('auth:resendIn', { seconds: resendCooldown })
+                    : t('auth:resendOtp')}
                 </span>
               </button>
             </div>
@@ -721,7 +731,7 @@ export const LoginPage = () => {
               }}
               className="w-full text-center text-xs text-slate-500 hover:text-slate-800 transition py-1 font-medium"
             >
-              ← Back to {availableRoles.length > 1 ? 'role selection' : 'email input'}
+              {availableRoles.length > 1 ? t('auth:backToRoleSelection') : t('auth:backToEmail')}
             </button>
           </form>
         )}

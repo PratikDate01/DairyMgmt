@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { dairyFarmerService } from '../../services/dairyFarmerService';
 import { paymentService } from '../../services/paymentService';
+import { getStatusLabel, getPaymentMethodLabel } from '../../i18n/statusMap';
 import { PageHeader } from '../../components/common/PageHeader';
 import { SectionCard } from '../../components/common/SectionCard';
 import { StatCard } from '../../components/common/StatCard';
@@ -23,6 +25,7 @@ import {
 } from 'lucide-react';
 
 export const Payments = () => {
+  const { t } = useTranslation(['dairyOwner', 'common']);
   const { token } = useAuth();
 
   // Active Farmers
@@ -279,9 +282,9 @@ export const Payments = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Payment Settlement & Ledger"
-        description="Calculate settlements, issue payments, and manage farmer payment history."
-        breadcrumbs={['Home', 'Dairy Console', 'Payments']}
+        title={t('dairyOwner:payments.title', 'Payment Settlement & Ledger')}
+        description={t('dairyOwner:payments.subtitle', 'Calculate settlements, issue payments, and manage farmer payment history.')}
+        breadcrumbs={[t('common:nav.home', 'Home'), t('common:roles.dairyOwner', 'Dairy Console'), t('dairyOwner:payments.title', 'Payments')]}
       />
 
       {error && (
@@ -291,7 +294,7 @@ export const Payments = () => {
             <span>{error}</span>
           </div>
           <button onClick={() => setError('')} className="text-red-500 hover:text-red-800 font-bold text-xs">
-            Dismiss
+            {t('common:actions.cancel', 'Dismiss')}
           </button>
         </div>
       )}
@@ -303,7 +306,7 @@ export const Payments = () => {
             <span>{successMsg}</span>
           </div>
           <button onClick={() => setSuccessMsg('')} className="text-green-600 hover:text-green-800 font-bold text-xs">
-            Dismiss
+            {t('common:actions.cancel', 'Dismiss')}
           </button>
         </div>
       )}
@@ -319,7 +322,7 @@ export const Payments = () => {
           }`}
         >
           <PlusCircle className="w-4 h-4" />
-          <span>New Settlement Entry</span>
+          <span>{t('dairyOwner:payments.recordSettlement', 'New Settlement Entry')}</span>
         </button>
 
         <button
@@ -331,7 +334,7 @@ export const Payments = () => {
           }`}
         >
           <History className="w-4 h-4" />
-          <span>Settlement Ledger History ({payments.length})</span>
+          <span>{t('dairyOwner:payments.pastSettlements', 'Settlement Ledger History')} ({payments.length})</span>
         </button>
       </div>
 
@@ -339,21 +342,21 @@ export const Payments = () => {
       {activeTab === 'new' && (
         <div className="space-y-6">
           <SectionCard
-            title="Step 1: Select Farmer & Date Range"
-            subtitle="Fetch unsettled milk collection records"
+            title={t('dairyOwner:payments.step1Title', 'Step 1: Select Farmer & Date Range')}
+            subtitle={t('dairyOwner:payments.step1Subtitle', 'Fetch unsettled milk collection records')}
           >
             {loadingFarmers ? (
-              <div className="py-6 text-center text-slate-500 text-sm">Loading connected farmers...</div>
+              <div className="py-6 text-center text-slate-500 text-sm">{t('dairyOwner:payments.loadingFarmers', 'Loading connected farmers...')}</div>
             ) : activeFarmers.length === 0 ? (
               <EmptyState
-                title="No Active Farmers"
-                description="Connect with farmers first before recording payment settlements."
+                title={t('dairyOwner:payments.noActiveFarmers', 'No Active Farmers')}
+                description={t('dairyOwner:payments.noActiveFarmersDesc', 'Connect with farmers first before recording payment settlements.')}
                 icon={User}
               />
             ) : (
               <form onSubmit={handleFetchUnpaid} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                 <div className="space-y-1.5 md:col-span-1">
-                  <label className="text-xs font-semibold text-slate-700">Select Active Farmer *</label>
+                  <label className="text-xs font-semibold text-slate-700">{t('dairyOwner:payments.selectActiveFarmer', 'Select Active Farmer *')}</label>
                   <select
                     value={selectedFarmerId}
                     onChange={(e) => setSelectedFarmerId(e.target.value)}
@@ -369,7 +372,7 @@ export const Payments = () => {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700">From Date (Optional)</label>
+                  <label className="text-xs font-semibold text-slate-700">{t('dairyOwner:payments.fromDateOptional', 'From Date (Optional)')}</label>
                   <input
                     type="date"
                     value={startDate}
@@ -379,7 +382,7 @@ export const Payments = () => {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700">To Date (Optional)</label>
+                  <label className="text-xs font-semibold text-slate-700">{t('common:filters.to', 'To Date (Optional)')}</label>
                   <input
                     type="date"
                     value={endDate}
@@ -407,7 +410,7 @@ export const Payments = () => {
             <form onSubmit={handleOpenConfirmation} className="space-y-6">
               <SectionCard
                 title={`Step 2: Unsettled Collections (${unpaidCollections.length})`}
-                subtitle="Select collections to include in this settlement"
+                subtitle={t('dairyOwner:payments.step2Subtitle', 'Select collections to include in this settlement')}
                 action={
                   <button
                     type="button"
@@ -417,12 +420,12 @@ export const Payments = () => {
                     {selectedCollectionIds.length === unpaidCollections.length ? (
                       <>
                         <CheckSquare className="w-4 h-4 text-blue-600" />
-                        <span>Deselect All</span>
+                        <span>{t('dairyOwner:payments.deselectAll', 'Deselect All')}</span>
                       </>
                     ) : (
                       <>
                         <Square className="w-4 h-4 text-slate-400" />
-                        <span>Select All ({unpaidCollections.length})</span>
+                        <span>{t('dairyOwner:payments.selectAllCount', { count: unpaidCollections.length, defaultValue: `Select All (${unpaidCollections.length})` })}</span>
                       </>
                     )}
                   </button>
@@ -476,38 +479,38 @@ export const Payments = () => {
               </SectionCard>
 
               {/* Live Preview & Payment Input Form */}
-              <SectionCard title="Step 3: Settlement & Payment Details" subtitle="Review authoritative totals and payment mode">
+              <SectionCard title={t('dairyOwner:payments.step3Title', 'Step 3: Settlement & Payment Details')} subtitle={t('dairyOwner:payments.step3Subtitle', 'Review authoritative totals and payment mode')}>
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {/* Left Column: Authoritative Calculation Preview */}
                   <div className="lg:col-span-1 p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
                     <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-                      Settlement Preview
+                      {t('dairyOwner:payments.settlementPreview', 'Settlement Preview')}
                     </span>
 
                     <div className="flex justify-between text-xs py-1 border-b border-slate-200">
-                      <span className="text-slate-600">Selected Records</span>
+                      <span className="text-slate-600">{t('dairyOwner:payments.selectedRecords', 'Selected Records')}</span>
                       <span className="font-bold text-slate-900">{selectedCollectionIds.length} Records</span>
                     </div>
 
                     <div className="flex justify-between text-xs py-1 border-b border-slate-200">
-                      <span className="text-slate-600">Total Milk Volume</span>
+                      <span className="text-slate-600">{t('dairyOwner:payments.totalMilkVolume', 'Total Milk Volume')}</span>
                       <span className="font-mono font-bold text-slate-900">{totalQuantityPreview} Liters</span>
                     </div>
 
                     <div className="flex justify-between text-xs py-1 border-b border-slate-200">
-                      <span className="text-slate-600 font-semibold">Gross Total Amount</span>
+                      <span className="text-slate-600 font-semibold">{t('dairyOwner:payments.grossTotalAmount', 'Gross Total Amount')}</span>
                       <span className="font-mono font-bold text-slate-900 text-base">₹{grossAmountPreview.toFixed(2)}</span>
                     </div>
 
                     <div className="flex justify-between text-xs py-1 border-b border-slate-200">
-                      <span className="text-emerald-700 font-semibold">Amount Being Paid</span>
+                      <span className="text-emerald-700 font-semibold">{t('dairyOwner:payments.amountBeingPaid', 'Amount Being Paid')}</span>
                       <span className="font-mono font-bold text-emerald-700 text-base">
                         ₹{(parseFloat(paidAmount) || 0).toFixed(2)}
                       </span>
                     </div>
 
                     <div className="flex justify-between text-xs py-1">
-                      <span className="text-amber-800 font-semibold">Remaining Balance</span>
+                      <span className="text-amber-800 font-semibold">{t('dairyOwner:payments.remainingBalance', 'Remaining Balance')}</span>
                       <span className="font-mono font-bold text-amber-800 text-base">
                         ₹{remainingAmountPreview.toFixed(2)}
                       </span>
@@ -520,7 +523,7 @@ export const Payments = () => {
                       {/* Amount Being Paid */}
                       <div className="space-y-1.5">
                         <div className="flex justify-between items-center">
-                          <label className="text-xs font-semibold text-slate-700">Amount Paid (₹) *</label>
+                          <label className="text-xs font-semibold text-slate-700">{t('dairyOwner:payments.amountPaidRequired', 'Amount Paid (₹) *')}</label>
                           <button
                             type="button"
                             onClick={() => setPaidAmount(grossAmountPreview.toString())}
@@ -543,22 +546,22 @@ export const Payments = () => {
 
                       {/* Payment Method */}
                       <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-700">Payment Method *</label>
+                        <label className="text-xs font-semibold text-slate-700">{t('dairyOwner:payments.paymentMethodRequired', 'Payment Method *')}</label>
                         <select
                           value={paymentMethod}
                           onChange={(e) => setPaymentMethod(e.target.value)}
                           className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 text-xs font-medium focus:ring-2 focus:ring-blue-500 outline-none"
                         >
-                          <option value="cash">Cash Payment</option>
-                          <option value="upi">UPI / GPay / PhonePe</option>
-                          <option value="bankTransfer">Bank Transfer / NEFT</option>
-                          <option value="other">Other Method</option>
+                          <option value="cash">{t('dairyOwner:payments.cashPayment', 'Cash Payment')}</option>
+                          <option value="upi">{t('dairyOwner:payments.upiPayment', 'UPI / GPay / PhonePe')}</option>
+                          <option value="bankTransfer">{t('dairyOwner:payments.bankTransfer', 'Bank Transfer / NEFT')}</option>
+                          <option value="other">{t('dairyOwner:payments.otherMethod', 'Other Method')}</option>
                         </select>
                       </div>
 
                       {/* Payment Date */}
                       <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-700">Payment Date *</label>
+                        <label className="text-xs font-semibold text-slate-700">{t('dairyOwner:payments.paymentDateRequired', 'Payment Date *')}</label>
                         <input
                           type="date"
                           value={paymentDate}
@@ -570,10 +573,10 @@ export const Payments = () => {
 
                       {/* Reference Number */}
                       <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-700">Ref / UTR / Transaction No.</label>
+                        <label className="text-xs font-semibold text-slate-700">{t('dairyOwner:payments.refTransactionNo', 'Ref / UTR / Transaction No.')}</label>
                         <input
                           type="text"
-                          placeholder="e.g. UTR1298401924"
+                          placeholder={t('dairyOwner:payments.refUtrPlaceholder', 'e.g. UTR1298401924')}
                           value={referenceNumber}
                           onChange={(e) => setReferenceNumber(e.target.value)}
                           className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 text-xs font-mono focus:ring-2 focus:ring-blue-500 outline-none"
@@ -583,10 +586,10 @@ export const Payments = () => {
 
                     {/* Remarks */}
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-slate-700">Remarks / Notes</label>
+                      <label className="text-xs font-semibold text-slate-700">{t('dairyOwner:payments.remarksNotes', 'Remarks / Notes')}</label>
                       <input
                         type="text"
-                        placeholder="e.g. Weekly settlement for Oct 1st week"
+                        placeholder={t('dairyOwner:payments.remarksPlaceholder', 'e.g. Weekly settlement for Oct 1st week')}
                         value={remarks}
                         onChange={(e) => setRemarks(e.target.value)}
                         className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 text-xs focus:ring-2 focus:ring-blue-500 outline-none"
@@ -600,7 +603,7 @@ export const Payments = () => {
                         className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-lg shadow-xs transition disabled:opacity-50 flex items-center space-x-1.5"
                       >
                         <Wallet className="w-4 h-4" />
-                        <span>Review & Confirm Settlement</span>
+                        <span>{t('dairyOwner:payments.reviewConfirmSettlement', 'Review & Confirm Settlement')}</span>
                       </button>
                     </div>
                   </div>
@@ -611,8 +614,8 @@ export const Payments = () => {
 
           {unpaidCollections.length === 0 && selectedFarmerId && !loadingUnpaid && (
             <EmptyState
-              title="No Unsettled Collections"
-              description="This farmer has no pending unpaid milk collections for the selected filter."
+              title={t('dairyOwner:payments.noUnsettledTitle', 'No Unsettled Collections')}
+              description={t('dairyOwner:payments.noUnsettledDesc', 'This farmer has no pending unpaid milk collections for the selected filter.')}
               icon={CheckCircle2}
             />
           )}
@@ -625,21 +628,21 @@ export const Payments = () => {
           {/* Summary Stat Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <StatCard
-              title="Total Settlement Volume"
+              title={t('dairyOwner:payments.totalSettlementVolume', 'Total Settlement Volume')}
               value={`₹ ${metrics.totalGross.toFixed(2)}`}
               icon={Wallet}
               badgeText="All Settled Periods"
               badgeType="neutral"
             />
             <StatCard
-              title="Total Paid Out"
+              title={t('dairyOwner:payments.totalPaidOut', 'Total Paid Out')}
               value={`₹ ${metrics.totalPaid.toFixed(2)}`}
               icon={CheckCircle2}
               badgeText="Disbursed Amount"
               badgeType="success"
             />
             <StatCard
-              title="Pending Outstanding"
+              title={t('dairyOwner:payments.pendingOutstanding', 'Pending Outstanding')}
               value={`₹ ${metrics.totalPending.toFixed(2)}`}
               icon={CreditCard}
               badgeText={metrics.totalPending > 0 ? 'Balance Unpaid' : 'Clear Ledger'}
@@ -648,13 +651,13 @@ export const Payments = () => {
           </div>
 
           <SectionCard
-            title="Payment Settlement History"
-            subtitle="Past settlement ledger records"
+            title={t('dairyOwner:payments.historyTitle', 'Payment Settlement History')}
+            subtitle={t('dairyOwner:payments.historySubtitle', 'Past settlement ledger records')}
             action={
               <button
                 onClick={fetchHistory}
                 className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded-lg transition"
-                title="Refresh History"
+                title={t('common:actions.refresh', 'Refresh History')}
               >
                 <RefreshCw className="w-4 h-4" />
               </button>
@@ -665,7 +668,7 @@ export const Payments = () => {
               <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
                 <div className="flex items-center space-x-2 text-xs font-semibold text-slate-600">
                   <Filter className="w-4 h-4 text-slate-400" />
-                  <span>Filter History:</span>
+                  <span>{t('dairyOwner:payments.filterHistory', 'Filter History:')}</span>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2">
                   <select
@@ -673,7 +676,7 @@ export const Payments = () => {
                     onChange={(e) => setFilterFarmerId(e.target.value)}
                     className="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-slate-800 text-xs font-medium focus:ring-2 focus:ring-blue-500 outline-none"
                   >
-                    <option value="all">All Farmers</option>
+                    <option value="all">{t('dairyOwner:payments.allFarmers', 'All Farmers')}</option>
                     {activeFarmers.map((f) => (
                       <option key={f._id} value={f._id}>
                         {f.name}
@@ -686,22 +689,22 @@ export const Payments = () => {
                     onChange={(e) => setFilterStatus(e.target.value)}
                     className="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-slate-800 text-xs font-medium focus:ring-2 focus:ring-blue-500 outline-none"
                   >
-                    <option value="all">All Statuses</option>
-                    <option value="paid">Paid</option>
-                    <option value="partiallyPaid">Partially Paid</option>
-                    <option value="pending">Pending</option>
-                    <option value="cancelled">Cancelled</option>
+                    <option value="all">{t('dairyOwner:payments.allStatuses', 'All Statuses')}</option>
+                    <option value="paid">{t('dairyOwner:payments.paid', 'Paid')}</option>
+                    <option value="partiallyPaid">{t('dairyOwner:payments.partiallyPaid', 'Partially Paid')}</option>
+                    <option value="pending">{t('dairyOwner:payments.pending', 'Pending')}</option>
+                    <option value="cancelled">{t('dairyOwner:payments.cancelled', 'Cancelled')}</option>
                   </select>
                 </div>
               </div>
             )}
 
             {loadingHistory ? (
-              <div className="py-8 text-center text-slate-500 text-sm">Loading settlement ledger...</div>
+              <div className="py-8 text-center text-slate-500 text-sm">{t('dairyOwner:payments.loadingLedger', 'Loading settlement ledger...')}</div>
             ) : payments.length === 0 ? (
               <EmptyState
-                title="No Settlement Records Found"
-                description="No payment settlement history matches the selected filters."
+                title={t('dairyOwner:payments.noHistoryTitle', 'No Settlement Records Found')}
+                description={t('dairyOwner:payments.noHistoryDesc', 'No payment settlement history matches the selected filters.')}
                 icon={History}
               />
             ) : (
@@ -711,14 +714,14 @@ export const Payments = () => {
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                        <th className="py-3 px-4">Payment Date</th>
-                        <th className="py-3 px-4">Farmer</th>
-                        <th className="py-3 px-4">Period</th>
-                        <th className="py-3 px-4 text-right">Gross Total</th>
-                        <th className="py-3 px-4 text-right">Paid Amount</th>
-                        <th className="py-3 px-4 text-right">Remaining</th>
-                        <th className="py-3 px-4 text-center">Status</th>
-                        <th className="py-3 px-4 text-center">Action</th>
+                        <th className="py-3 px-4">{t('dairyOwner:payments.paymentDateLabel', 'Payment Date')}</th>
+                        <th className="py-3 px-4">{t('common:roles.farmer', 'Farmer')}</th>
+                        <th className="py-3 px-4">{t('dairyOwner:payments.period', 'Period')}</th>
+                        <th className="py-3 px-4 text-right">{t('dairyOwner:payments.grossTotal', 'Gross Total')}</th>
+                        <th className="py-3 px-4 text-right">{t('dairyOwner:payments.paidAmount', 'Paid Amount')}</th>
+                        <th className="py-3 px-4 text-right">{t('dairyOwner:payments.remaining', 'Remaining')}</th>
+                        <th className="py-3 px-4 text-center">{t('common:labels.status', 'Status')}</th>
+                        <th className="py-3 px-4 text-center">{t('common:labels.action', 'Action')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
@@ -750,14 +753,14 @@ export const Payments = () => {
                                   : 'bg-blue-100 text-blue-800'
                               }`}
                             >
-                              {p.paymentStatus}
+                              {getStatusLabel(p.paymentStatus, t)}
                             </span>
                           </td>
                           <td className="py-3 px-4 text-center">
                             <button
                               onClick={() => setSelectedPaymentDetail(p)}
                               className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition"
-                              title="View Details"
+                              title={t('dairyOwner:payments.viewDetails', 'View Details')}
                             >
                               <Eye className="w-4 h-4" />
                             </button>
@@ -783,21 +786,21 @@ export const Payments = () => {
                               : 'bg-blue-100 text-blue-800'
                           }`}
                         >
-                          {p.paymentStatus}
+                          {getStatusLabel(p.paymentStatus, t)}
                         </span>
                       </div>
 
                       <div className="grid grid-cols-3 gap-2 py-2 border-y border-slate-200 text-center">
                         <div>
-                          <span className="text-[10px] text-slate-400 block uppercase">Gross</span>
+                          <span className="text-[10px] text-slate-400 block uppercase">{t('dairyOwner:payments.grossTotal', 'Gross')}</span>
                           <span className="font-mono font-bold text-slate-800">₹{p.grossAmount?.toFixed(2)}</span>
                         </div>
                         <div>
-                          <span className="text-[10px] text-slate-400 block uppercase">Paid</span>
+                          <span className="text-[10px] text-slate-400 block uppercase">{t('dairyOwner:payments.paidAmount', 'Paid')}</span>
                           <span className="font-mono font-bold text-emerald-700">₹{p.paidAmount?.toFixed(2)}</span>
                         </div>
                         <div>
-                          <span className="text-[10px] text-slate-400 block uppercase">Balance</span>
+                          <span className="text-[10px] text-slate-400 block uppercase">{t('dairyOwner:payments.remaining', 'Balance')}</span>
                           <span className="font-mono font-bold text-amber-800">₹{p.remainingAmount?.toFixed(2)}</span>
                         </div>
                       </div>
@@ -824,12 +827,12 @@ export const Payments = () => {
 
       {/* CONFIRMATION MODAL */}
       {showConfirmModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-xs">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl border border-slate-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/40 backdrop-xs overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl border border-slate-200 my-auto max-h-[90vh] overflow-y-auto modal-animate">
             <div className="flex items-center justify-between border-b pb-3">
               <h3 className="text-base font-bold text-slate-900 flex items-center space-x-2">
                 <Wallet className="w-5 h-5 text-emerald-600" />
-                <span>Confirm Payment Settlement</span>
+                <span>{t('dairyOwner:payments.confirmSettlementTitle', 'Confirm Payment Settlement')}</span>
               </h3>
               <button
                 onClick={() => setShowConfirmModal(false)}
@@ -841,27 +844,27 @@ export const Payments = () => {
 
             <div className="space-y-2 text-xs text-slate-700 bg-slate-50 p-4 rounded-xl border border-slate-200 font-mono">
               <div className="flex justify-between py-1 border-b border-slate-200">
-                <span className="text-slate-500">Selected Farmer:</span>
+                <span className="text-slate-500">{t('dairyOwner:payments.selectedFarmerLabel', 'Selected Farmer:')}</span>
                 <span className="font-bold text-slate-900">
                   {activeFarmers.find((f) => f._id === selectedFarmerId)?.name}
                 </span>
               </div>
               <div className="flex justify-between py-1 border-b border-slate-200">
-                <span className="text-slate-500">Collections Settled:</span>
+                <span className="text-slate-500">{t('dairyOwner:payments.collectionsSettledLabel', 'Collections Settled:')}</span>
                 <span className="font-bold text-slate-900">{selectedCollectionIds.length} Records</span>
               </div>
               <div className="flex justify-between py-1 border-b border-slate-200">
-                <span className="text-slate-500">Gross Settlement:</span>
+                <span className="text-slate-500">{t('dairyOwner:payments.grossSettlementLabel', 'Gross Settlement:')}</span>
                 <span className="font-bold text-slate-900">₹{grossAmountPreview.toFixed(2)}</span>
               </div>
               <div className="flex justify-between py-1 border-b border-slate-200">
-                <span className="text-emerald-700 font-bold">Amount Being Paid:</span>
+                <span className="text-emerald-700 font-bold">{t('dairyOwner:payments.amountBeingPaidLabel', 'Amount Being Paid:')}</span>
                 <span className="font-bold text-emerald-700 text-sm">
                   ₹{(parseFloat(paidAmount) || 0).toFixed(2)}
                 </span>
               </div>
               <div className="flex justify-between py-1">
-                <span className="text-amber-800 font-bold">Remaining Balance:</span>
+                <span className="text-amber-800 font-bold">{t('dairyOwner:payments.remainingBalanceLabel', 'Remaining Balance:')}</span>
                 <span className="font-bold text-amber-800 text-sm">₹{remainingAmountPreview.toFixed(2)}</span>
               </div>
             </div>
@@ -893,10 +896,10 @@ export const Payments = () => {
 
       {/* DETAIL MODAL */}
       {selectedPaymentDetail && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-xs">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-xl border border-slate-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/40 backdrop-xs overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-xl border border-slate-200 my-auto max-h-[90vh] overflow-y-auto modal-animate">
             <div className="flex items-center justify-between border-b pb-3">
-              <h3 className="text-base font-bold text-slate-900">Settlement Record Details</h3>
+              <h3 className="text-base font-bold text-slate-900">{t('dairyOwner:payments.settlementDetailsTitle', 'Settlement Record Details')}</h3>
               <button onClick={() => setSelectedPaymentDetail(null)} className="text-slate-400 hover:text-slate-700">
                 <XCircle className="w-5 h-5" />
               </button>
@@ -904,33 +907,33 @@ export const Payments = () => {
 
             <div className="space-y-2 text-xs text-slate-700 font-mono">
               <div className="flex justify-between py-1 border-b">
-                <span className="text-slate-500">Farmer:</span>
+                <span className="text-slate-500">{t('dairyOwner:payments.farmerLabel', 'Farmer:')}</span>
                 <span className="font-bold text-slate-900">{selectedPaymentDetail.farmer?.name}</span>
               </div>
               <div className="flex justify-between py-1 border-b">
-                <span className="text-slate-500">Payment Date:</span>
+                <span className="text-slate-500">{t('dairyOwner:payments.paymentDateLabel', 'Payment Date:')}</span>
                 <span>{new Date(selectedPaymentDetail.paymentDate).toLocaleDateString('en-IN')}</span>
               </div>
               <div className="flex justify-between py-1 border-b">
-                <span className="text-slate-500">Payment Method:</span>
+                <span className="text-slate-500">{t('dairyOwner:payments.paymentMethodLabel', 'Payment Method:')}</span>
                 <span className="capitalize font-semibold">{selectedPaymentDetail.paymentMethod}</span>
               </div>
               {selectedPaymentDetail.referenceNumber && (
                 <div className="flex justify-between py-1 border-b">
-                  <span className="text-slate-500">Ref / UTR:</span>
+                  <span className="text-slate-500">{t('dairyOwner:payments.refUtrLabel', 'Ref / UTR:')}</span>
                   <span>{selectedPaymentDetail.referenceNumber}</span>
                 </div>
               )}
               <div className="flex justify-between py-1 border-b">
-                <span className="text-slate-500">Gross Amount:</span>
+                <span className="text-slate-500">{t('dairyOwner:payments.grossAmountLabel', 'Gross Amount:')}</span>
                 <span className="font-bold">₹{selectedPaymentDetail.grossAmount?.toFixed(2)}</span>
               </div>
               <div className="flex justify-between py-1 border-b">
-                <span className="text-emerald-700 font-bold">Paid Amount:</span>
+                <span className="text-emerald-700 font-bold">{t('dairyOwner:payments.paidAmountLabel', 'Paid Amount:')}</span>
                 <span className="font-bold text-emerald-700">₹{selectedPaymentDetail.paidAmount?.toFixed(2)}</span>
               </div>
               <div className="flex justify-between py-1 border-b">
-                <span className="text-amber-800 font-bold">Remaining Balance:</span>
+                <span className="text-amber-800 font-bold">{t('dairyOwner:payments.remainingBalanceLabel', 'Remaining Balance:')}</span>
                 <span className="font-bold text-amber-800">₹{selectedPaymentDetail.remainingAmount?.toFixed(2)}</span>
               </div>
             </div>
