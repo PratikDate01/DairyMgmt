@@ -78,19 +78,22 @@ The application strictly defines five distinct user roles stored in the `User` M
 │  - Phone/Email OTP Authentication │  - Brevo Email Delivery Fallback   │
 │  - SHA-256 Hashing & Timing-Safe  │    (Dev console fallback if no key)│
 │  - Farmer-Dairy Connections       │  - Admin User Management Summary   │
-│  - Milk Collection & Settlement   │ 🔴 Not Implemented / Future Scope  │
+│  - Milk Collection (Cow & Buffalo)│ 🔴 Not Implemented / Future Scope  │
 │  - 10-Day Milk & Payment Summary  │  - SMS Gateway Integration (Twilio)│
 │    (Authoritative Billing Cycles) │  - Real-time WebSockets / Push     │
 │  - Refined Dairy & Farmer Consoles│  - Online Payment Gateway (Razorpay│
 │  - Cattle Profile Management      │  - PDF Export / Invoice Printing   │
 │  - Veterinary Medicine Catalog    │  - Video Consultation Call         │
+│  - Prescription Filter & Stock    │                                    │
 │  - Medicine Request Workflow      │                                    │
-│  - AI Disease Scanner             │                                    │
+│  - AI Disease Scanner (Cow/Bull)  │                                    │
 │  - Vet Recommendation Engine (100)│                                    │
 │  - Vet Request Consultation Flow  │                                    │
 │  - Basic Automated Escalation     │                                    │
 │  - Vet Clinical Case Workflow (23)│                                    │
-│    (Exam ➔ Diagnosis ➔ Rx ➔ Follow)│                                    │
+│    (Exam ➔ Rx ➔ Follow-up Physical)│                                   │
+│  - Direct Calling (Doctor/Farmer) │                                    │
+│  - Global Back Button Navigation  │                                    │
 └───────────────────────────────────┴────────────────────────────────────┘
 ```
 
@@ -537,6 +540,11 @@ All buttons declare explicit `type="button"` preventing accidental form submissi
 | **Veterinarian Cases Queue** | `client/src/pages/veterinarian/PendingCases.jsx` & `CaseDetailModal.jsx` |
 | **Milk Collections, History & 10-Day Summary** | `client/src/pages/dairy/MilkCollection.jsx`, `MilkCollections.jsx` & `milkCollectionController.js` |
 | **Dairy Payments & Settlements Ledger** | `client/src/pages/dairy/Payments.jsx` & `paymentController.js` |
+| **Cow / Buffalo Milk Types & Dual Session Ledger** | `server/src/models/MilkCollection.js`, `milkCollectionController.js`, `MilkCollection.jsx`, `MilkCollections.jsx` |
+| **Prescription Extraction & Catalog Filtering** | `server/src/controllers/medicineController.js` & `client/src/pages/farmer/Medicines.jsx` |
+| **Male Cattle AI Screening & Enum Fix** | `server/src/models/DiseaseScan.js`, `diseaseScanController.js` & `aiDiseaseService.js` |
+| **Veterinarian Direct Calling & Clinical Follow-up** | `server/src/models/VetRequest.js`, `vetRequestController.js`, `ClinicalWorkspaceModal.jsx` & `FarmerCaseDetailModal.jsx` |
+| **Global Back Navigation & Fallback Engine** | `client/src/components/common/BackButton.jsx`, `PageHeader.jsx` & `client/test/navigation.test.js` |
 
 ---
 
@@ -592,5 +600,81 @@ All buttons declare explicit `type="button"` preventing accidental form submissi
 - **Automated Validation**:
   - `npm test` (`statusMap.test.js`): 10/10 tests pass.
   - `npm run build`: Production bundle compiles cleanly with 0 errors in 1.07s.
+
+---
+
+## 19. Phase 30.1 — Global Navigation Architecture & Core Operational Workflows
+
+### 1. Global Back Button & Navigation Architecture
+- **Universal Component (`client/src/components/common/BackButton.jsx`)**:
+  - Encapsulates safe back navigation with bilingual labeling (`common:actions.back`, English: "Back", Marathi: "मागे").
+  - Evaluates `window.history.state?.idx > 0` and referrer history:
+    - If valid local history exists: invokes `navigate(-1)`.
+    - If accessed directly (bookmark, external link, fresh tab) or from another domain: gracefully falls back to explicit `fallback` route or the user's role-specific dashboard.
+- **Header Integration (`PageHeader.jsx`)**:
+  - Automatically renders the back button when `showBack` or `backFallback` is provided, matching the current theme and spacing.
+- **Route Fallback Inventory**:
+  - Role dashboards: `/farmer/dashboard`, `/dairy-owner/dashboard`, `/veterinarian/dashboard`, `/medical-provider/dashboard`, `/admin/dashboard`.
+  - Child sections map reliably to parent lists (e.g. Scan History ➔ AI Scanner, Complaint Details ➔ Complaints List).
+- **Unit Testing Suite (`client/test/navigation.test.js`)**:
+  - 4 automated suites verifying English/Marathi translations, role dashboard resolution, history decision logic, and fallback map integrity.
+
+### 2. Dairy Owner Module: Dual Milk Type Selection (Cow & Buffalo)
+- **Database Schema & Compound Index (`server/src/models/MilkCollection.js`)**:
+  - Added `milkType: { type: String, enum: ['cow', 'buffalo'], default: 'cow', required: true }`.
+  - Updated compound unique index from `{ dairyOwner, farmer, collectionDate, session }` to `{ dairyOwner, farmer, collectionDate, session, milkType }`.
+  - Dairy owners can now record both cow milk and buffalo milk entries for the same farmer during the same morning or evening session without duplicate key errors (`E11000`).
+- **REST Controller (`server/src/controllers/milkCollectionController.js`)**:
+  - Extracts and validates `milkType` in `createCollection`.
+  - Supports `?milkType=cow` and `?milkType=buffalo` query filtering in collection histories and reports.
+- **User Interface (`MilkCollection.jsx` & `MilkCollections.jsx`)**:
+  - Modern toggle selector in the entry form: **🐄 Cow Milk** | **🐃 Buffalo Milk**.
+  - History filter toolbar supports filtering by milk type.
+  - Clear visual badges displayed across table rows and mobile card views.
+
+### 3. Farmer Module: Prescription-Driven Medicine Catalog
+- **Problem Solved**:
+  - Previously, uploading a prescription file returned every medicine in the catalog regardless of what was prescribed.
+- **Smart Keyword Extraction (`server/src/controllers/medicineController.js`)**:
+  - `processPrescription` extracts candidate medicine terms from `prescribedMedicinesText`, OCR fields, and the uploaded filename while discarding common stop words (`rx`, `tab`, `syrup`, `prescription`, `mg`, `ml`).
+  - Matches candidate tokens strictly against active pharmacy inventory.
+  - Only medicines mentioned in the prescription and currently available in stock are returned in `matchingMedicines`. Unavailable prescribed items are categorized in `extractedMedicines`.
+  - If no prescribed terms match inventory, an empty result set (`[]`) is returned rather than dumping the entire catalog.
+- **Farmer UI (`Medicines.jsx`)**:
+  - Farmers can inspect and edit extracted medicine names directly below the prescription preview before searching stock.
+
+### 4. AI Cattle Diagnostics: Male Cattle Support (`bull`, `ox`)
+- **Schema Fix (`server/src/models/DiseaseScan.js`)**:
+  - Expanded `animalType` enum to include `['cow', 'bull', 'ox', 'buffalo', 'cattle', 'goat', 'sheep', 'other']`.
+  - Prevents Mongoose `ValidationError` ("`bull` is not a valid enum value for path `animalType`") when screening male cattle.
+- **Gender-Aware Disease Filtering (`aiDiseaseService.js`)**:
+  - Filters out female-only conditions (e.g. Bovine Mastitis, udder swelling) when screening bulls or oxen, preventing clinically impossible diagnostic predictions.
+
+### 5. Veterinarian Clinical Workflow: Direct Calling & Follow-up Physical Examination
+- **Direct Calling Integration (Farmer ↔ Doctor)**:
+  - **Doctor Workspace (`ClinicalWorkspaceModal.jsx` & `PendingCases.jsx`)**: Activated one-click phone dialer (`tel:${farmer.phone}`) in the farmer profile card and pending case list.
+  - **Farmer Workspace (`FarmerCaseDetailModal.jsx`)**: Added direct "Call Doctor" button in the case details header linking directly to `tel:${veterinarian.phone}`.
+- **Follow-up Physical Examination (`server/src/models/VetRequest.js`)**:
+  - Added `physicalExamination` subdocument under `followUp`:
+    - `conducted`: Boolean flag.
+    - `examinedAt`: Date of clinical follow-up visit.
+    - `temperature`: Physical body temperature.
+    - `appetite`: Clinical appetite status (`normal`, `reduced`, `poor`).
+    - `physicalFindings`: Doctor's on-site physical examination observations.
+    - `recoveryStatus`: Assessment (`recovering`, `fully_recovered`, `stable`, `deteriorating`).
+    - `observations`: Prescribed directives and dietary/medical care guidelines.
+- **Workspace UI**:
+  - Dedicated Follow-up Physical Examination card in Tab 5 of `ClinicalWorkspaceModal.jsx`.
+  - Displays recorded follow-up examination findings directly to the farmer in `FarmerCaseDetailModal.jsx`.
+
+### 6. Admin Control Center: Metrics & Reporting Realignment
+- **Total Registered Users**: Fixed metric in `AdminDashboard.jsx` and `adminController.js` to accurately aggregate actual registered system users.
+- **System Reports**: Split Medical Providers and Veterinarians into distinct metrics in `Reports.jsx` and `reportController.js`, giving administrators clear visibility into both healthcare pillars.
+
+### 7. Phase 30.1 Verification Status
+- **Server Code Syntax**: Passed `node -c` with 0 errors across all updated models, services, and controllers.
+- **Client Build**: Compiled with `vite v8.3.2` production bundle in 1.10s without errors.
+- **Automated Tests**: 15/15 tests passing (`navigation.test.js` and `statusMap.test.js`).
+
 
 
