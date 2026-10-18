@@ -43,6 +43,7 @@ export const FarmerMedicines = () => {
   const [filePreview, setFilePreview] = useState(null);
   const [fileName, setFileName] = useState('');
   const [fileSize, setFileSize] = useState('');
+  const [prescribedMedicinesText, setPrescribedMedicinesText] = useState('');
 
   // Processing & Results State
   const [analyzing, setAnalyzing] = useState(false);
@@ -118,6 +119,7 @@ export const FarmerMedicines = () => {
     setFilePreview(null);
     setFileName('');
     setFileSize('');
+    setPrescribedMedicinesText('');
     setError('');
     setAnalysisDone(false);
     setExtractedMedicines([]);
@@ -140,7 +142,8 @@ export const FarmerMedicines = () => {
       const res = await medicineService.processPrescription(token, {
         prescriptionData: payloadData,
         fileName,
-        fileType: selectedFile.type
+        fileType: selectedFile.type,
+        prescribedMedicinesText
       });
 
       setExtractedMedicines(res.extractedMedicines || []);
@@ -181,11 +184,14 @@ export const FarmerMedicines = () => {
       setSubmitting(true);
       setModalError('');
 
-      const res = await createMedicineRequest({
-        medicineId: selectedMedicine._id,
-        quantity,
-        notes
-      });
+      const res = await createMedicineRequest(
+        {
+          medicineId: selectedMedicine._id,
+          quantity,
+          notes
+        },
+        token
+      );
 
       if (res.success) {
         setSuccessMsg(`Medicine request created for ${selectedMedicine.name}. You can track status in 'My Medicine Requests'.`);
@@ -205,6 +211,7 @@ export const FarmerMedicines = () => {
         title={t('farmer:medicinesPage.title', 'Prescription Medicine Search & Catalog')}
         description={t('farmer:medicines.subtitle', 'Upload your veterinarian prescription to automatically identify prescribed medicines and find available products from registered medical providers.')}
         breadcrumbs={[t('common:nav.home', 'Home'), t('common:roles.farmer', 'Farmer'), t('farmer:medicinesPage.title', 'Prescription Search')]}
+        backFallback="/farmer/dashboard"
         actions={
           <div className="flex items-center space-x-2">
             <span className="px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold rounded-lg flex items-center">
@@ -403,50 +410,73 @@ export const FarmerMedicines = () => {
             />
           </label>
         ) : (
-          <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center space-x-3 min-w-0">
-              {filePreview ? (
-                <img src={filePreview} alt="Prescription preview" className="w-16 h-16 object-cover rounded-xl border border-slate-200 shrink-0" />
-              ) : (
-                <div className="w-16 h-16 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center text-xl shrink-0">
-                  📄
+          <div className="space-y-3">
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center space-x-3 min-w-0">
+                {filePreview ? (
+                  <img src={filePreview} alt="Prescription preview" className="w-16 h-16 object-cover rounded-xl border border-slate-200 shrink-0" />
+                ) : (
+                  <div className="w-16 h-16 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center text-xl shrink-0">
+                    📄
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <span className="text-xs font-bold text-slate-900 block truncate">{fileName}</span>
+                  <span className="text-[11px] text-slate-500 block mt-0.5">Size: {fileSize}</span>
+                  <span className="px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-100 text-[10px] font-bold rounded-md inline-block mt-1">
+                    {t('common:status.ready', 'Ready for Analysis')}
+                  </span>
                 </div>
-              )}
-              <div className="min-w-0">
-                <span className="text-xs font-bold text-slate-900 block truncate">{fileName}</span>
-                <span className="text-[11px] text-slate-500 block mt-0.5">Size: {fileSize}</span>
-                <span className="px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-100 text-[10px] font-bold rounded-md inline-block mt-1">
-                  {t('common:status.ready', 'Ready for Analysis')}
-                </span>
+              </div>
+
+              <div className="flex items-center space-x-2 w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={handleClearFile}
+                  className="px-3 py-2 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-xl transition"
+                >
+                  {t('farmer:medicines.changeFile', 'Change File')}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAnalyzePrescription}
+                  disabled={analyzing}
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition disabled:opacity-50 flex items-center justify-center space-x-1.5"
+                >
+                  {analyzing ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      <span>{t('farmer:medicines.analyzingPrescription', 'Analyzing Prescription...')}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Search className="w-4 h-4" />
+                      <span>{t('farmer:medicines.analyzeAndFind', 'Analyze Prescription & Find Medicines')}</span>
+                    </>
+                  )}
+                </button>
               </div>
             </div>
 
-            <div className="flex items-center space-x-2 w-full sm:w-auto">
-              <button
-                type="button"
-                onClick={handleClearFile}
-                className="px-3 py-2 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-xl transition"
-              >
-                {t('farmer:medicines.changeFile', 'Change File')}
-              </button>
-              <button
-                type="button"
-                onClick={handleAnalyzePrescription}
-                disabled={analyzing}
-                className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition disabled:opacity-50 flex items-center justify-center space-x-1.5"
-              >
-                {analyzing ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span>{t('farmer:medicines.analyzingPrescription', 'Analyzing Prescription...')}</span>
-                  </>
-                ) : (
-                  <>
-                    <Search className="w-4 h-4" />
-                    <span>{t('farmer:medicines.analyzeAndFind', 'Analyze Prescription & Find Medicines')}</span>
-                  </>
-                )}
-              </button>
+            {/* Prescribed Medicines input to ensure only prescribed items are matched */}
+            <div className="p-3.5 bg-blue-50/50 border border-blue-200 rounded-xl space-y-1.5">
+              <label className="text-xs font-bold text-slate-800 flex items-center justify-between">
+                <span className="flex items-center space-x-1.5">
+                  <Pill className="w-3.5 h-3.5 text-blue-600" />
+                  <span>{t('farmer:medicines.prescribedNamesLabel', 'Prescribed Medicines / Doctor Written Items')}</span>
+                </span>
+                <span className="text-[10px] font-normal text-slate-500">e.g. Amoxicillin, Meloxicam, Oxytetracycline</span>
+              </label>
+              <input
+                type="text"
+                placeholder={t('farmer:medicines.prescribedNamesPlaceholder', 'Type medicine names written in the prescription (or leave blank to match from file name)...')}
+                value={prescribedMedicinesText}
+                onChange={(e) => setPrescribedMedicinesText(e.target.value)}
+                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+              <p className="text-[10px] text-slate-600">
+                🔒 <strong>{t('farmer:medicines.prescriptionOnlyNotice', 'Notice:')}</strong> {t('farmer:medicines.prescriptionOnlyNoticeDesc', 'The catalog will only show available stock for medicines specifically listed in this prescription.')}
+              </p>
             </div>
           </div>
         )}

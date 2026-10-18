@@ -339,7 +339,7 @@ export const AdminDashboard = () => {
 
   const navigationTabs = [
     { id: 'overview', label: t('admin:dashboard.tabs.overview', 'Overview & KPIs'), icon: BarChart3 },
-    { id: 'users', label: t('admin:dashboard.tabs.users', 'User Directory'), icon: Users, badge: stats?.users?.totalUsers },
+    { id: 'users', label: t('admin:dashboard.tabs.users', 'User Directory'), icon: Users, badge: (stats?.users?.totalRegisteredUsers ?? stats?.users?.totalUsers) },
     { id: 'verifications', label: t('admin:dashboard.tabs.verifications', 'Verifications'), icon: ShieldCheck, badge: (stats?.users?.pendingVetVerifications || 0) + (stats?.users?.pendingStoreVerifications || 0) },
     { id: 'cattle', label: t('admin:dashboard.tabs.cattle', 'Cattle Records'), icon: HeartPulse, badge: stats?.operations?.totalCattle },
     { id: 'vet-requests', label: t('admin:dashboard.tabs.vetRequests', 'Vet Requests'), icon: Activity, badge: stats?.operations?.activeVetRequests },
@@ -364,6 +364,9 @@ export const AdminDashboard = () => {
         title={t('admin:dashboard.title', 'Admin Control Center')}
         description={t('admin:dashboard.subtitle', { name: user?.name || 'Administrator', phone: user?.phone, defaultValue: `Logged in as ${user?.name || 'Administrator'} (${user?.phone}). Complete platform administration, role authorization, and record verification.` })}
         breadcrumbs={[t('common:nav.home', 'Home'), t('admin:dashboard.title', 'Admin Dashboard'), navigationTabs.find(t => t.id === activeTab)?.label || 'Overview']}
+        showBack={activeTab !== 'overview'}
+        backFallback="/admin/dashboard"
+        onBack={() => setSearchParams({ tab: 'overview' })}
         actions={
           <div className="flex items-center space-x-2">
             <button
@@ -451,11 +454,11 @@ export const AdminDashboard = () => {
             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">{t('admin:dashboard.userAccountMetrics', 'User & Account Metrics')}</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
               <StatCard
-                title={t('admin:dashboard.totalUsersStat', 'Total Users')}
-                value={statsLoading ? '...' : `${stats?.users?.totalUsers || 0}`}
+                title={t('admin:dashboard.totalRegisteredUsersStat', 'Total Registered Users')}
+                value={statsLoading ? '...' : `${stats?.users?.totalRegisteredUsers ?? stats?.users?.totalUsers ?? 0}`}
                 icon={Users}
-                badgeText="System Total"
-                badgeType="neutral"
+                badgeText={t('admin:dashboard.platformUsers', 'Platform Users')}
+                badgeType="success"
               />
               <StatCard
                 title={t('admin:dashboard.farmersStat', 'Farmers')}
@@ -486,10 +489,10 @@ export const AdminDashboard = () => {
                 badgeType={stats?.users?.pendingStoreVerifications ? 'amber' : 'neutral'}
               />
               <StatCard
-                title={t('admin:dashboard.administratorsStat', 'Administrators')}
-                value={statsLoading ? '...' : `${stats?.users?.totalAdmins || 0}`}
+                title={t('admin:dashboard.administratorsStat', 'System Administrators')}
+                value={statsLoading ? '...' : `${stats?.users?.totalAdmins ?? stats?.users?.totalSystemUsers ?? 0}`}
                 icon={ShieldAlert}
-                badgeText="Super Users"
+                badgeText={t('admin:dashboard.systemUsers', 'System Users')}
                 badgeType="neutral"
               />
             </div>

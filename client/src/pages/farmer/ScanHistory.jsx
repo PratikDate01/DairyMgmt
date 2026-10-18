@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { diseaseScanService } from '../../services/diseaseScanService';
 import { VeterinarianRecommendations } from '../../components/farmer/VeterinarianRecommendations';
+import { BackButton } from '../../components/common/BackButton';
 import { getStatusLabel } from '../../i18n/statusMap';
 import {
   FileText,
@@ -76,14 +77,17 @@ export const ScanHistory = () => {
     <div className="space-y-6 max-w-5xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
-        <div>
-          <h1 className="text-xl font-extrabold text-slate-900 tracking-tight flex items-center space-x-2">
-            <FileText className="w-6 h-6 text-blue-600" />
-            <span>{t('farmer:scanHistory.title', 'Disease Scan History')}</span>
-          </h1>
-          <p className="text-xs text-slate-500 mt-1">
-            {t('farmer:scanHistory.subtitle', 'View your cattle disease screening reports and professional veterinarian reviews.')}
-          </p>
+        <div className="flex items-center gap-3">
+          <BackButton fallback="/farmer/ai-scanner" />
+          <div>
+            <h1 className="text-xl font-extrabold text-slate-900 tracking-tight flex items-center space-x-2">
+              <FileText className="w-6 h-6 text-blue-600" />
+              <span>{t('farmer:scanHistory.title', 'Disease Scan History')}</span>
+            </h1>
+            <p className="text-xs text-slate-500 mt-1">
+              {t('farmer:scanHistory.subtitle', 'View your cattle disease screening reports and professional veterinarian reviews.')}
+            </p>
+          </div>
         </div>
 
         <Link

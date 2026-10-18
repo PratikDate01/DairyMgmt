@@ -57,6 +57,7 @@ export const MilkCollection = () => {
     new Date().toISOString().split('T')[0]
   );
   const [session, setSession] = useState('morning');
+  const [milkType, setMilkType] = useState('cow'); // 'cow' | 'buffalo'
   const [quantityLiters, setQuantityLiters] = useState('');
   const [fatPercentage, setFatPercentage] = useState('');
   const [ratePerLiter, setRatePerLiter] = useState('');
@@ -69,6 +70,7 @@ export const MilkCollection = () => {
   // History Filter State
   const [filterFarmerId, setFilterFarmerId] = useState('all');
   const [filterSession, setFilterSession] = useState('all');
+  const [filterMilkType, setFilterMilkType] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterDatePreset, setFilterDatePreset] = useState('all');
   const [filterStartDate, setFilterStartDate] = useState('');
@@ -197,12 +199,13 @@ export const MilkCollection = () => {
       const matchFarmer = (c.farmer?._id || c.farmer) === selectedFarmerId;
       const matchDate = cDateStr === collectionDate;
       const matchSession = c.session === session;
-      return matchFarmer && matchDate && matchSession;
+      const matchMilkType = (c.milkType || 'cow') === milkType;
+      return matchFarmer && matchDate && matchSession && matchMilkType;
     });
 
     if (isDuplicate) {
       setFormError(
-        `A milk collection record already exists for ${
+        `A ${milkType === 'buffalo' ? 'buffalo' : 'cow'} milk collection record already exists for ${
           selectedFarmerProfile?.name || 'this farmer'
         } on ${collectionDate} (${session} shift). Please verify your entry.`
       );
@@ -216,6 +219,7 @@ export const MilkCollection = () => {
           farmerId: selectedFarmerId,
           collectionDate,
           session,
+          milkType,
           quantityLiters: qty,
           fatPercentage: fat,
           ratePerLiter: rate
@@ -257,6 +261,11 @@ export const MilkCollection = () => {
         return false;
       }
 
+      // Milk Type filter
+      if (filterMilkType !== 'all' && (item.milkType || 'cow') !== filterMilkType) {
+        return false;
+      }
+
       // Payment Status filter
       if (filterStatus !== 'all' && item.paymentStatus !== filterStatus) {
         return false;
@@ -290,6 +299,7 @@ export const MilkCollection = () => {
     collections,
     filterFarmerId,
     filterSession,
+    filterMilkType,
     filterStatus,
     filterDatePreset,
     filterStartDate,
@@ -388,6 +398,7 @@ export const MilkCollection = () => {
         title={t('dairyOwner:collection.title', 'Milk Management & Collection Console')}
         description={t('dairyOwner:collection.subtitle', 'Record morning/evening milk intakes, inspect past logs, and review authoritative 10-day billing summaries.')}
         breadcrumbs={[t('common:nav.home', 'Home'), t('common:roles.dairyOwner', 'Dairy Console'), t('dairyOwner:collection.title', 'Milk Management')]}
+        backFallback="/dairy-owner/dashboard"
         actions={
           <div className="flex items-center space-x-2">
             <button
@@ -589,6 +600,40 @@ export const MilkCollection = () => {
                       >
                         <Moon className="w-3.5 h-3.5 text-indigo-500" />
                         <span>{t('dairyOwner:collection.eveningShift', 'Evening Shift')}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Milk Type Toggle (Cow vs Buffalo) */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700 flex items-center space-x-1">
+                      <Droplets className="w-3.5 h-3.5 text-blue-600" />
+                      <span>{t('dairyOwner:collection.milkTypeRequired', 'Milk Type *')}</span>
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setMilkType('cow')}
+                        className={`py-2 px-3 text-xs font-semibold rounded-lg border flex items-center justify-center space-x-1.5 transition ${
+                          milkType === 'cow'
+                            ? 'bg-blue-50 border-blue-400 text-blue-900 shadow-xs ring-1 ring-blue-400 font-bold'
+                            : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                        }`}
+                      >
+                        <span className="text-sm">🐄</span>
+                        <span>{t('dairyOwner:collection.cowMilk', 'Cow Milk')}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setMilkType('buffalo')}
+                        className={`py-2 px-3 text-xs font-semibold rounded-lg border flex items-center justify-center space-x-1.5 transition ${
+                          milkType === 'buffalo'
+                            ? 'bg-purple-50 border-purple-400 text-purple-900 shadow-xs ring-1 ring-purple-400 font-bold'
+                            : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                        }`}
+                      >
+                        <span className="text-sm">🐃</span>
+                        <span>{t('dairyOwner:collection.buffaloMilk', 'Buffalo Milk')}</span>
                       </button>
                     </div>
                   </div>
@@ -1049,7 +1094,7 @@ export const MilkCollection = () => {
                 <span>{t('dairyOwner:collection.filterRecords', 'Filter Records:')}</span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
                 {/* Farmer filter */}
                 <div>
                   <label className="text-[11px] font-semibold text-slate-600 block mb-1">{t('common:roles.farmer', 'Farmer')}</label>
@@ -1078,6 +1123,20 @@ export const MilkCollection = () => {
                     <option value="all">{t('dairyOwner:collection.allShifts', 'All Shifts (Morning & Evening)')}</option>
                     <option value="morning">{t('dairyOwner:collection.morningShiftOnly', 'Morning Shift Only')}</option>
                     <option value="evening">{t('dairyOwner:collection.eveningShiftOnly', 'Evening Shift Only')}</option>
+                  </select>
+                </div>
+
+                {/* Milk Type filter */}
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-600 block mb-1">{t('dairyOwner:collection.milkTypeRequired', 'Milk Type')}</label>
+                  <select
+                    value={filterMilkType}
+                    onChange={(e) => setFilterMilkType(e.target.value)}
+                    className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs"
+                  >
+                    <option value="all">{t('dairyOwner:collection.allMilkTypes', 'All Milk Types')}</option>
+                    <option value="cow">🐄 {t('dairyOwner:collection.cowOnly', 'Cow Milk Only')}</option>
+                    <option value="buffalo">🐃 {t('dairyOwner:collection.buffaloOnly', 'Buffalo Milk Only')}</option>
                   </select>
                 </div>
 
@@ -1177,6 +1236,7 @@ export const MilkCollection = () => {
                       <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                         <th className="py-3 px-4">{t('common:labels.date', 'Date')}</th>
                         <th className="py-3 px-4">{t('common:roles.farmer', 'Farmer')}</th>
+                        <th className="py-3 px-4">{t('dairyOwner:collection.milkTypeRequired', 'Type')}</th>
                         <th className="py-3 px-4">{t('common:labels.session', 'Session')}</th>
                         <th className="py-3 px-4 text-right">{t('common:labels.quantity', 'Quantity (L)')}</th>
                         <th className="py-3 px-4 text-right">{t('common:labels.fat', 'Fat (%)')}</th>
@@ -1202,6 +1262,17 @@ export const MilkCollection = () => {
                             <div className="text-[10px] text-slate-400 font-mono">
                               {item.farmer?.phone}
                             </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <span
+                              className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                                (item.milkType || 'cow') === 'buffalo'
+                                  ? 'bg-purple-100 text-purple-900 border border-purple-200'
+                                  : 'bg-blue-100 text-blue-900 border border-blue-200'
+                              }`}
+                            >
+                              {(item.milkType || 'cow') === 'buffalo' ? '🐃 Buffalo' : '🐄 Cow'}
+                            </span>
                           </td>
                           <td className="py-3 px-4">
                             <span
@@ -1260,7 +1331,16 @@ export const MilkCollection = () => {
                           <h4 className="text-sm font-bold text-slate-900">{item.farmer?.name}</h4>
                           <p className="text-xs text-slate-500 font-mono">{item.farmer?.phone}</p>
                         </div>
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-1.5 flex-wrap justify-end gap-1">
+                          <span
+                            className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${
+                              (item.milkType || 'cow') === 'buffalo'
+                                ? 'bg-purple-100 text-purple-900 border border-purple-200'
+                                : 'bg-blue-100 text-blue-900 border border-blue-200'
+                            }`}
+                          >
+                            {(item.milkType || 'cow') === 'buffalo' ? '🐃 Buffalo' : '🐄 Cow'}
+                          </span>
                           <span
                             className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
                               item.session === 'morning'

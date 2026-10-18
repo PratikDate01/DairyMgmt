@@ -16,7 +16,7 @@ import Complaint from '../models/Complaint.js';
 export const getAdminOverviewStats = async (req, res) => {
   try {
     const [
-      totalUsers,
+      totalRegisteredUsers,
       totalFarmers,
       totalDairyOwners,
       totalVeterinarians,
@@ -39,7 +39,12 @@ export const getAdminOverviewStats = async (req, res) => {
       recentFodderListings,
       recentComplaints
     ] = await Promise.all([
-      User.countDocuments(),
+      User.countDocuments({
+        $and: [
+          { role: { $ne: 'admin' } },
+          { roles: { $nin: ['admin'] } }
+        ]
+      }),
       User.countDocuments({ $or: [{ role: 'farmer' }, { roles: 'farmer' }] }),
       User.countDocuments({ $or: [{ role: 'dairyOwner' }, { roles: 'dairyOwner' }] }),
       User.countDocuments({ $or: [{ role: 'veterinarian' }, { roles: 'veterinarian' }] }),
@@ -64,7 +69,12 @@ export const getAdminOverviewStats = async (req, res) => {
       FodderListing.countDocuments(),
       Complaint.countDocuments(),
       Complaint.countDocuments({ status: { $in: ['open', 'in_progress'] } }),
-      User.find()
+      User.find({
+        $and: [
+          { role: { $ne: 'admin' } },
+          { roles: { $nin: ['admin'] } }
+        ]
+      })
         .select('_id name phone email role roles isActive verificationStatus createdAt')
         .sort({ createdAt: -1 })
         .limit(5),
@@ -121,7 +131,9 @@ export const getAdminOverviewStats = async (req, res) => {
       success: true,
       stats: {
         users: {
-          totalUsers,
+          totalUsers: totalRegisteredUsers,
+          totalRegisteredUsers,
+          totalSystemUsers: totalAdmins,
           totalFarmers,
           totalDairyOwners,
           totalVeterinarians,

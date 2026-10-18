@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import MedicineRequest from '../models/MedicineRequest.js';
 import Medicine from '../models/Medicine.js';
 import User from '../models/User.js';
@@ -11,13 +12,18 @@ export const createMedicineRequest = async (req, res) => {
   try {
     const { medicineId, quantity, notes, vetRequestId } = req.body;
 
-    if (!medicineId) {
-      return res.status(400).json({ success: false, message: 'Medicine ID is required' });
+    if (!medicineId || !mongoose.Types.ObjectId.isValid(medicineId)) {
+      return res.status(400).json({ success: false, message: 'Valid medicine ID is required' });
     }
 
     const parsedQuantity = parseInt(quantity, 10);
     if (isNaN(parsedQuantity) || parsedQuantity <= 0) {
       return res.status(400).json({ success: false, message: 'Quantity must be a positive integer' });
+    }
+
+    const farmerId = req.user?.id || req.user?._id || req.user?.userId;
+    if (!farmerId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized access. Farmer ID missing.' });
     }
 
     // Find medicine
@@ -26,11 +32,12 @@ export const createMedicineRequest = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Medicine not found' });
     }
 
-    if (!medicine.isActive) {
+    if (medicine.isActive === false) {
       return res.status(400).json({ success: false, message: 'This medicine is no longer active' });
     }
 
-    if (medicine.availability !== 'available' || medicine.stockQuantity <= 0) {
+    const isAvailable = medicine.availability ? medicine.availability === 'available' : true;
+    if (!isAvailable || medicine.stockQuantity <= 0) {
       return res.status(400).json({ success: false, message: 'This medicine is currently out of stock or unavailable' });
     }
 
@@ -43,8 +50,8 @@ export const createMedicineRequest = async (req, res) => {
 
     // Protection against rapid duplicate submissions (e.g. double click within 5 seconds for same medicine and farmer)
     const recentDuplicate = await MedicineRequest.findOne({
-      farmer: req.user.id,
-      medicine: medicineId,
+      farmer: farmerId,
+      medicine: medicine._id,
       status: 'pending',
       createdAt: { $gte: new Date(Date.now() - 5000) }
     });
@@ -56,17 +63,38 @@ export const createMedicineRequest = async (req, res) => {
       });
     }
 
+    // Resolve medical provider reference
+    let medicalProvider = medicine.medicalProvider?._id || medicine.medicalProvider;
+    if (!medicalProvider) {
+      const fallbackProvider = await User.findOne({ role: 'medicalProvider' });
+      if (fallbackProvider) {
+        medicalProvider = fallbackProvider._id;
+      }
+    }
+
+    if (!medicalProvider) {
+      return res.status(400).json({
+        success: false,
+        message: 'This medicine does not have an active medical provider registered'
+      });
+    }
+
+    // Validate vetRequestId if provided
+    let validVetRequestId = null;
+    if (vetRequestId && mongoose.Types.ObjectId.isValid(vetRequestId)) {
+      validVetRequestId = vetRequestId;
+    }
+
     // Snapshot values calculated on backend
     const unitPriceSnapshot = Number(medicine.price);
     const totalAmount = Number((unitPriceSnapshot * parsedQuantity).toFixed(2));
     const medicineNameSnapshot = medicine.name;
-    const medicalProvider = medicine.medicalProvider;
 
     const newRequest = await MedicineRequest.create({
-      farmer: req.user.id,
+      farmer: farmerId,
       medicalProvider,
       medicine: medicine._id,
-      vetRequest: vetRequestId || null,
+      vetRequest: validVetRequestId,
       medicineNameSnapshot,
       unitPriceSnapshot,
       quantity: parsedQuantity,

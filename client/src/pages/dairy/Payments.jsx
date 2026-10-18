@@ -285,6 +285,7 @@ export const Payments = () => {
         title={t('dairyOwner:payments.title', 'Payment Settlement & Ledger')}
         description={t('dairyOwner:payments.subtitle', 'Calculate settlements, issue payments, and manage farmer payment history.')}
         breadcrumbs={[t('common:nav.home', 'Home'), t('common:roles.dairyOwner', 'Dairy Console'), t('dairyOwner:payments.title', 'Payments')]}
+        backFallback="/dairy-owner/dashboard"
       />
 
       {error && (

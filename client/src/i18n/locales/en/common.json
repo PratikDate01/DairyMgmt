@@ -212,6 +212,8 @@
     "success": "Success",
     "error": "Error",
     "warning": "Warning",
+    "required": "Required",
+    "mandatory": "Mandatory",
     "currencySymbol": "₹"
   },
   "language": {

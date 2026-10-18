@@ -278,6 +278,7 @@ export const MyCattle = () => {
         title={t('farmer:cattle.title', 'My Cattle')}
         description={t('farmer:cattle.subtitle', 'Register and manage your livestock profiles, health records, and diagnostic scans.')}
         breadcrumbs={[t('common:nav.home', 'Home'), t('common:roles.farmer', 'Farmer'), t('farmer:cattle.title', 'My Cattle')]}
+        backFallback="/farmer/dashboard"
         actions={
           <button
             onClick={handleOpenAdd}

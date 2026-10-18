@@ -1,7 +1,11 @@
 const API_BASE_URL = 'http://localhost:5000/api/medicine-requests';
 
 const getHeaders = (token) => {
-  const authToken = token || localStorage.getItem('token');
+  const authToken =
+    token ||
+    (typeof localStorage !== 'undefined'
+      ? localStorage.getItem('authToken') || localStorage.getItem('token')
+      : null);
   return {
     'Content-Type': 'application/json',
     ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})

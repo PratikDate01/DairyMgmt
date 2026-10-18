@@ -615,7 +615,13 @@ export const deactivateMedicine = async (req, res) => {
  */
 export const processPrescription = async (req, res) => {
   try {
-    const { prescriptionData, fileName = 'Prescription.jpg', fileType = 'image/jpeg' } = req.body;
+    const {
+      prescriptionData,
+      fileName = 'Prescription.jpg',
+      fileType = 'image/jpeg',
+      prescribedMedicinesText = '',
+      medicineNames = []
+    } = req.body;
 
     if (!prescriptionData) {
       return res.status(400).json({
@@ -624,41 +630,108 @@ export const processPrescription = async (req, res) => {
       });
     }
 
-    // Fetch all available active medicines from database
+    // Fetch all active medicines from database
     const dbMedicines = await Medicine.find({ isActive: true })
       .populate('medicalProvider', '_id name phone');
 
-    // Perform extraction & matching against existing database inventory
+    // Collect query terms from user input, filename, or prescribed list
+    const candidateTerms = new Set();
+
+    if (Array.isArray(medicineNames) && medicineNames.length > 0) {
+      medicineNames.forEach(n => {
+        if (n && typeof n === 'string' && n.trim().length > 1) {
+          candidateTerms.add(n.trim());
+        }
+      });
+    }
+
+    if (prescribedMedicinesText && typeof prescribedMedicinesText === 'string') {
+      prescribedMedicinesText
+        .split(/[,;\n\r]+/)
+        .map(s => s.trim())
+        .filter(s => s.length > 1)
+        .forEach(s => candidateTerms.add(s));
+    }
+
+    // Check fileName for potential medicine names (e.g. "Amoxicillin_prescription.pdf" or "Oxytetracycline.png")
+    if (fileName && typeof fileName === 'string') {
+      const nameWithoutExt = fileName.replace(/\.[^/.]+$/, '');
+      const parts = nameWithoutExt.split(/[-_.\s]+/);
+      const ignoredWords = new Set([
+        'prescription', 'rx', 'doc', 'doctor', 'vet', 'medical', 'scan', 'image',
+        'img', 'file', 'photo', 'camera', 'upload', 'pdf', 'jpg', 'jpeg', 'png',
+        'report', 'paper', 'note', 'cattle', 'cow', 'buffalo', 'patient', 'dated',
+        'whatsapp', 'screenshot'
+      ]);
+
+      parts.forEach(part => {
+        const cleanPart = part.trim();
+        if (cleanPart.length > 2 && !ignoredWords.has(cleanPart.toLowerCase()) && !/^\d+$/.test(cleanPart)) {
+          candidateTerms.add(cleanPart);
+        }
+      });
+    }
+
     let identifiedItems = [];
     let matchingMedicines = [];
 
-    if (dbMedicines.length > 0) {
-      dbMedicines.forEach((med) => {
-        const isAvailable = med.availability === 'available' && med.stockQuantity > 0;
-        identifiedItems.push({
-          name: med.name,
-          genericName: med.genericName || '',
-          category: med.category,
-          status: isAvailable ? 'Available' : 'Out of Stock',
-          available: isAvailable,
-          medicineId: med._id
+    // If specific candidate terms were identified, filter strictly against them
+    if (candidateTerms.size > 0) {
+      const termArray = Array.from(candidateTerms);
+
+      termArray.forEach(term => {
+        const lowerTerm = term.toLowerCase();
+        // Find matching medicines in DB
+        const matchedDbMeds = dbMedicines.filter(med => {
+          const medName = med.name.toLowerCase();
+          const generic = (med.genericName || '').toLowerCase();
+          const cat = (med.category || '').toLowerCase();
+          return medName.includes(lowerTerm) || lowerTerm.includes(medName) ||
+                 (generic && (generic.includes(lowerTerm) || lowerTerm.includes(generic))) ||
+                 (cat && cat === lowerTerm);
         });
 
-        if (isAvailable) {
-          matchingMedicines.push(med);
+        if (matchedDbMeds.length > 0) {
+          matchedDbMeds.forEach(med => {
+            // Avoid duplicate additions
+            if (!identifiedItems.some(item => item.medicineId && item.medicineId.toString() === med._id.toString())) {
+              const isAvailable = med.availability === 'available' && med.stockQuantity > 0;
+              identifiedItems.push({
+                name: med.name,
+                genericName: med.genericName || '',
+                category: med.category,
+                status: isAvailable ? 'Available' : 'Out of Stock',
+                available: isAvailable,
+                medicineId: med._id
+              });
+
+              if (isAvailable && !matchingMedicines.some(m => m._id.toString() === med._id.toString())) {
+                matchingMedicines.push(med);
+              }
+            }
+          });
+        } else {
+          // Prescribed medicine not found in catalog inventory
+          identifiedItems.push({
+            name: term,
+            genericName: '',
+            category: 'Prescribed Medicine',
+            status: 'Not Currently in Stock',
+            available: false
+          });
         }
       });
     } else {
-      identifiedItems = [
-        { name: 'Amoxicillin 500mg', status: 'Not Currently Available', available: false },
-        { name: 'Oxytetracycline Injection', status: 'Not Currently Available', available: false },
-        { name: 'Vitamin B Complex', status: 'Not Currently Available', available: false }
-      ];
+      // If no medicine keywords were detected in input or filename, do NOT return all medicines.
+      identifiedItems = [];
+      matchingMedicines = [];
     }
 
     return res.status(200).json({
       success: true,
-      message: 'Prescription analyzed and matched against current medicine catalog successfully.',
+      message: matchingMedicines.length > 0
+        ? `Found ${matchingMedicines.length} in-stock product(s) matching your prescription.`
+        : 'Prescription processed. No matching in-stock medicines were found for the prescribed items.',
       fileName,
       fileType,
       extractedMedicines: identifiedItems,

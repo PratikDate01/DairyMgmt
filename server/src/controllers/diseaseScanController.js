@@ -10,7 +10,7 @@ import { analyzeCattleImage } from '../services/aiDiseaseService.js';
  */
 export const createDiseaseScan = async (req, res) => {
   try {
-    const { cattleId, animalType = 'cow', animalIdTag = 'Cattle Tag', imageUrl, symptoms = '' } = req.body;
+    const { cattleId, animalType, animalIdTag = 'Cattle Tag', imageUrl, symptoms = '' } = req.body;
 
     if (!cattleId) {
       return res.status(400).json({
@@ -25,6 +25,15 @@ export const createDiseaseScan = async (req, res) => {
         message: 'Image URL or captured image file is required for disease screening.'
       });
     }
+
+    if (!symptoms || !String(symptoms).trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Observed symptoms are mandatory for cattle disease screening.'
+      });
+    }
+
+    const trimmedSymptoms = String(symptoms).trim();
 
     // Verify cattle existence and ownership
     const cattle = await Cattle.findById(cattleId);
@@ -43,14 +52,17 @@ export const createDiseaseScan = async (req, res) => {
       });
     }
 
-    const resolvedAnimalType = animalType || (cattle.gender === 'male' ? 'bull' : 'cow');
+    const resolvedAnimalType = animalType
+      ? (cattle.gender === 'male' && animalType === 'cow' ? 'bull' : animalType.toLowerCase())
+      : (cattle.gender === 'male' ? 'bull' : 'cow');
     const resolvedAnimalTag = cattle.nameTag || animalIdTag;
 
     // Run AI Disease Screening
     const aiResult = await analyzeCattleImage({
       imageUrl,
       animalType: resolvedAnimalType,
-      animalIdTag: resolvedAnimalTag
+      animalIdTag: resolvedAnimalTag,
+      symptoms: trimmedSymptoms
     });
 
     const newScan = new DiseaseScan({
@@ -62,7 +74,7 @@ export const createDiseaseScan = async (req, res) => {
       scanStatus: 'analyzed',
       detectedCondition: aiResult.detectedCondition,
       confidence: aiResult.confidence,
-      symptoms: symptoms || aiResult.symptoms,
+      symptoms: trimmedSymptoms,
       recommendations: aiResult.recommendations,
       veterinarianRecommended: aiResult.veterinarianRecommended,
       veterinarianReviewStatus: 'pending_review',

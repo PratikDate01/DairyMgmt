@@ -117,6 +117,7 @@ export const DairyOwnerReports = () => {
         title={t('dairyOwner:reports.title', 'Reports & Summary Analytics')}
         description={t('dairyOwner:reports.subtitle', 'Comprehensive intelligence on milk collection intake, farmer performance, and payment settlements.')}
         breadcrumbs={[t('common:nav.home', 'Home'), t('common:roles.dairyOwner', 'Dairy Owner'), t('dairyOwner:reports.title', 'Reports')]}
+        backFallback="/dairy-owner/dashboard"
         actions={
           <button
             onClick={fetchReports}

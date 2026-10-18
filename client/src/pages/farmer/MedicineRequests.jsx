@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../../context/AuthContext';
 import { getStatusLabel } from '../../i18n/statusMap';
 import {
   ShoppingBag,
@@ -27,6 +28,7 @@ const statusBadges = {
 
 export default function FarmerMedicineRequests() {
   const { t } = useTranslation(['farmer', 'common']);
+  const { token } = useAuth();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -44,11 +46,14 @@ export default function FarmerMedicineRequests() {
     try {
       setLoading(true);
       setError('');
-      const res = await getMyMedicineRequests({
-        status: statusFilter,
-        page: currentPage,
-        limit: 10
-      });
+      const res = await getMyMedicineRequests(
+        {
+          status: statusFilter,
+          page: currentPage,
+          limit: 10
+        },
+        token
+      );
 
       if (res.success) {
         setRequests(res.data);
@@ -63,13 +68,13 @@ export default function FarmerMedicineRequests() {
 
   useEffect(() => {
     fetchRequests();
-  }, [statusFilter, currentPage]);
+  }, [statusFilter, currentPage, token]);
 
   const handleCancel = async (requestId) => {
     if (!window.confirm('Are you sure you want to cancel this pending request?')) return;
     try {
       setCancellingId(requestId);
-      const res = await cancelMedicineRequest(requestId, 'Cancelled by farmer');
+      const res = await cancelMedicineRequest(requestId, 'Cancelled by farmer', token);
       if (res.success) {
         setSuccessMsg('Request cancelled successfully.');
         fetchRequests();
@@ -87,6 +92,7 @@ export default function FarmerMedicineRequests() {
         title={t('farmer:medicineRequests.title', 'My Medicine Requests')}
         description={t('farmer:medicineRequests.subtitle', 'Track the status of your submitted medicine requests and pickup schedules.')}
         breadcrumbs={[t('common:nav.home', 'Home'), t('common:roles.farmer', 'Farmer'), t('farmer:medicineRequests.title', 'My Requests')]}
+        backFallback="/farmer/medicines"
         actions={
           <button
             onClick={fetchRequests}

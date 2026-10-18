@@ -17,10 +17,12 @@ import {
   MessageSquare,
   AlertCircle,
   CheckCircle2,
+  Phone,
   X
 } from 'lucide-react';
 import { CaseDetailModal } from './CaseDetailModal';
 import { ClinicalWorkspaceModal } from '../../components/veterinarian/ClinicalWorkspaceModal';
+import { BackButton } from '../../components/common/BackButton';
 
 export const PendingCases = () => {
   const { t } = useTranslation(['veterinarian', 'common']);
@@ -133,14 +135,17 @@ export const PendingCases = () => {
     <div className="space-y-6 max-w-6xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
-        <div>
-          <h1 className="text-xl font-extrabold text-slate-900 tracking-tight flex items-center space-x-2">
-            <Stethoscope className="w-6 h-6 text-teal-600" />
-            <span>{t('veterinarian:cases.title', 'Veterinarian Clinical Console')}</span>
-          </h1>
-          <p className="text-xs text-slate-500 mt-1">
-            {t('veterinarian:cases.subtitle', 'Review incoming farmer consultation requests and manage livestock disease screening cases.')}
-          </p>
+        <div className="flex items-center gap-3">
+          <BackButton fallback="/veterinarian/dashboard" />
+          <div>
+            <h1 className="text-xl font-extrabold text-slate-900 tracking-tight flex items-center space-x-2">
+              <Stethoscope className="w-6 h-6 text-teal-600" />
+              <span>{t('veterinarian:cases.title', 'Veterinarian Clinical Console')}</span>
+            </h1>
+            <p className="text-xs text-slate-500 mt-1">
+              {t('veterinarian:cases.subtitle', 'Review incoming farmer consultation requests and manage livestock disease screening cases.')}
+            </p>
+          </div>
         </div>
 
         {/* Console Main Tabs */}
@@ -310,14 +315,25 @@ export const PendingCases = () => {
                           </button>
                         </div>
                       ) : !isRejected ? (
-                        <button
-                          type="button"
-                          onClick={() => setActiveWorkspaceReq(reqItem)}
-                          className="w-full py-2 px-3 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center justify-center space-x-2"
-                        >
-                          <Stethoscope className="w-4 h-4" />
-                          <span>{t('veterinarian:pendingCasesPage.openWorkspaceBtn', 'Open Clinical Workspace')}</span>
-                        </button>
+                        <div className="flex items-center space-x-2">
+                          {reqItem.farmer?.phone && (
+                            <a
+                              href={`tel:${reqItem.farmer.phone}`}
+                              className="p-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl transition flex items-center justify-center shrink-0 shadow-2xs"
+                              title={`Call Farmer (${reqItem.farmer.phone})`}
+                            >
+                              <Phone className="w-4 h-4" />
+                            </a>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => setActiveWorkspaceReq(reqItem)}
+                            className="flex-1 py-2 px-3 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center justify-center space-x-2"
+                          >
+                            <Stethoscope className="w-4 h-4" />
+                            <span>{t('veterinarian:pendingCasesPage.openWorkspaceBtn', 'Open Clinical Workspace')}</span>
+                          </button>
+                        </div>
                       ) : (
                         <div className="p-2 text-center text-xs font-bold text-red-700 bg-red-50 rounded-xl border border-red-200 capitalize">
                           {t('common:status.declined', 'Request Declined')}

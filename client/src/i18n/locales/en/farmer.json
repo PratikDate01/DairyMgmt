@@ -73,6 +73,8 @@
     "selectCattle": "Select Animal for Screening",
     "describeSymptoms": "Describe Observed Symptoms",
     "symptomsPlaceholder": "e.g., High fever, skin nodules, loss of appetite, decreased milk yield...",
+    "symptomsRequired": "Observed symptoms are required. Please describe the symptoms before starting the scan.",
+    "symptomsHelp": "Please record observed signs, behavioral changes, or affected areas to aid diagnostic accuracy.",
     "uploadPhoto": "Upload Cattle / Skin Photo",
     "startScan": "Run AI Diagnostic Scan",
     "analyzing": "Analyzing symptoms and imagery...",

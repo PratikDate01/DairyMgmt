@@ -113,12 +113,15 @@ export const PrescriptionProcurementModal = ({ vetRequestItem, onClose, onOrderS
     try {
       const notesWithRef = `Prescription Order for Cattle Tag: ${vetRequestItem?.cattle?.nameTag || 'Animal'} (Diagnosis: ${vetRequestItem?.finalDiagnosis?.diagnosis || vetRequestItem?.aiCondition}). ${notes.trim()}`;
 
-      const res = await createMedicineRequest({
-        medicineId: orderingMedicine._id,
-        quantity,
-        notes: notesWithRef,
-        vetRequestId: vetRequestItem?._id || null
-      });
+      const res = await createMedicineRequest(
+        {
+          medicineId: orderingMedicine._id,
+          quantity,
+          notes: notesWithRef,
+          vetRequestId: vetRequestItem?._id || null
+        },
+        token
+      );
 
       if (res.success) {
         setSuccessMsg(t('farmer:medicinesProcurement.orderConfirmation', `Medicine request created for ${orderingMedicine.name}. Order sent to ${orderingMedicine.medicalProvider?.name || 'Medical Provider'}.`));

@@ -71,7 +71,7 @@
     "viewDetails": "तपशील पहा",
     "submit": "सादर करा",
     "confirm": "पुष्टी करा",
-    "back": "मागे जा",
+    "back": "मागे",
     "refresh": "रीफ्रेश करा",
     "continue": "पुढे चला",
     "loading": "लोड होत आहे...",
@@ -212,6 +212,8 @@
     "success": "यशस्वी",
     "error": "त्रुटी",
     "warning": "इशारा",
+    "required": "आवश्यक",
+    "mandatory": "अनिवार्य",
     "currencySymbol": "₹"
   },
   "language": {

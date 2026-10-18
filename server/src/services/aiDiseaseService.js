@@ -6,7 +6,7 @@
  * while providing an intelligent screening engine fallback.
  */
 
-export const analyzeCattleImage = async ({ imageUrl, animalType = 'cow', animalIdTag = 'Cattle Tag' }) => {
+export const analyzeCattleImage = async ({ imageUrl, animalType = 'cow', animalIdTag = 'Cattle Tag', symptoms = '' }) => {
   try {
     // If an external AI endpoint is configured (e.g., PyTorch / FastAPI microservice)
     const aiApiUrl = process.env.AI_DISEASE_MODEL_URL;
@@ -16,7 +16,7 @@ export const analyzeCattleImage = async ({ imageUrl, animalType = 'cow', animalI
         const response = await fetch(aiApiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imageUrl, animalType, animalIdTag })
+          body: JSON.stringify({ imageUrl, animalType, animalIdTag, symptoms })
         });
         if (response.ok) {
           const aiData = await response.json();
@@ -66,9 +66,15 @@ export const analyzeCattleImage = async ({ imageUrl, animalType = 'cow', animalI
       }
     ];
 
+    // Filter applicable conditions for male cattle (e.g., exclude mastitis/udder conditions)
+    const isMale = ['bull', 'ox'].includes(String(animalType).toLowerCase());
+    const validConditions = isMale
+      ? commonConditions.filter(c => !c.condition.toLowerCase().includes('mastitis'))
+      : commonConditions;
+
     // Pick a deterministic screening based on string hash of image URL / timestamp
     const hash = imageUrl.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    const selected = commonConditions[hash % commonConditions.length];
+    const selected = validConditions[hash % validConditions.length];
 
     return {
       detectedCondition: selected.condition,

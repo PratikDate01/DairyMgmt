@@ -3,6 +3,8 @@ import MilkCollection from '../models/MilkCollection.js';
 import Payment from '../models/Payment.js';
 import DairyFarmerConnection from '../models/DairyFarmerConnection.js';
 import User from '../models/User.js';
+import VetRequest from '../models/VetRequest.js';
+import DiseaseScan from '../models/DiseaseScan.js';
 
 /**
  * Helper to parse date range filters safely
@@ -444,12 +446,41 @@ export const getDashboardSummary = async (req, res) => {
     const { role, id } = req.user;
 
     if (role === 'admin') {
-      const [totalUsers, totalFarmers, totalDairyOwners, totalMedicalProviders, totalVeterinarians] = await Promise.all([
-        User.countDocuments(),
-        User.countDocuments({ role: 'farmer' }),
-        User.countDocuments({ role: 'dairyOwner' }),
-        User.countDocuments({ role: 'medicalProvider' }),
-        User.countDocuments({ role: 'veterinarian' })
+      const [
+        totalRegisteredUsers,
+        totalFarmers,
+        totalDairyOwners,
+        totalMedicalProviders,
+        totalVeterinarians,
+        totalAdmins,
+        totalVetRequests,
+        activeVetRequests,
+        completedVetRequests,
+        criticalVetRequests,
+        totalDiseaseScans
+      ] = await Promise.all([
+        User.countDocuments({
+          $and: [
+            { role: { $ne: 'admin' } },
+            { roles: { $nin: ['admin'] } }
+          ]
+        }),
+        User.countDocuments({ $or: [{ role: 'farmer' }, { roles: 'farmer' }] }),
+        User.countDocuments({ $or: [{ role: 'dairyOwner' }, { roles: 'dairyOwner' }] }),
+        User.countDocuments({ $or: [{ role: 'medicalProvider' }, { roles: 'medicalProvider' }] }),
+        User.countDocuments({ $or: [{ role: 'veterinarian' }, { roles: 'veterinarian' }] }),
+        User.countDocuments({ $or: [{ role: 'admin' }, { roles: 'admin' }] }),
+        VetRequest.countDocuments(),
+        VetRequest.countDocuments({
+          status: { $in: ['pending', 'accepted', 'examination', 'diagnosed'] }
+        }),
+        VetRequest.countDocuments({
+          status: { $in: ['prescription_created', 'completed'] }
+        }),
+        VetRequest.countDocuments({
+          riskLevel: { $in: ['High', 'high', 'Critical', 'critical'] }
+        }),
+        DiseaseScan.countDocuments()
       ]);
 
       const milkAgg = await MilkCollection.aggregate([
@@ -483,10 +514,21 @@ export const getDashboardSummary = async (req, res) => {
         role: 'admin',
         metrics: {
           users: {
-            totalUsers,
+            totalUsers: totalRegisteredUsers,
+            totalRegisteredUsers,
+            totalSystemUsers: totalAdmins,
             totalFarmers,
             totalDairyOwners,
             totalMedicalProviders,
+            totalVeterinarians,
+            totalAdmins
+          },
+          veterinary: {
+            totalVetRequests,
+            activeVetRequests,
+            completedVetRequests,
+            criticalVetRequests,
+            totalDiseaseScans,
             totalVeterinarians
           },
           milk: {

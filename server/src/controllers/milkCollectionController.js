@@ -14,6 +14,7 @@ export const createCollection = async (req, res) => {
       farmerId,
       collectionDate,
       session = 'morning',
+      milkType = 'cow',
       quantityLiters,
       fatPercentage,
       ratePerLiter
@@ -38,6 +39,14 @@ export const createCollection = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: 'Session must be either morning or evening'
+      });
+    }
+
+    const normalizedMilkType = String(milkType).toLowerCase();
+    if (!['cow', 'buffalo'].includes(normalizedMilkType)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Milk type must be either cow or buffalo'
       });
     }
 
@@ -101,13 +110,14 @@ export const createCollection = async (req, res) => {
       dairyOwner: dairyOwnerId,
       farmer: farmerId,
       collectionDate: normalizedDate,
-      session
+      session,
+      milkType: normalizedMilkType
     });
 
     if (existingCollection) {
       return res.status(409).json({
         success: false,
-        message: `A milk collection already exists for this farmer on ${normalizedDate.toISOString().split('T')[0]} (${session} shift).`
+        message: `A ${normalizedMilkType} milk collection already exists for this farmer on ${normalizedDate.toISOString().split('T')[0]} (${session} shift).`
       });
     }
 
@@ -120,6 +130,7 @@ export const createCollection = async (req, res) => {
       farmer: farmerId,
       collectionDate: normalizedDate,
       session,
+      milkType: normalizedMilkType,
       quantityLiters: qty,
       fatPercentage: fat,
       ratePerLiter: rate,
@@ -158,7 +169,7 @@ export const createCollection = async (req, res) => {
 export const getDairyOwnerCollections = async (req, res) => {
   try {
     const dairyOwnerId = req.user.id;
-    const { farmerId, date, startDate, endDate, session } = req.query;
+    const { farmerId, date, startDate, endDate, session, milkType } = req.query;
 
     const query = { dairyOwner: dairyOwnerId };
 
@@ -168,6 +179,10 @@ export const getDairyOwnerCollections = async (req, res) => {
 
     if (session && ['morning', 'evening'].includes(session)) {
       query.session = session;
+    }
+
+    if (milkType && ['cow', 'buffalo'].includes(String(milkType).toLowerCase())) {
+      query.milkType = String(milkType).toLowerCase();
     }
 
     if (date && !isNaN(new Date(date).getTime())) {
@@ -213,12 +228,16 @@ export const getDairyOwnerCollections = async (req, res) => {
 export const getFarmerCollections = async (req, res) => {
   try {
     const farmerId = req.user.id;
-    const { startDate, endDate, session } = req.query;
+    const { startDate, endDate, session, milkType } = req.query;
 
     const query = { farmer: farmerId };
 
     if (session && ['morning', 'evening'].includes(session)) {
       query.session = session;
+    }
+
+    if (milkType && ['cow', 'buffalo'].includes(String(milkType).toLowerCase())) {
+      query.milkType = String(milkType).toLowerCase();
     }
 
     if (startDate || endDate) {

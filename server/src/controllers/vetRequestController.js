@@ -589,8 +589,35 @@ export const saveFollowUpAndComplete = async (req, res) => {
       status: isReq ? 'scheduled' : 'not_required'
     };
 
+    if (req.body.physicalExamination) {
+      const pe = req.body.physicalExamination;
+      const isConducted = Boolean(pe.conducted ?? true);
+      vetReq.followUp.physicalExamination = {
+        conducted: isConducted,
+        examinedAt: pe.examinedAt ? new Date(pe.examinedAt) : new Date(),
+        temperature: (pe.temperature || '').trim(),
+        appetite: (pe.appetite || '').trim(),
+        physicalFindings: (pe.physicalFindings || '').trim(),
+        recoveryStatus: pe.recoveryStatus || 'improving',
+        observations: (pe.observations || '').trim()
+      };
+      if (isConducted) {
+        vetReq.followUp.status = 'completed';
+      }
+    }
+
     if (completeCase) {
       vetReq.status = 'completed';
+    }
+
+    if (req.body.physicalExamination && req.body.physicalExamination.conducted) {
+      vetReq.clinicalTimeline.push({
+        stage: 'FOLLOW_UP_EXAM',
+        title: 'Follow-up Physical Examination Conducted',
+        notes: `Clinical examination findings updated. Status: ${req.body.physicalExamination.recoveryStatus || 'Improving'}. Findings: ${req.body.physicalExamination.physicalFindings || 'Normal recovery'}.`,
+        performedBy: req.user.id,
+        timestamp: new Date()
+      });
     }
 
     vetReq.clinicalTimeline.push({

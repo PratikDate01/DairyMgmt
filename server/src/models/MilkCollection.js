@@ -28,6 +28,15 @@ const milkCollectionSchema = new mongoose.Schema(
       default: 'morning',
       required: true
     },
+    milkType: {
+      type: String,
+      enum: {
+        values: ['cow', 'buffalo'],
+        message: '{VALUE} is not a valid milk type'
+      },
+      default: 'cow',
+      required: true
+    },
     quantityLiters: {
       type: Number,
       required: [true, 'Milk quantity in liters is required'],
@@ -69,9 +78,9 @@ const milkCollectionSchema = new mongoose.Schema(
   }
 );
 
-// Compound index to prevent duplicate entries for the same farmer, date, and shift session
+// Compound index to prevent duplicate entries for the same farmer, date, shift session, and milk type
 milkCollectionSchema.index(
-  { dairyOwner: 1, farmer: 1, collectionDate: 1, session: 1 },
+  { dairyOwner: 1, farmer: 1, collectionDate: 1, session: 1, milkType: 1 },
   { unique: true }
 );
 

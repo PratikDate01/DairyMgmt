@@ -71,6 +71,16 @@ export const FarmerCaseDetailModal = ({ requestItem, onClose }) => {
               </p>
             </div>
           </div>
+          {requestItem.veterinarian?.phone && (
+            <a
+              href={`tel:${requestItem.veterinarian.phone}`}
+              className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-xs self-start sm:self-auto"
+              title={`Call Dr. ${requestItem.veterinarian?.name || 'Veterinarian'}`}
+            >
+              <Phone className="w-3.5 h-3.5" />
+              <span>{t('farmer:caseDetailsModal.callDoctor', 'Call Doctor')}</span>
+            </a>
+          )}
         </div>
 
         {/* Stepper Progress */}
@@ -224,6 +234,37 @@ export const FarmerCaseDetailModal = ({ requestItem, onClose }) => {
                   <p className="text-slate-700 pt-1">
                     <strong>{t('farmer:caseDetailsModal.physicalSymptoms', 'Physical Findings:')}</strong> {requestItem.clinicalExamination.physicalSymptoms}
                   </p>
+                </div>
+              )}
+
+              {/* Follow-up Physical Examination Findings */}
+              {requestItem.followUp?.physicalExamination?.conducted && (
+                <div className="p-4 bg-purple-50/80 border border-purple-200 rounded-2xl space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-extrabold text-purple-950 flex items-center space-x-1.5">
+                      <Activity className="w-4 h-4 text-purple-600" />
+                      <span>{t('farmer:caseDetailsModal.followUpTitle', 'Follow-up Physical Examination Findings')}</span>
+                    </h4>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 border border-purple-200 uppercase">
+                      {requestItem.followUp.physicalExamination.recoveryStatus?.replace('_', ' ') || 'Examined'}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-slate-600">
+                    <p>Examined: <strong className="text-slate-800">{new Date(requestItem.followUp.physicalExamination.examinedAt || requestItem.followUp.conductedAt || Date.now()).toLocaleDateString()}</strong></p>
+                    <p>Temperature: <strong className="text-slate-800">{requestItem.followUp.physicalExamination.temperature || 'Normal'}</strong></p>
+                    <p>Appetite: <strong className="text-slate-800 capitalize">{requestItem.followUp.physicalExamination.appetite || 'Normal'}</strong></p>
+                    <p>Recovery: <strong className="text-slate-800 capitalize">{requestItem.followUp.physicalExamination.recoveryStatus?.replace('_', ' ') || 'In Progress'}</strong></p>
+                  </div>
+                  {requestItem.followUp.physicalExamination.physicalFindings && (
+                    <p className="text-slate-700 pt-1">
+                      <strong>Doctor Findings:</strong> {requestItem.followUp.physicalExamination.physicalFindings}
+                    </p>
+                  )}
+                  {requestItem.followUp.physicalExamination.observations && (
+                    <p className="text-slate-700">
+                      <strong>Directives & Notes:</strong> {requestItem.followUp.physicalExamination.observations}
+                    </p>
+                  )}
                 </div>
               )}
 

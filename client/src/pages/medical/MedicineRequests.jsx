@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../../context/AuthContext';
+import { BackButton } from '../../components/common/BackButton';
 import { getStatusLabel } from '../../i18n/statusMap';
 import {
   Clock,
@@ -39,6 +41,7 @@ const statusBadges = {
 
 export default function MedicalMedicineRequests() {
   const { t } = useTranslation(['medicalProvider', 'common']);
+  const { token } = useAuth();
   const [requests, setRequests] = useState([]);
   const [summary, setSummary] = useState({
     total: 0,
@@ -75,15 +78,18 @@ export default function MedicalMedicineRequests() {
       setError(null);
 
       const [summaryRes, requestsRes] = await Promise.all([
-        getProviderRequestsSummary(),
-        getProviderMedicineRequests({
-          status: statusFilter,
-          search,
-          startDate,
-          endDate,
-          page: currentPage,
-          limit: 10
-        })
+        getProviderRequestsSummary(token),
+        getProviderMedicineRequests(
+          {
+            status: statusFilter,
+            search,
+            startDate,
+            endDate,
+            page: currentPage,
+            limit: 10
+          },
+          token
+        )
       ]);
 
       if (summaryRes.success) setSummary(summaryRes.data);
@@ -100,7 +106,7 @@ export default function MedicalMedicineRequests() {
 
   useEffect(() => {
     fetchData();
-  }, [statusFilter, currentPage]);
+  }, [statusFilter, currentPage, token]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -120,7 +126,7 @@ export default function MedicalMedicineRequests() {
   const handleAccept = async (requestId) => {
     try {
       setActionLoading(true);
-      const res = await acceptMedicineRequest(requestId);
+      const res = await acceptMedicineRequest(requestId, '', token);
       if (res.success) {
         setSuccessMsg('Request accepted successfully! Stock has been reserved.');
         fetchData();
@@ -135,7 +141,7 @@ export default function MedicalMedicineRequests() {
   const handlePack = async (requestId) => {
     try {
       setActionLoading(true);
-      const res = await packMedicineRequest(requestId);
+      const res = await packMedicineRequest(requestId, '', token);
       if (res.success) {
         setSuccessMsg('Request marked as packed.');
         fetchData();
@@ -150,7 +156,7 @@ export default function MedicalMedicineRequests() {
   const handleReady = async (requestId) => {
     try {
       setActionLoading(true);
-      const res = await readyMedicineRequest(requestId);
+      const res = await readyMedicineRequest(requestId, '', token);
       if (res.success) {
         setSuccessMsg('Request marked ready for collection.');
         fetchData();
@@ -165,7 +171,7 @@ export default function MedicalMedicineRequests() {
   const handleComplete = async (requestId) => {
     try {
       setActionLoading(true);
-      const res = await completeMedicineRequest(requestId);
+      const res = await completeMedicineRequest(requestId, '', token);
       if (res.success) {
         setSuccessMsg('Request marked as completed.');
         fetchData();
@@ -182,7 +188,7 @@ export default function MedicalMedicineRequests() {
     if (!selectedRequest) return;
     try {
       setActionLoading(true);
-      const res = await rejectMedicineRequest(selectedRequest._id, providerRemarks);
+      const res = await rejectMedicineRequest(selectedRequest._id, providerRemarks, token);
       if (res.success) {
         setSuccessMsg('Request rejected.');
         setModalType(null);
@@ -202,7 +208,7 @@ export default function MedicalMedicineRequests() {
     if (!selectedRequest) return;
     try {
       setActionLoading(true);
-      const res = await cancelMedicineRequest(selectedRequest._id, cancelReason);
+      const res = await cancelMedicineRequest(selectedRequest._id, cancelReason, token);
       if (res.success) {
         setSuccessMsg('Request cancelled successfully. Any reserved stock was restored.');
         setModalType(null);
@@ -221,9 +227,12 @@ export default function MedicalMedicineRequests() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800">{t('medicalProvider:requestsPage.title', 'Medicine Requests')}</h1>
-          <p className="text-slate-500 text-sm">{t('medicalProvider:requestsPage.subtitle', 'Manage incoming farmer requests, order packing, and fulfillment.')}</p>
+        <div className="flex items-center gap-3">
+          <BackButton fallback="/medical-provider/dashboard" />
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800">{t('medicalProvider:requestsPage.title', 'Medicine Requests')}</h1>
+            <p className="text-slate-500 text-sm">{t('medicalProvider:requestsPage.subtitle', 'Manage incoming farmer requests, order packing, and fulfillment.')}</p>
+          </div>
         </div>
         <button
           onClick={fetchData}

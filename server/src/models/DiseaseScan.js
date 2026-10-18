@@ -15,7 +15,7 @@ const diseaseScanSchema = new mongoose.Schema(
     },
     animalType: {
       type: String,
-      enum: ['cow', 'buffalo', 'goat', 'sheep', 'other'],
+      enum: ['cow', 'bull', 'ox', 'buffalo', 'cattle', 'goat', 'sheep', 'other'],
       default: 'cow',
       required: true
     },
@@ -50,6 +50,7 @@ const diseaseScanSchema = new mongoose.Schema(
     },
     symptoms: {
       type: String,
+      required: [true, 'Observed symptoms are required'],
       trim: true
     },
     recommendations: {

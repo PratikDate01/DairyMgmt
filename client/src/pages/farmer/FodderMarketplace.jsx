@@ -285,6 +285,7 @@ export const FodderMarketplace = () => {
         title={t('farmer:fodderMarket.title', 'Fodder Marketplace')}
         description={t('farmer:fodder.subtitle', 'Farmer-to-Farmer fodder marketplace. Buy, sell, and list available green & dry cattle fodder directly with neighboring farmers.')}
         breadcrumbs={[t('common:nav.home', 'Home'), t('common:roles.farmer', 'Farmer'), t('farmer:fodderMarket.title', 'Fodder Marketplace')]}
+        backFallback="/farmer/dashboard"
         actions={
           <button
             onClick={openCreateModal}

@@ -304,6 +304,7 @@ export const Inventory = () => {
         title={t('medicalProvider:inventory.title', 'Medical Inventory Management')}
         description={t('medicalProvider:inventory.subtitle', 'Manage medicines, track stock levels, and set product availability for your medical store.')}
         breadcrumbs={[t('common:nav.home', 'Home'), t('common:roles.medicalProvider', 'Medical Console'), t('medicalProvider:inventory.title', 'Inventory')]}
+        backFallback="/medical-provider/dashboard"
         actions={
           <button
             onClick={handleOpenAddModal}

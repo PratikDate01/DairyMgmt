@@ -100,6 +100,7 @@ export const ConnectedFarmers = () => {
         title={t('dairyOwner:farmers.title', 'Connected Farmers')}
         description={t('dairyOwner:farmers.subtitle', 'Search, connect, and manage farmers registered under your dairy operation.')}
         breadcrumbs={[t('common:nav.home', 'Home'), t('common:roles.dairyOwner', 'Dairy Owner'), t('dairyOwner:farmers.title', 'Connected Farmers')]}
+        backFallback="/dairy-owner/dashboard"
       />
 
       {error && (

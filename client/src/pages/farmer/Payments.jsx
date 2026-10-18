@@ -54,6 +54,7 @@ export const FarmerPayments = () => {
         title={t('farmer:paymentsPage.title', 'Payment History & Ledger')}
         description={t('farmer:paymentsPage.subtitle', 'View payment settlements disbursed by your connected dairy owner.')}
         breadcrumbs={[t('common:nav.home', 'Home'), t('common:roles.farmer', 'Farmer Portal'), t('farmer:payments.title', 'Payments')]}
+        backFallback="/farmer/dashboard"
       />
 
       {error && (

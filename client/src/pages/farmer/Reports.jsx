@@ -114,6 +114,7 @@ export const FarmerReports = () => {
         title={t('farmer:reportsPage.title', 'Personal Supply & Payment Analytics')}
         description={t('farmer:reportsPage.subtitle', 'View your personal milk supply metrics, historical earnings, and settlement summary.')}
         breadcrumbs={[t('common:nav.home', 'Home'), t('common:roles.farmer', 'Farmer Portal'), t('common:nav.reportsAnalytics', 'Reports')]}
+        backFallback="/farmer/dashboard"
         actions={
           <div className="flex items-center space-x-2">
             <span className="px-2.5 py-1 bg-amber-50 text-amber-800 border border-amber-200 text-xs font-semibold rounded-lg flex items-center">

@@ -64,12 +64,18 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
     dietaryAdvice: requestItem.prescription?.dietaryAdvice || ''
   });
 
-  // 4. Follow-Up Form State
+  // 4. Follow-Up & Physical Examination Form State
   const [followUpForm, setFollowUpForm] = useState({
     required: requestItem.followUp?.required || false,
     date: requestItem.followUp?.date ? new Date(requestItem.followUp.date).toISOString().split('T')[0] : '',
     instructions: requestItem.followUp?.instructions || '',
     notes: requestItem.followUp?.notes || '',
+    conductExam: Boolean(requestItem.followUp?.physicalExamination?.conducted),
+    examTemperature: requestItem.followUp?.physicalExamination?.temperature || '',
+    examAppetite: requestItem.followUp?.physicalExamination?.appetite || 'Normal',
+    physicalFindings: requestItem.followUp?.physicalExamination?.physicalFindings || '',
+    recoveryStatus: requestItem.followUp?.physicalExamination?.recoveryStatus || 'improving',
+    examObservations: requestItem.followUp?.physicalExamination?.observations || '',
     completeCase: requestItem.status === 'completed'
   });
 
@@ -172,12 +178,24 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
     setSuccessMsg('');
     try {
       const payload = {
-        ...followUpForm,
-        completeCase
+        required: followUpForm.required,
+        date: followUpForm.date || null,
+        instructions: followUpForm.instructions,
+        notes: followUpForm.notes,
+        completeCase,
+        physicalExamination: followUpForm.conductExam ? {
+          conducted: true,
+          temperature: followUpForm.examTemperature,
+          appetite: followUpForm.examAppetite,
+          physicalFindings: followUpForm.physicalFindings,
+          recoveryStatus: followUpForm.recoveryStatus,
+          observations: followUpForm.examObservations,
+          examinedAt: new Date()
+        } : undefined
       };
       const res = await vetRequestService.saveFollowUp(currentReq._id, payload, token);
       setCurrentReq(res.data);
-      setSuccessMsg(completeCase ? 'Case completed & released to farmer!' : 'Follow-up details saved successfully!');
+      setSuccessMsg(completeCase ? 'Case completed & released to farmer!' : 'Follow-up and physical examination details saved successfully!');
       if (onRequestUpdated) onRequestUpdated(res.data);
       setTimeout(() => setSuccessMsg(''), 4000);
     } catch (err) {
@@ -319,26 +337,57 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
               {/* Two-Column Grid: Farmer & Cattle Info */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                 {/* Farmer Info Card */}
-                <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
-                  <div className="flex items-center space-x-1.5 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
-                    <User className="w-3.5 h-3.5 text-teal-600" />
-                    <span>{t('veterinarian:clinicalWorkspace.farmerInfo', 'Farmer Profile')}</span>
+                <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-1.5 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
+                      <User className="w-3.5 h-3.5 text-teal-600" />
+                      <span>{t('veterinarian:clinicalWorkspace.farmerInfo', 'Farmer Profile')}</span>
+                    </div>
+                    <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded-full">
+                      Client Contact
+                    </span>
                   </div>
-                  <h3 className="text-sm font-extrabold text-slate-900">{currentReq.farmer?.name || 'Farmer'}</h3>
-                  <div className="space-y-1 text-slate-600">
-                    <p className="flex items-center space-x-1.5">
-                      <Phone className="w-3 h-3 text-slate-400" />
-                      <span>{currentReq.farmer?.phone}</span>
-                    </p>
+
+                  <div>
+                    <h3 className="text-sm font-extrabold text-slate-900">{currentReq.farmer?.name || 'Farmer'}</h3>
                     {currentReq.farmer?.email && (
-                      <p className="flex items-center space-x-1.5">
+                      <p className="flex items-center space-x-1.5 text-[11px] text-slate-500 mt-0.5">
                         <Mail className="w-3 h-3 text-slate-400" />
                         <span>{currentReq.farmer?.email}</span>
                       </p>
                     )}
                   </div>
+
+                  {/* Active Call Section */}
+                  <div className="p-3 bg-white border border-teal-200 rounded-xl space-y-2 shadow-2xs">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-teal-900 uppercase tracking-wider flex items-center space-x-1">
+                        <Phone className="w-3.5 h-3.5 text-teal-600" />
+                        <span>Voice Tele-Consultation</span>
+                      </span>
+                      <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-700 text-[10px] font-extrabold rounded-md border border-emerald-200">
+                        Direct Call Active
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between pt-0.5">
+                      <span className="font-mono font-bold text-slate-800 text-xs">
+                        {currentReq.farmer?.phone || 'No phone number'}
+                      </span>
+                      {currentReq.farmer?.phone && (
+                        <a
+                          href={`tel:${currentReq.farmer.phone}`}
+                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs transition flex items-center space-x-1.5 shadow-xs"
+                          title="Call Farmer directly"
+                        >
+                          <Phone className="w-3.5 h-3.5" />
+                          <span>Call Farmer</span>
+                        </a>
+                      )}
+                    </div>
+                  </div>
+
                   {currentReq.farmerMessage && (
-                    <div className="mt-2 p-2.5 bg-white border border-slate-200 rounded-xl italic text-slate-700">
+                    <div className="mt-2 p-2.5 bg-white border border-slate-200 rounded-xl italic text-slate-700 text-xs">
                       <strong>{t('veterinarian:pendingCasesPage.farmerMessage', 'Message from Farmer:')}</strong> "{currentReq.farmerMessage}"
                     </div>
                   )}
@@ -796,6 +845,7 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
                 </p>
               </div>
 
+              {/* Card 1: Schedule Follow-Up & Farmer Instructions */}
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-4">
                 <div className="flex items-center space-x-3">
                   <input
@@ -806,7 +856,7 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
                     className="w-4 h-4 text-teal-600 rounded border-slate-300 focus:ring-teal-500"
                   />
                   <label htmlFor="followup-needed" className="font-bold text-slate-900 cursor-pointer">
-                    {t('veterinarian:clinicalWorkspace.followUpRequired', 'Follow-up examination required for this cattle')}
+                    {t('veterinarian:clinicalWorkspace.followUpRequired', 'Follow-up consultation required for this cattle')}
                   </label>
                 </div>
 
@@ -825,13 +875,114 @@ export const ClinicalWorkspaceModal = ({ requestItem, onClose, onRequestUpdated 
                 <div>
                   <label className="block font-semibold text-slate-700 mb-1">{t('veterinarian:clinicalWorkspace.followUpInstructions', 'Follow-Up Instructions for Farmer')}</label>
                   <textarea
-                    rows="3"
+                    rows="2"
                     placeholder={t('veterinarian:clinicalWorkspace.followUpPlaceholder', 'e.g. Schedule check-up if fever persists after 3 days, monitor milk yield recovery...')}
                     value={followUpForm.instructions}
                     onChange={(e) => setFollowUpForm(prev => ({ ...prev, instructions: e.target.value }))}
                     className="w-full p-3 bg-white border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-teal-500 outline-none"
                   />
                 </div>
+              </div>
+
+              {/* Card 2: Follow-up Physical Examination Findings */}
+              <div className="p-4 bg-teal-50/50 border border-teal-200 rounded-2xl space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Activity className="w-4 h-4 text-teal-600" />
+                    <h4 className="font-extrabold text-teal-950 text-xs">
+                      {t('veterinarian:clinicalWorkspace.followUpExamTitle', 'Follow-up Physical Examination (Clinical Visit)')}
+                    </h4>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      id="conduct-exam"
+                      type="checkbox"
+                      checked={followUpForm.conductExam}
+                      onChange={(e) => setFollowUpForm(prev => ({ ...prev, conductExam: e.target.checked }))}
+                      className="w-4 h-4 text-teal-600 rounded border-slate-300 focus:ring-teal-500"
+                    />
+                    <label htmlFor="conduct-exam" className="font-bold text-teal-900 cursor-pointer">
+                      {t('veterinarian:clinicalWorkspace.recordExamNow', 'Record Physical Exam Findings')}
+                    </label>
+                  </div>
+                </div>
+
+                {followUpForm.conductExam && (
+                  <div className="space-y-4 pt-2 border-t border-teal-100">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">
+                          {t('veterinarian:clinicalWorkspace.recoveryStatus', 'Clinical Recovery Status')}
+                        </label>
+                        <select
+                          value={followUpForm.recoveryStatus}
+                          onChange={(e) => setFollowUpForm(prev => ({ ...prev, recoveryStatus: e.target.value }))}
+                          className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-teal-500 outline-none"
+                        >
+                          <option value="improving">🟢 {t('common:status.improving', 'Condition Improving / Positive Response')}</option>
+                          <option value="fully_recovered">✅ {t('common:status.fullyRecovered', 'Fully Recovered / Healthy')}</option>
+                          <option value="stagnant">🟡 {t('common:status.stagnant', 'Guarded / Slow Progress')}</option>
+                          <option value="critical">🔴 {t('common:status.critical', 'Critical / Deteriorating')}</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">
+                          {t('veterinarian:clinicalWorkspace.followUpTemp', 'Current Temperature (°F)')}
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. 101.8 °F (Normal)"
+                          value={followUpForm.examTemperature}
+                          onChange={(e) => setFollowUpForm(prev => ({ ...prev, examTemperature: e.target.value }))}
+                          className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-teal-500 outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">
+                          {t('veterinarian:clinicalWorkspace.followUpAppetite', 'Current Appetite / Rumination')}
+                        </label>
+                        <select
+                          value={followUpForm.examAppetite}
+                          onChange={(e) => setFollowUpForm(prev => ({ ...prev, examAppetite: e.target.value }))}
+                          className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-teal-500 outline-none"
+                        >
+                          <option value="Normal">Normal Feeding & Rumination</option>
+                          <option value="Improving">Appetite Improving</option>
+                          <option value="Reduced">Reduced Feed Intake</option>
+                          <option value="Anorexic">Loss of Appetite / Depressed</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block font-semibold text-slate-700 mb-1">
+                        {t('veterinarian:clinicalWorkspace.physicalFindingsLabel', 'Physical Examination Observations & Healing Progress')}
+                      </label>
+                      <textarea
+                        rows="3"
+                        placeholder="Document physical symptoms observed: e.g. wound healing nicely, udder swelling reduced by 80%, rumination normalized, active gait..."
+                        value={followUpForm.physicalFindings}
+                        onChange={(e) => setFollowUpForm(prev => ({ ...prev, physicalFindings: e.target.value }))}
+                        className="w-full p-3 bg-white border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-teal-500 outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block font-semibold text-slate-700 mb-1">
+                        {t('veterinarian:clinicalWorkspace.doctorDirectives', 'Additional Doctor Directives & Next Steps')}
+                      </label>
+                      <textarea
+                        rows="2"
+                        placeholder="Optional instructions for further management, vaccination date, or discharge note..."
+                        value={followUpForm.examObservations}
+                        onChange={(e) => setFollowUpForm(prev => ({ ...prev, examObservations: e.target.value }))}
+                        className="w-full p-3 bg-white border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-teal-500 outline-none"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="pt-3 border-t border-slate-100 flex items-center justify-between">

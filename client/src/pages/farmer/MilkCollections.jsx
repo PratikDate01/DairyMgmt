@@ -196,6 +196,7 @@ export const MilkCollections = () => {
         title={t('farmer:milkCollections.title', 'My Milk Collections')}
         description={t('farmer:milk.subtitle', 'Inspect daily milk collections, fat percentages, rate payouts, and 10-day billing summaries recorded by your dairy.')}
         breadcrumbs={[t('common:nav.home', 'Home'), t('common:roles.farmer', 'Farmer'), t('farmer:milkCollections.title', 'My Milk Collections')]}
+        backFallback="/farmer/dashboard"
         actions={
           <div className="flex items-center space-x-2">
             <button
@@ -486,6 +487,15 @@ export const MilkCollections = () => {
                             )}
                             {item.session}
                           </span>
+                          <span
+                            className={`inline-flex items-center ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${
+                              (item.milkType || 'cow') === 'buffalo'
+                                ? 'bg-purple-100 text-purple-900 border border-purple-200'
+                                : 'bg-blue-100 text-blue-900 border border-blue-200'
+                            }`}
+                          >
+                            {(item.milkType || 'cow') === 'buffalo' ? '🐃 Buffalo' : '🐄 Cow'}
+                          </span>
                         </td>
                         <td className="py-3 px-4 text-right font-mono font-semibold text-slate-900">
                           {item.quantityLiters} L
@@ -535,7 +545,16 @@ export const MilkCollections = () => {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-1.5">
+                      <div className="flex items-center space-x-1.5 flex-wrap justify-end gap-1">
+                        <span
+                          className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${
+                            (item.milkType || 'cow') === 'buffalo'
+                              ? 'bg-purple-100 text-purple-900 border border-purple-200'
+                              : 'bg-blue-100 text-blue-900 border border-blue-200'
+                          }`}
+                        >
+                          {(item.milkType || 'cow') === 'buffalo' ? '🐃 Buffalo' : '🐄 Cow'}
+                        </span>
                         <span
                           className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
                             item.session === 'morning'

@@ -137,6 +137,7 @@ export const FarmerVetRequests = () => {
         title={t('farmer:vetRequests.title', 'My Veterinary Requests')}
         description={t('farmer:vetRequests.subtitle', 'Track consultation requests submitted to veterinarians for your cattle AI screenings.')}
         breadcrumbs={[t('common:nav.home', 'Home'), t('common:roles.farmer', 'Farmer'), t('farmer:vetRequests.title', 'Vet Requests')]}
+        backFallback="/farmer/dashboard"
         actions={
           <button
             onClick={fetchRequests}

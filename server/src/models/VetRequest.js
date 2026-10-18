@@ -98,7 +98,20 @@ const vetRequestSchema = new mongoose.Schema(
       date: { type: Date },
       instructions: { type: String, trim: true, default: '' },
       notes: { type: String, trim: true, default: '' },
-      status: { type: String, enum: ['scheduled', 'completed', 'not_required'], default: 'not_required' }
+      status: { type: String, enum: ['scheduled', 'completed', 'not_required'], default: 'not_required' },
+      physicalExamination: {
+        conducted: { type: Boolean, default: false },
+        examinedAt: { type: Date },
+        temperature: { type: String, trim: true, default: '' },
+        appetite: { type: String, trim: true, default: '' },
+        physicalFindings: { type: String, trim: true, default: '' },
+        recoveryStatus: {
+          type: String,
+          enum: ['improving', 'fully_recovered', 'stagnant', 'critical', ''],
+          default: ''
+        },
+        observations: { type: String, trim: true, default: '' }
+      }
     },
     clinicalTimeline: [
       {

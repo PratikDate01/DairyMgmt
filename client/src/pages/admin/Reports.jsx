@@ -10,11 +10,17 @@ import {
   Wallet,
   Building2,
   Stethoscope,
+  Store,
+  ShieldAlert,
   CreditCard,
   CheckCircle2,
   RefreshCw,
   AlertCircle,
-  Lock
+  Lock,
+  Activity,
+  Clock,
+  HeartPulse,
+  AlertTriangle
 } from 'lucide-react';
 
 export const AdminReports = () => {
@@ -44,7 +50,8 @@ export const AdminReports = () => {
   }, [fetchAdminReports]);
 
   const metrics = dashboardData || {
-    users: { totalUsers: 0, totalFarmers: 0, totalDairyOwners: 0, totalMedicalProviders: 0 },
+    users: { totalUsers: 0, totalRegisteredUsers: 0, totalFarmers: 0, totalDairyOwners: 0, totalMedicalProviders: 0, totalVeterinarians: 0, totalAdmins: 0 },
+    veterinary: { totalVetRequests: 0, activeVetRequests: 0, completedVetRequests: 0, criticalVetRequests: 0, totalDiseaseScans: 0, totalVeterinarians: 0 },
     milk: { totalQuantity: 0, totalValue: 0 },
     payments: { totalPayments: 0, totalGross: 0, totalPaid: 0, totalOutstanding: 0 }
   };
@@ -55,6 +62,7 @@ export const AdminReports = () => {
         title={t('admin:reportsPage.title', 'System Administration & Global Reports')}
         description={t('admin:reportsPage.subtitle', 'Read-only high-level analytics across system users, milk collections, and payment volumes.')}
         breadcrumbs={[t('common:nav.home', 'Home'), t('common:roles.admin', 'Admin'), t('admin:reportsPage.title', 'Reports')]}
+        backFallback="/admin/dashboard"
         actions={
           <div className="flex items-center space-x-2">
             <span className="px-2.5 py-1 bg-amber-50 text-amber-800 border border-amber-200 text-xs font-semibold rounded-lg flex items-center">
@@ -85,13 +93,13 @@ export const AdminReports = () => {
 
       {/* User Statistics */}
       <SectionCard title={t('admin:reportsPage.userDemographics', 'System Registered User Demographics')} subtitle={t('admin:reportsPage.userDemographicsSubtitle', 'Aggregated count of active registered accounts across system roles')}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
           <StatCard
             title={t('admin:reportsPage.totalRegisteredAccounts', 'Total Registered Accounts')}
-            value={loading ? '...' : `${metrics.users.totalUsers} Users`}
+            value={loading ? '...' : `${metrics.users.totalRegisteredUsers ?? metrics.users.totalUsers} Users`}
             icon={Users}
-            badgeText="System Ecosystem"
-            badgeType="neutral"
+            badgeText={t('admin:dashboard.platformUsers', 'Platform Users')}
+            badgeType="success"
           />
           <StatCard
             title={t('admin:reportsPage.totalFarmers', 'Total Farmers')}
@@ -108,11 +116,69 @@ export const AdminReports = () => {
             badgeType="neutral"
           />
           <StatCard
-            title={t('admin:reportsPage.totalMedicalStores', 'Total Medical Providers')}
-            value={loading ? '...' : `${metrics.users.totalMedicalProviders} Doctors`}
+            title={t('admin:reportsPage.totalVets', 'Total Veterinarians')}
+            value={loading ? '...' : `${metrics.users.totalVeterinarians || 0} Doctors`}
             icon={Stethoscope}
-            badgeText="Healthcare Specialists"
+            badgeText="Licensed Doctors"
             badgeType="neutral"
+          />
+          <StatCard
+            title={t('admin:reportsPage.totalMedicalProviders', 'Total Medical Providers')}
+            value={loading ? '...' : `${metrics.users.totalMedicalProviders || 0} Medical Providers`}
+            icon={Store}
+            badgeText="Medical Stores"
+            badgeType="neutral"
+          />
+          <StatCard
+            title={t('admin:dashboard.administratorsStat', 'System Administrators')}
+            value={loading ? '...' : `${metrics.users.totalAdmins || 0} Admins`}
+            icon={ShieldAlert}
+            badgeText={t('admin:dashboard.systemUsers', 'System Users')}
+            badgeType="neutral"
+          />
+        </div>
+      </SectionCard>
+
+      {/* Global Veterinary & Clinical Healthcare Statistics */}
+      <SectionCard
+        title={t('admin:reportsPage.vetMetricsTitle', 'System-Wide Veterinary Healthcare & Clinical Services')}
+        subtitle={t('admin:reportsPage.vetMetricsSubtitle', 'Comprehensive triage metrics across cattle disease scans, veterinary consultation cases, and clinical statuses')}
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+          <StatCard
+            title={t('admin:reportsPage.totalConsultations', 'Total Vet Requests')}
+            value={loading ? '...' : `${metrics.veterinary?.totalVetRequests || 0} Cases`}
+            icon={Activity}
+            badgeText="All Time Consultations"
+            badgeType="neutral"
+          />
+          <StatCard
+            title={t('admin:reportsPage.activeConsultations', 'Active Consultation Cases')}
+            value={loading ? '...' : `${metrics.veterinary?.activeVetRequests || 0} Active`}
+            icon={Clock}
+            badgeText="In-Triage / Under Review"
+            badgeType={metrics.veterinary?.activeVetRequests ? 'amber' : 'neutral'}
+          />
+          <StatCard
+            title={t('admin:reportsPage.completedConsultations', 'Completed Prescriptions')}
+            value={loading ? '...' : `${metrics.veterinary?.completedVetRequests || 0} Prescribed`}
+            icon={CheckCircle2}
+            badgeText="Fulfilled by Doctors"
+            badgeType="success"
+          />
+          <StatCard
+            title={t('admin:reportsPage.cattleDiseaseScans', 'Cattle Disease Scans')}
+            value={loading ? '...' : `${metrics.veterinary?.totalDiseaseScans || 0} Scans`}
+            icon={HeartPulse}
+            badgeText="AI Health Screenings"
+            badgeType="neutral"
+          />
+          <StatCard
+            title={t('admin:reportsPage.criticalCases', 'Critical / High Risk Cases')}
+            value={loading ? '...' : `${metrics.veterinary?.criticalVetRequests || 0} Cases`}
+            icon={AlertTriangle}
+            badgeText="Emergency Priority"
+            badgeType={metrics.veterinary?.criticalVetRequests ? 'amber' : 'neutral'}
           />
         </div>
       </SectionCard>

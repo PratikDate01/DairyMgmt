@@ -97,22 +97,31 @@ export const CaseDetailModal = ({ caseData, onClose, onCaseUpdated }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Left Column: Case Information */}
           <div className="space-y-4 text-xs">
-            {/* Farmer Card */}
-            <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+            <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
               <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">{t('veterinarian:clinicalWorkspace.farmerInfo', 'Farmer Information')}</span>
               <p className="font-bold text-slate-900 text-sm">{caseData.farmer?.name || 'Farmer'}</p>
-              <div className="flex items-center space-x-3 text-slate-600">
-                <span className="flex items-center space-x-1">
-                  <Phone className="w-3 h-3 text-slate-400" />
+              <div className="flex items-center justify-between pt-1">
+                <span className="flex items-center space-x-1.5 text-slate-700 font-mono">
+                  <Phone className="w-3.5 h-3.5 text-teal-600" />
                   <span>{caseData.farmer?.phone}</span>
                 </span>
-                {caseData.farmer?.email && (
-                  <span className="flex items-center space-x-1">
-                    <Mail className="w-3 h-3 text-slate-400" />
-                    <span>{caseData.farmer?.email}</span>
-                  </span>
+                {caseData.farmer?.phone && (
+                  <a
+                    href={`tel:${caseData.farmer.phone}`}
+                    className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs transition flex items-center space-x-1 shadow-2xs"
+                    title="Call Farmer"
+                  >
+                    <Phone className="w-3 h-3" />
+                    <span>Call</span>
+                  </a>
                 )}
               </div>
+              {caseData.farmer?.email && (
+                <p className="flex items-center space-x-1 text-slate-500 text-[11px]">
+                  <Mail className="w-3 h-3 text-slate-400" />
+                  <span>{caseData.farmer?.email}</span>
+                </p>
+              )}
             </div>
 
             {/* Animal & Image */}

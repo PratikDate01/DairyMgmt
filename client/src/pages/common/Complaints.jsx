@@ -99,6 +99,7 @@ export const Complaints = () => {
         title={t('complaints:title', 'Complaints & Support Desk')}
         description={t('complaints:subtitle', 'Submit operational grievances, report discrepancies, and receive prompt administrative assistance.')}
         breadcrumbs={[t('common:nav.home', 'Home'), t('complaints:title', 'Complaints & Support')]}
+        showBack={true}
         actions={
           <div className="flex items-center space-x-2">
             <button

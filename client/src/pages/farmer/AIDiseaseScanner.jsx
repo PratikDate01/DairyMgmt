@@ -6,6 +6,7 @@ import { diseaseScanService } from '../../services/diseaseScanService';
 import { cattleService } from '../../services/cattleService';
 import { getStatusLabel, getGenderLabel } from '../../i18n/statusMap';
 import { VeterinarianRecommendations } from '../../components/farmer/VeterinarianRecommendations';
+import { BackButton } from '../../components/common/BackButton';
 import {
   Scan,
   Upload,
@@ -121,6 +122,11 @@ export const AIDiseaseScanner = () => {
       return;
     }
 
+    if (!symptoms || !symptoms.trim()) {
+      setError(t('farmer:aiScanner.symptomsRequired', 'Observed symptoms are required. Please describe the symptoms before starting the scan.'));
+      return;
+    }
+
     setLoading(true);
     setError('');
     setScanResult(null);
@@ -132,7 +138,7 @@ export const AIDiseaseScanner = () => {
           animalType: selectedCattle.gender === 'male' ? 'bull' : 'cow',
           animalIdTag: selectedCattle.nameTag,
           imageUrl: imagePreview,
-          symptoms
+          symptoms: symptoms.trim()
         },
         token
       );
@@ -165,13 +171,7 @@ export const AIDiseaseScanner = () => {
               <h1 className="text-2xl font-extrabold tracking-tight">{t('farmer:aiScanner.title', 'AI Cattle Disease Scanner')}</h1>
             </div>
           </div>
-          <Link
-            to="/farmer/cattle"
-            className="px-3.5 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-semibold backdrop-sm transition flex items-center space-x-1.5"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>{t('farmer:cattle.title', 'My Cattle')}</span>
-          </Link>
+          <BackButton fallback="/farmer/cattle" variant="inverse" />
         </div>
         <p className="text-xs text-blue-100 max-w-2xl mt-1">
           {t('farmer:aiScanner.subtitle', 'Upload a photo of your cattle affected area or symptoms for immediate preliminary AI screening.')}
@@ -330,24 +330,38 @@ export const AIDiseaseScanner = () => {
 
           {/* Section 3: Observed Symptoms */}
           <div className="space-y-3 pt-4 border-t border-slate-100">
-            <h3 className="text-sm font-bold text-slate-900 flex items-center space-x-2">
-              <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold">3</span>
-              <span>{t('farmer:aiScanner.describeSymptoms', 'Observed Symptoms / Notes')}</span>
-            </h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-slate-900 flex items-center space-x-2">
+                <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold">3</span>
+                <span>{t('farmer:aiScanner.describeSymptoms', 'Observed Symptoms / Notes')}</span>
+                <span className="text-red-500 font-bold">*</span>
+              </h3>
+              <span className="text-[11px] font-semibold text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">
+                {t('common:labels.required', 'Required')}
+              </span>
+            </div>
             <textarea
               rows="3"
+              required
               placeholder={t('farmer:aiScanner.symptomsPlaceholder', 'Enter symptoms (e.g. skin rash, udder swelling, limping, fever, loss of appetite)...')}
               value={symptoms}
-              onChange={(e) => setSymptoms(e.target.value)}
-              className="w-full p-3 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
+              onChange={(e) => {
+                setSymptoms(e.target.value);
+                if (error) setError('');
+              }}
+              className={`w-full p-3 bg-white border ${!symptoms.trim() && error ? 'border-red-400 ring-1 ring-red-400' : 'border-slate-300'} rounded-xl text-xs text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none`}
             />
+            <p className="text-[11px] text-slate-500 flex items-center space-x-1">
+              <span className="text-red-500 font-bold">*</span>
+              <span>{t('farmer:aiScanner.symptomsHelp', 'Please record observed signs, behavioral changes, or affected areas to aid diagnostic accuracy.')}</span>
+            </p>
           </div>
 
           {/* Submit Button */}
           <div className="pt-4 border-t border-slate-100 flex items-center justify-end">
             <button
               type="submit"
-              disabled={loading || !selectedCattle || !imagePreview}
+              disabled={loading || !selectedCattle || !imagePreview || !symptoms.trim()}
               className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-md transition disabled:opacity-50 flex items-center justify-center space-x-2"
             >
               {loading ? (
