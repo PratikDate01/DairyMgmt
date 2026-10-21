@@ -14,6 +14,11 @@ const cattleSchema = new mongoose.Schema(
       trim: true,
       minlength: [1, 'Name or tag number cannot be empty']
     },
+    nameMr: {
+      type: String,
+      trim: true,
+      default: ''
+    },
     breed: {
       type: String,
       required: [true, 'Breed is required'],

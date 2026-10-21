@@ -125,6 +125,9 @@
     "fulfilled": "वितरित झाले",
     "cancelled": "रद्द झाले",
     "paid": "भरले",
+    "settled": "जमा",
+    "cow": "गाय",
+    "buffalo": "म्हैस",
     "unpaid": "थकबाकी",
     "partial": "अंशतः भरले",
     "available": "उपलब्ध",
@@ -244,5 +247,17 @@
     "from": "सुरुवात तारीख",
     "to": "अखेर तारीख",
     "period": "कालावधी"
+  },
+  "datePresets": {
+    "all": "सर्व",
+    "today": "आज",
+    "yesterday": "काल",
+    "thisWeek": "हा आठवडा",
+    "thisMonth": "हा महिना",
+    "last7days": "मागील ७ दिवस",
+    "last10days": "मागील १० दिवस",
+    "last30days": "मागील ३० दिवस",
+    "custom": "सानुकूल कालावधी",
+    "customRange": "सानुकूल कालावधी"
   }
 }

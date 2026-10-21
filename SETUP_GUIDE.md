@@ -67,6 +67,23 @@ BREVO_SENDER_NAME=Gauseva
 ---
 
 ### STEP 8: Start Backend Server
+### STEP 8: Configure Google Sign-In (Optional / OAuth)
+In `server/.env`, insert your Google OAuth credentials:
+```env
+GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+```
+
+In `client/.env`, configure the client ID for Google Identity Services (GIS):
+```env
+VITE_GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
+```
+
+*Note: In Google Cloud Console (APIs & Services > Credentials), add `http://localhost:5173` under **Authorized JavaScript Origins**.*
+
+---
+
+### STEP 9: Start Backend Server
 From the `server` directory, run:
 ```bash
 npm run dev
@@ -77,7 +94,7 @@ npm run dev
 
 ---
 
-### STEP 9: Install Client Dependencies
+### STEP 10: Install Client Dependencies
 Open a new terminal window, navigate to the `client` directory, and install dependencies:
 ```bash
 cd client
@@ -86,7 +103,7 @@ npm install
 
 ---
 
-### STEP 10: Start Frontend Client
+### STEP 11: Start Frontend Client
 From the `client` directory, run:
 ```bash
 npm run dev
@@ -95,23 +112,39 @@ npm run dev
 
 ---
 
-### STEP 11: Open Browser
+### STEP 12: Open Browser & Test Authentication
 Open your browser and navigate to:
 ```
 http://localhost:5173
 ```
+1. **Email OTP Workflow:**
+   - Select role (Farmer, Veterinarian, or Medical Store).
+   - Enter your email address.
+   - Click **Send Verification Code**.
+   - Enter the 6-digit OTP received via email and log in.
+2. **Google Sign-In Workflow:**
+   - Click **Sign in with Google**.
+   - Complete Google identity verification; new accounts seamlessly register under permitted public roles, while existing accounts link cleanly.
 
 ---
 
-### STEP 12: Test Login & OTP Workflow
-1. Click **Farmer** (or another role).
-2. Enter a phone number (e.g., `9876543210`).
-3. Click **Request OTP**.
-4. Retrieve the 6-digit OTP sent to your Brevo sender/registered email.
-5. Enter the OTP and click **Verify OTP**.
-6. Access the dashboard and demonstrate features!
+### STEP 13: Run Automated Test Suites
+Run the regression test suites to verify backend and frontend integrity:
+```bash
+# Server tests (6 passing suites)
+cd server
+npm test
+
+# Client tests (19 passing suites)
+cd ../client
+npm test
+
+# Client production build
+npm run build
+```
 
 ---
 
 ### Windows 1-Click Startup Option
 Alternatively, on Windows systems, double-click `START_PROJECT.bat` in the project root directory. It will automatically open two terminal windows and start both backend (`http://localhost:5000`) and frontend (`http://localhost:5173`).
+

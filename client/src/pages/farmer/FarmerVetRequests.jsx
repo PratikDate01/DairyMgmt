@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { vetRequestService } from '../../services/vetRequestService';
-import { getStatusLabel, getRiskLabel } from '../../i18n/statusMap';
+import { getStatusLabel, getRiskLabel, getDiseaseLabel } from '../../i18n/statusMap';
 import { PageHeader } from '../../components/common/PageHeader';
 import { StatCard } from '../../components/common/StatCard';
 import { SectionCard } from '../../components/common/SectionCard';
@@ -30,7 +30,8 @@ import {
 } from 'lucide-react';
 
 export const FarmerVetRequests = () => {
-  const { t } = useTranslation(['farmer', 'common']);
+  const { t, i18n } = useTranslation(['farmer', 'common']);
+  const isMr = i18n?.language === 'mr';
   const { token } = useAuth();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -271,13 +272,13 @@ export const FarmerVetRequests = () => {
 
                     <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs space-y-1">
                       <div className="flex items-center justify-between text-slate-800 font-semibold">
-                        <span>{t('common:labels.cattle', 'Cattle')}: {reqItem.cattle?.nameTag || 'Cattle'}</span>
+                        <span>{t('common:labels.cattle', 'Cattle')}: {(isMr && reqItem.cattle?.nameMr) ? reqItem.cattle.nameMr : (reqItem.cattle?.nameTag || 'Cattle')}</span>
                         <span className="text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-100 font-extrabold text-[10px]">
                           {getRiskLabel(reqItem.riskLevel, t)}
                         </span>
                       </div>
                       <div className="text-slate-600">
-                        {t('farmer:aiScanner.detectedCondition', 'Condition')}: <strong className="text-slate-900">{reqItem.aiCondition}</strong>
+                        {t('farmer:aiScanner.detectedCondition', 'Condition')}: <strong className="text-slate-900">{getDiseaseLabel(reqItem.aiCondition, t)}</strong>
                       </div>
                       {reqItem.farmerMessage && (
                         <p className="text-slate-500 italic pt-1 border-t border-slate-200/60 line-clamp-2">

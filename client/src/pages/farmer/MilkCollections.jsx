@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { getStatusLabel } from '../../i18n/statusMap';
+import { getStatusLabel, getSessionLabel, getAnimalTypeLabel } from '../../i18n/statusMap';
 import { useAuth } from '../../context/AuthContext';
 import { milkCollectionService } from '../../services/milkCollectionService';
 import { PageHeader } from '../../components/common/PageHeader';
@@ -25,7 +25,8 @@ import {
 import { Link } from 'react-router-dom';
 
 export const MilkCollections = () => {
-  const { t } = useTranslation(['farmer', 'common']);
+  const { t, i18n } = useTranslation(['farmer', 'common']);
+  const isMr = i18n?.language === 'mr';
   const { token } = useAuth();
 
   // Active Tab: 'history' or 'summary'
@@ -362,8 +363,8 @@ export const MilkCollections = () => {
                   className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs"
                 >
                   <option value="all">{t('farmer:milkCollections.allSessions', 'All Shifts')}</option>
-                  <option value="morning">{t('farmer:dashboard.morningSession', 'Morning')}</option>
-                  <option value="evening">{t('farmer:dashboard.eveningSession', 'Evening')}</option>
+                  <option value="morning">{getSessionLabel('morning', t)}</option>
+                  <option value="evening">{getSessionLabel('evening', t)}</option>
                 </select>
               </div>
 
@@ -375,8 +376,8 @@ export const MilkCollections = () => {
                   className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs"
                 >
                   <option value="all">{t('farmer:milkCollections.allStatuses', 'All Statuses')}</option>
-                  <option value="unpaid">{t('common:status.unpaid', 'Unpaid')}</option>
-                  <option value="settled">{t('common:status.settled', 'Settled')}</option>
+                  <option value="unpaid">{getStatusLabel('unpaid', t)}</option>
+                  <option value="settled">{getStatusLabel('settled', t)}</option>
                 </select>
               </div>
 
@@ -387,12 +388,15 @@ export const MilkCollections = () => {
                   onChange={(e) => setFilterDatePreset(e.target.value)}
                   className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs"
                 >
-                  <option value="all">{t('farmer:milkCollections.allDates', 'All Recorded Dates')}</option>
+                  <option value="all">{t('common:datePresets.all', 'All')}</option>
                   <option value="today">{t('common:datePresets.today', 'Today')}</option>
-                  <option value="last7days">{t('common:datePresets.last7days', 'Last 7 Days')}</option>
-                  <option value="last10days">{t('farmer:milkCollections.last10Days', 'Last 10 Days')}</option>
+                  <option value="yesterday">{t('common:datePresets.yesterday', 'Yesterday')}</option>
+                  <option value="thisWeek">{t('common:datePresets.thisWeek', 'This Week')}</option>
                   <option value="thisMonth">{t('common:datePresets.thisMonth', 'This Month')}</option>
-                  <option value="custom">{t('farmer:milkCollections.customRange', 'Custom Date Range')}</option>
+                  <option value="last7days">{t('common:datePresets.last7days', 'Last 7 Days')}</option>
+                  <option value="last10days">{t('common:datePresets.last10days', 'Last 10 Days')}</option>
+                  <option value="last30days">{t('common:datePresets.last30days', 'Last 30 Days')}</option>
+                  <option value="custom">{t('common:datePresets.customRange', 'Custom Range')}</option>
                 </select>
               </div>
             </div>
@@ -464,7 +468,7 @@ export const MilkCollections = () => {
                             <Building2 className="w-4 h-4 text-blue-600 shrink-0" />
                             <div>
                               <div className="font-semibold text-slate-900">
-                                {item.dairyOwner?.name || 'Dairy Owner'}
+                                {(isMr && item.dairyOwner?.nameMr) ? item.dairyOwner.nameMr : (item.dairyOwner?.name || t('roles.dairyOwner', 'Dairy Owner'))}
                               </div>
                               <div className="text-[10px] text-slate-400 font-mono">
                                 {item.dairyOwner?.phone}
@@ -485,7 +489,7 @@ export const MilkCollections = () => {
                             ) : (
                               <Moon className="w-3 h-3 mr-1 text-indigo-600" />
                             )}
-                            {item.session}
+                            {getSessionLabel(item.session, t)}
                           </span>
                           <span
                             className={`inline-flex items-center ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${
@@ -494,7 +498,7 @@ export const MilkCollections = () => {
                                 : 'bg-blue-100 text-blue-900 border border-blue-200'
                             }`}
                           >
-                            {(item.milkType || 'cow') === 'buffalo' ? '🐃 Buffalo' : '🐄 Cow'}
+                            {(item.milkType || 'cow') === 'buffalo' ? `🐃 ${getAnimalTypeLabel('buffalo', t)}` : `🐄 ${getAnimalTypeLabel('cow', t)}`}
                           </span>
                         </td>
                         <td className="py-3 px-4 text-right font-mono font-semibold text-slate-900">
@@ -538,7 +542,7 @@ export const MilkCollections = () => {
                         <Building2 className="w-4 h-4 text-blue-600 shrink-0" />
                         <div>
                           <h4 className="text-sm font-bold text-slate-900">
-                            {item.dairyOwner?.name || 'Dairy Owner'}
+                            {(isMr && item.dairyOwner?.nameMr) ? item.dairyOwner.nameMr : (item.dairyOwner?.name || t('roles.dairyOwner', 'Dairy Owner'))}
                           </h4>
                           <p className="text-xs text-slate-500 font-mono">
                             {item.dairyOwner?.phone}
@@ -553,7 +557,7 @@ export const MilkCollections = () => {
                               : 'bg-blue-100 text-blue-900 border border-blue-200'
                           }`}
                         >
-                          {(item.milkType || 'cow') === 'buffalo' ? '🐃 Buffalo' : '🐄 Cow'}
+                          {(item.milkType || 'cow') === 'buffalo' ? `🐃 ${getAnimalTypeLabel('buffalo', t)}` : `🐄 ${getAnimalTypeLabel('cow', t)}`}
                         </span>
                         <span
                           className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
@@ -562,7 +566,7 @@ export const MilkCollections = () => {
                               : 'bg-indigo-100 text-indigo-800'
                           }`}
                         >
-                          {item.session}
+                          {getSessionLabel(item.session, t)}
                         </span>
                         <span
                           className={`px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase ${

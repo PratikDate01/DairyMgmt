@@ -676,5 +676,90 @@ All buttons declare explicit `type="button"` preventing accidental form submissi
 - **Client Build**: Compiled with `vite v8.3.2` production bundle in 1.10s without errors.
 - **Automated Tests**: 15/15 tests passing (`navigation.test.js` and `statusMap.test.js`).
 
+---
+
+## 19. Phase 31 — Gauseva Functional Fixes, Complete Marathi Localization, Medicine Synchronization & Authentication Enhancements
+
+### 1. Farmer Dashboard: Complete Marathi Display & Localization
+- **Localized Display Names with Fallbacks (`FarmerDashboard.jsx`, `MilkCollections.jsx`, `Cattle.js`, `User.js`)**:
+  - Added backward-compatible `nameMr` fields to `User` and `Cattle` models.
+  - When Marathi language is selected (`i18n.language === 'mr'`), components render `user.nameMr || user.name`, `cattle.nameMr || cattle.name`, and `dairy.ownerId?.nameMr || dairy.ownerId?.name`.
+  - Legacy records without Marathi names safely fall back to the canonical registered name without data loss or artificial transliterations.
+- **Milk Collection Shifts & Animal Types**:
+  - `Morning` $\rightarrow$ `सकाळ`, `Evening` $\rightarrow$ `संध्याकाळ`.
+  - `Cow` $\rightarrow$ `गाय`, `Buffalo` $\rightarrow$ `म्हैस`.
+  - Database stores canonical enums while the presentation layer handles bilingual translation via `getSessionLabel()` and `getAnimalTypeLabel()`.
+- **Payment Status (`Settled` $\rightarrow$ `जमा`)**:
+  - Mapped payment status `settled` $\rightarrow$ **जमा** in Marathi across collection tables, payment histories, and status badges.
+- **Comprehensive Duration Filters**:
+  - Fully translated all collection duration presets in `common.json`: All (`सर्व`), Today (`आज`), Yesterday (`काल`), This Week (`हा आठवडा`), This Month (`हा महिना`), Last 7 Days (`मागील ७ दिवस`), Last 30 Days (`मागील ३० दिवस`), Custom Range (`सानुकूल कालावधी`).
+- **Milk Collection Number Audit**:
+  - Confirmed `MilkCollection` model has no sequential collection number column. In compliance with data integrity directives, no artificial column was fabricated, preserving existing date and session indexing.
+
+### 2. Veterinary Requests: Possible Disease in Marathi
+- **Dynamic Bilingual Disease Mapping (`statusMap.js`)**:
+  - Implemented `getDiseaseLabel()` mapping predefined cattle diseases to authentic Marathi terminology:
+    - *Bovine Mastitis / Mastitis* $\rightarrow$ `स्तनदाह (मॅस्टायटिस)`
+    - *Lumpy Skin Disease (LSD)* $\rightarrow$ `लम्पी त्वचा रोग (LSD)`
+    - *Foot and Mouth Disease (FMD)* $\rightarrow$ `लाळ खुरकूत (FMD)`
+    - *Bovine Foot Rot / Pododermatitis* $\rightarrow$ `गोवंशीय खुरकुज / पोडोडरमॅटायटिस`
+    - *Fungal Ringworm* $\rightarrow$ `बुरशीजन्य गजकर्ण / डर्मेटोफायटोसिस`
+  - Unrecognized AI outputs or veterinarian clinical free-text notes are preserved exactly as written to safeguard diagnostic fidelity.
+
+### 3. Farmer Medicine Catalog Streamlining
+- **Removed "My Doctor Prescription" Tab (`Medicines.jsx`)**:
+  - Cleaned up the redundant tab header and section while preserving all underlying prescription parsing, OCR document scanning, catalog matching, and order modals (`PrescriptionProcurementModal.jsx`).
+
+### 4. Critical Medicine Availability Root Cause & Fix
+- **Root Cause 1 (Backend State Machine in `medicineController.js`)**:
+  - When inventory was exhausted, `updateStock` correctly set `availability = 'unavailable'`. However, when stock was replenished (`numericStock > 0`), it failed to restore `availability = 'available'`. Because `/api/medicines/available` queries `{ isActive: true, availability: 'available', stockQuantity: { $gt: 0 } }`, restocked medicines remained hidden.
+  - *Fix*: In `updateStock`, when `numericStock > 0` and `medicine.isActive`, `availability` automatically transitions back to `'available'`.
+- **Root Cause 2 (Frontend Response Unpacking in `PrescriptionProcurementModal.jsx`)**:
+  - `medicineService.getAvailableMedicines` returns `{ success: true, count, medicines: [...] }`. The modal mistakenly executed `setCatalogMedicines(data || [])` instead of `data.medicines || []`, causing all catalog availability filters to fail.
+  - *Fix*: Unpacked `data.medicines || []`.
+- **Prescription Token Matching**:
+  - Implemented tokenized word-level matching in `processPrescription` and the procurement modal, preventing false negatives on compound medicine formulations.
+
+### 5. Medical Provider & Admin Medicine Prompt Refresh
+- **Medical Provider Workspace (`Inventory.jsx`)**:
+  - Modified mutation handlers (`updateStock`, `toggleStatus`) to immediately synchronize local React state from confirmed server responses, eliminating stale UI states. Added a manual Refresh button.
+- **Admin Medicine Oversight (`AdminDashboard.jsx` & `adminController.js`)**:
+  - Fixed category filter to use case-insensitive regular expressions (`new RegExp('^' + cleanCat + '$', 'i')`) and normalized availability badges. Added on-demand Refresh trigger.
+
+### 6. Public Registration Security & Role Policy
+- **Hiding Privileged Roles (`LoginPage.jsx`)**:
+  - Removed `Admin` and `Dairy Owner` from the public registration dropdown.
+- **Server-Side Authorization Enforcement (`authController.js`)**:
+  - `register` endpoint strictly rejects client-submitted `admin` or `dairyOwner` roles with `403 Forbidden`:
+    `"Direct public registration for administrative or dairy management roles is restricted."`
+  - Existing authorized admin and dairy owner accounts remain fully functional with their assigned roles.
+
+### 7. Professional Certification Details during Registration
+- **Veterinarian Registration**:
+  - Captured `licenseNumber` (VCI / State Veterinary Council Registration) and `specialization`.
+- **Medical Provider Registration**:
+  - Captured `licenseNumber` (Drug License Number) and `clinicName` (Pharmacy / Medical Store Name).
+- **Secure Verification Pipeline**:
+  - Certification metadata is held securely in `pendingMetadata` during OTP validation and saved to `User` with `verificationStatus: 'pending'` for administrator review.
+- **Dairy Driver Finding**:
+  - Documented that no Dairy Driver role or model exists in the codebase; preserved architecture without inventing mock driver schemas.
+
+### 8. Sign In with Google (GIS) Integration
+- **Frontend Identity Services (`LoginPage.jsx`, `AuthContext.jsx`, `authService.js`)**:
+  - Embedded Google Identity Services button with token callback and graceful fallback when credentials are not configured.
+- **Backend ID Token Cryptographic Verification (`authController.js`, `authRoutes.js`)**:
+  - Verified incoming Google ID tokens via `google-auth-library` (`OAuth2Client.verifyIdToken`) against Google public certificates.
+  - Enforced audience verification against `GOOGLE_CLIENT_ID`, valid signature, issuer, and non-expiration.
+- **Safe Account Linking & Role Assignment**:
+  - Matched users by verified email address; links Google identity to existing accounts without duplicating records or mutating assigned roles.
+  - Auto-registered Google users are restricted to permitted public roles (`farmer`, `veterinarian`, `medicalProvider`). Privileged roles are never assigned automatically.
+  - Generated application JWT sessions maintaining identical RBAC and active-role switching behavior as email OTP login.
+
+### 9. Phase 31 Verification Status
+- **Server Regression Tests (`npm test` in `server/`)**: 6/6 tests passing (Schemas, Public role restrictions, Stock transition state machine, Prescription tokenizer).
+- **Client Regression Tests (`npm test` in `client/`)**: 19/19 tests passing (`statusMap.test.js` & `navigation.test.js`).
+- **Client Production Build (`npm run build`)**: Vite production bundle built cleanly in 1.09s with zero errors.
+
+
 
 

@@ -192,7 +192,7 @@ export const getFarmerDairies = async (req, res) => {
     const farmerId = req.user.id;
 
     const connections = await DairyFarmerConnection.find({ farmer: farmerId })
-      .populate('dairyOwner', '_id name phone role isActive')
+      .populate('dairyOwner', '_id name nameMr phone role isActive')
       .sort({ updatedAt: -1 });
 
     return res.status(200).json({
@@ -243,8 +243,8 @@ export const acceptConnection = async (req, res) => {
 
     connection.status = 'active';
     await connection.save();
-    await connection.populate('dairyOwner', '_id name phone role isActive');
-    await connection.populate('farmer', '_id name phone role isActive');
+    await connection.populate('dairyOwner', '_id name nameMr phone role isActive');
+    await connection.populate('farmer', '_id name nameMr phone role isActive');
 
     return res.status(200).json({
       success: true,
@@ -294,8 +294,8 @@ export const rejectConnection = async (req, res) => {
 
     connection.status = 'rejected';
     await connection.save();
-    await connection.populate('dairyOwner', '_id name phone role isActive');
-    await connection.populate('farmer', '_id name phone role isActive');
+    await connection.populate('dairyOwner', '_id name nameMr phone role isActive');
+    await connection.populate('farmer', '_id name nameMr phone role isActive');
 
     return res.status(200).json({
       success: true,

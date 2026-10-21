@@ -7,7 +7,7 @@ import Cattle from '../models/Cattle.js';
  */
 export const createCattle = async (req, res) => {
   try {
-    const { nameTag, breed, gender, ageYears, healthStatus, imageUrl, notes } = req.body;
+    const { nameTag, nameMr, breed, gender, ageYears, healthStatus, imageUrl, notes } = req.body;
 
     if (!nameTag || !nameTag.trim() || !breed || !breed.trim()) {
       return res.status(400).json({
@@ -21,6 +21,7 @@ export const createCattle = async (req, res) => {
     const newCattle = await Cattle.create({
       farmer: farmerId,
       nameTag: nameTag.trim(),
+      nameMr: nameMr ? nameMr.trim() : '',
       breed: breed.trim(),
       gender: gender || 'female',
       ageYears: ageYears !== undefined && ageYears !== null ? Number(ageYears) : 3,
@@ -138,9 +139,10 @@ export const updateCattle = async (req, res) => {
       });
     }
 
-    const { nameTag, breed, gender, ageYears, healthStatus, imageUrl, notes, lastHealthCheck } = req.body;
+    const { nameTag, nameMr, breed, gender, ageYears, healthStatus, imageUrl, notes, lastHealthCheck } = req.body;
 
     if (nameTag !== undefined) cattle.nameTag = nameTag.trim();
+    if (nameMr !== undefined) cattle.nameMr = nameMr ? nameMr.trim() : '';
     if (breed !== undefined) cattle.breed = breed.trim();
     if (gender !== undefined) cattle.gender = gender;
     if (ageYears !== undefined) cattle.ageYears = Number(ageYears);

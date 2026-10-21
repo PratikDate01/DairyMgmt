@@ -159,4 +159,68 @@ test('statusMap regression suite', async (t) => {
 
     await i18n.changeLanguage('en');
   });
+
+  await t.test('10. Payment status settled displays as जमा in Marathi and Settled in English', async () => {
+    await i18n.changeLanguage('en');
+    assert.equal(getStatusLabel('settled', i18n.t), 'Settled');
+
+    await i18n.changeLanguage('mr');
+    assert.equal(getStatusLabel('settled', i18n.t), 'जमा');
+
+    await i18n.changeLanguage('en');
+  });
+
+  await t.test('11. Animal type helper in English and Marathi', async () => {
+    const { getAnimalTypeLabel } = await import('../src/i18n/statusMap.js');
+    await i18n.changeLanguage('en');
+    assert.equal(getAnimalTypeLabel('cow', i18n.t), 'Cow');
+    assert.equal(getAnimalTypeLabel('buffalo', i18n.t), 'Buffalo');
+
+    await i18n.changeLanguage('mr');
+    assert.equal(getAnimalTypeLabel('cow', i18n.t), 'गाय');
+    assert.equal(getAnimalTypeLabel('buffalo', i18n.t), 'म्हैस');
+
+    await i18n.changeLanguage('en');
+  });
+
+  await t.test('12. Disease label helper with known and fallback conditions', async () => {
+    const { getDiseaseLabel } = await import('../src/i18n/statusMap.js');
+    await i18n.changeLanguage('en');
+    assert.equal(getDiseaseLabel('Mastitis', i18n.t), 'Mastitis');
+    assert.equal(getDiseaseLabel('Foot and Mouth Disease (FMD)', i18n.t), 'Foot and Mouth Disease (FMD)');
+
+    await i18n.changeLanguage('mr');
+    assert.equal(getDiseaseLabel('Mastitis', i18n.t), 'स्तनदाह (मॅस्टायटिस)');
+    assert.equal(getDiseaseLabel('Foot and Mouth Disease (FMD)', i18n.t), 'लाळ खुरकूत (FMD)');
+    assert.equal(getDiseaseLabel('Lumpy Skin Disease', i18n.t), 'लम्पी त्वचा रोग (LSD)');
+    // Fallback for unknown condition
+    assert.equal(getDiseaseLabel('Unknown Viral Illness', i18n.t), 'Unknown Viral Illness');
+
+    await i18n.changeLanguage('en');
+  });
+
+  await t.test('13. Date duration presets are localized in English and Marathi', async () => {
+    await i18n.changeLanguage('en');
+    assert.equal(i18n.t('common:datePresets.all'), 'All');
+    assert.equal(i18n.t('common:datePresets.today'), 'Today');
+    assert.equal(i18n.t('common:datePresets.yesterday'), 'Yesterday');
+    assert.equal(i18n.t('common:datePresets.thisWeek'), 'This Week');
+    assert.equal(i18n.t('common:datePresets.thisMonth'), 'This Month');
+    assert.equal(i18n.t('common:datePresets.last7days'), 'Last 7 Days');
+    assert.equal(i18n.t('common:datePresets.last30days'), 'Last 30 Days');
+    assert.equal(i18n.t('common:datePresets.customRange'), 'Custom Range');
+
+    await i18n.changeLanguage('mr');
+    assert.equal(i18n.t('common:datePresets.all'), 'सर्व');
+    assert.equal(i18n.t('common:datePresets.today'), 'आज');
+    assert.equal(i18n.t('common:datePresets.yesterday'), 'काल');
+    assert.equal(i18n.t('common:datePresets.thisWeek'), 'हा आठवडा');
+    assert.equal(i18n.t('common:datePresets.thisMonth'), 'हा महिना');
+    assert.equal(i18n.t('common:datePresets.last7days'), 'मागील ७ दिवस');
+    assert.equal(i18n.t('common:datePresets.last30days'), 'मागील ३० दिवस');
+    assert.equal(i18n.t('common:datePresets.customRange'), 'सानुकूल कालावधी');
+
+    await i18n.changeLanguage('en');
+  });
 });
+

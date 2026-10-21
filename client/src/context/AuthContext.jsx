@@ -40,6 +40,16 @@ export const AuthProvider = ({ children }) => {
     return data;
   };
 
+  const loginWithGoogle = async (credential, role) => {
+    const data = await authService.googleAuth(credential, role);
+    if (data.token && data.user) {
+      localStorage.setItem('authToken', data.token);
+      setToken(data.token);
+      setUser(data.user);
+    }
+    return data;
+  };
+
   const switchRole = async (newRole) => {
     if (!token) return;
     const data = await authService.switchRole(token, newRole);
@@ -65,6 +75,7 @@ export const AuthProvider = ({ children }) => {
         isAuthenticated: !!token && !!user,
         loading,
         loginWithOTP,
+        loginWithGoogle,
         switchRole,
         logout
       }}

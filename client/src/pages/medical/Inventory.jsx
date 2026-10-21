@@ -251,8 +251,11 @@ export const Inventory = () => {
 
     try {
       setSubmitting(true);
-      await medicineService.updateStock(stockTargetItem._id, val, token);
+      const res = await medicineService.updateStock(stockTargetItem._id, val, token);
       setSuccessMsg(`Stock updated for ${stockTargetItem.name}!`);
+      if (res?.medicine) {
+        setInventory(prev => prev.map(m => m._id === res.medicine._id ? res.medicine : m));
+      }
       setShowStockModal(false);
       await fetchSummary();
       await fetchInventory();
@@ -273,8 +276,11 @@ export const Inventory = () => {
     }
 
     try {
-      await medicineService.updateAvailability(item._id, nextVal, token);
+      const res = await medicineService.updateAvailability(item._id, nextVal, token);
       setSuccessMsg(`Availability updated for ${item.name}!`);
+      if (res?.medicine) {
+        setInventory(prev => prev.map(m => m._id === res.medicine._id ? res.medicine : m));
+      }
       await fetchSummary();
       await fetchInventory();
     } catch (err) {
@@ -289,8 +295,11 @@ export const Inventory = () => {
     }
 
     try {
-      await medicineService.deactivateMedicine(item._id, token);
+      const res = await medicineService.deactivateMedicine(item._id, token);
       setSuccessMsg(`${item.name} has been deactivated.`);
+      if (res?.medicine) {
+        setInventory(prev => prev.map(m => m._id === res.medicine._id ? res.medicine : m));
+      }
       await fetchSummary();
       await fetchInventory();
     } catch (err) {
@@ -306,13 +315,23 @@ export const Inventory = () => {
         breadcrumbs={[t('common:nav.home', 'Home'), t('common:roles.medicalProvider', 'Medical Console'), t('medicalProvider:inventory.title', 'Inventory')]}
         backFallback="/medical-provider/dashboard"
         actions={
-          <button
-            onClick={handleOpenAddModal}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center space-x-1.5"
-          >
-            <PlusCircle className="w-4 h-4" />
-            <span>+ {t('medicalProvider:inventory.addMedicineBtn', 'Add New Medicine')}</span>
-          </button>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => { fetchSummary(); fetchInventory(); }}
+              disabled={loading}
+              className="p-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-600 rounded-lg shadow-xs transition"
+              title={t('common:actions.refresh', 'Refresh')}
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            </button>
+            <button
+              onClick={handleOpenAddModal}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center space-x-1.5"
+            >
+              <PlusCircle className="w-4 h-4" />
+              <span>+ {t('medicalProvider:inventory.addMedicineBtn', 'Add New Medicine')}</span>
+            </button>
+          </div>
         }
       />
 

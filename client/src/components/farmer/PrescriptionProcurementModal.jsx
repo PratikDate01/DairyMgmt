@@ -52,7 +52,8 @@ export const PrescriptionProcurementModal = ({ vetRequestItem, onClose, onOrderS
     setError('');
     try {
       const data = await medicineService.getAvailableMedicines(token);
-      setCatalogMedicines(data || []);
+      const list = Array.isArray(data) ? data : (data?.medicines || []);
+      setCatalogMedicines(list);
     } catch (err) {
       console.error('Error fetching medicine catalog:', err);
       setError(err.message || 'Failed to load live medicine catalog.');
@@ -78,17 +79,23 @@ export const PrescriptionProcurementModal = ({ vetRequestItem, onClose, onOrderS
   const findMatchesForPrescription = (targetName) => {
     if (!targetName) return [];
     const normTarget = normalizeName(targetName);
+    const targetTokens = targetName.toLowerCase().split(/[\s,.-]+/).filter(t => t.length > 2);
+
     if (!normTarget || normTarget.length < 2) {
-      return catalogMedicines.filter(m => m.availability === 'available');
+      return catalogMedicines.filter(m => (m.availability === 'available' || m.stockQuantity > 0) && m.isActive !== false);
     }
 
     return catalogMedicines.filter(m => {
       const normCatName = normalizeName(m.name);
       const normGenName = normalizeName(m.genericName || '');
+      const catTokens = m.name.toLowerCase().split(/[\s,.-]+/).filter(t => t.length > 2);
+      const hasTokenMatch = targetTokens.length > 0 && targetTokens.some(tt => catTokens.some(ct => ct.includes(tt) || tt.includes(ct)));
+
       return (
         normCatName.includes(normTarget) ||
         normTarget.includes(normCatName) ||
-        (normGenName && (normGenName.includes(normTarget) || normTarget.includes(normGenName)))
+        (normGenName && (normGenName.includes(normTarget) || normTarget.includes(normGenName))) ||
+        hasTokenMatch
       );
     });
   };

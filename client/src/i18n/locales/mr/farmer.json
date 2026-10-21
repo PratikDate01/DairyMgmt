@@ -507,5 +507,27 @@
     "duration": "कालावधी:",
     "referralHistory": "संदर्भ इतिहास",
     "pendingDoctorResponse": "डॉक्टरांच्या प्रतिसादाची प्रतीक्षा आहे."
+  },
+  "milkCollections": {
+    "title": "माझे दूध संकलन",
+    "refreshTooltip": "दूध संकलन रिफ्रेश करा",
+    "paymentsLedger": "पेमेंट खतावणी",
+    "totalQuantity": "एकूण पुरवलेले दूध",
+    "historyTab": "नोंदवलेले दूध संकलन",
+    "summaryTab": "१० दिवसांचा बिलिंग तपशील",
+    "filterSession": "सत्र / वेळ",
+    "allSessions": "सर्व सत्रे",
+    "filterStatus": "पेमेंट स्थिती",
+    "allStatuses": "सर्व स्थिती",
+    "filterDatePreset": "कालावधी",
+    "allDates": "सर्व नोंदी",
+    "last10Days": "मागील १० दिवस",
+    "customRange": "सानुकूल कालावधी",
+    "loadingCollections": "दूध संकलन नोंदी लोड होत आहेत...",
+    "noCollectionsFound": "अद्याप कोणतीही दूध संकलन नोंद नाही",
+    "noCollectionsDesc": "तुमच्या जोडलेल्या डेअरी मालकाने दूध नोंदवल्यावर ते येथे दिसेल.",
+    "date": "तारीख",
+    "dairyCenter": "डेअरी युनिट",
+    "summaryCycleTitle": "माझा १० दिवसांचा बिलिंग तपशील"
   }
 }

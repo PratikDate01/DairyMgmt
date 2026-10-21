@@ -9,7 +9,7 @@ import { PageHeader } from '../../components/common/PageHeader';
 import { StatCard } from '../../components/common/StatCard';
 import { SectionCard } from '../../components/common/SectionCard';
 import { EmptyState } from '../../components/common/EmptyState';
-import { getStatusLabel, getRoleLabel, getGenderLabel } from '../../i18n/statusMap';
+import { getStatusLabel, getRoleLabel, getGenderLabel, getSessionLabel, getAnimalTypeLabel } from '../../i18n/statusMap';
 import {
   Milk,
   Stethoscope,
@@ -31,7 +31,9 @@ import { Link } from 'react-router-dom';
 
 export const FarmerDashboard = () => {
   const { user, token } = useAuth();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isMr = i18n?.language === 'mr';
+  const displayedFarmerName = (isMr && user?.nameMr) ? user.nameMr : (user?.name || t('roles.farmer'));
   const [connections, setConnections] = useState([]);
   const [collections, setCollections] = useState([]);
   const [paymentMetrics, setPaymentMetrics] = useState({ totalPaid: 0, totalPending: 0 });
@@ -96,7 +98,7 @@ export const FarmerDashboard = () => {
     <div className="space-y-6">
       <PageHeader
         title={t('farmer:dashboard.title')}
-        description={t('farmer:dashboard.welcome', { name: user?.name || t('roles.farmer') })}
+        description={t('farmer:dashboard.welcome', { name: displayedFarmerName })}
         breadcrumbs={[t('home'), t('farmer:dashboard.title')]}
         actions={
           <div className="flex flex-wrap items-center gap-2">
@@ -143,7 +145,7 @@ export const FarmerDashboard = () => {
         />
         <StatCard
           title={t('farmer:dashboard.activeDairyPartner')}
-          value={loading ? t('actions.loading') : activeConnection ? activeConnection.dairyOwner?.name || t('status.active') : t('status.inactive')}
+          value={loading ? t('actions.loading') : activeConnection ? ((isMr && activeConnection.dairyOwner?.nameMr) ? activeConnection.dairyOwner.nameMr : activeConnection.dairyOwner?.name) || t('status.active') : t('status.inactive')}
           icon={Milk}
           badgeText={activeConnection ? t('status.active') : pendingRequests.length > 0 ? `${pendingRequests.length} ${t('status.pending')}` : t('status.inactive')}
           badgeType={activeConnection ? 'success' : pendingRequests.length > 0 ? 'amber' : 'neutral'}
@@ -217,11 +219,11 @@ export const FarmerDashboard = () => {
         {/* Left Column: Profile & Cattle Summary */}
         <div className="lg:col-span-1 space-y-6">
           {/* Profile Card */}
-          <SectionCard title={t('farmer:dashboard.welcome', { name: user?.name || '' })} subtitle={user?.phone}>
+          <SectionCard title={t('farmer:dashboard.welcome', { name: displayedFarmerName })} subtitle={user?.phone}>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between py-2 border-b border-slate-100">
                 <span className="text-slate-500">{t('auth:fullName')}</span>
-                <span className="font-semibold text-slate-800">{user?.name}</span>
+                <span className="font-semibold text-slate-800">{displayedFarmerName}</span>
               </div>
               <div className="flex justify-between py-2 border-b border-slate-100">
                 <span className="text-slate-500">{t('auth:mobileNumber')}</span>
@@ -273,7 +275,7 @@ export const FarmerDashboard = () => {
                     <div className="flex items-center space-x-2.5">
                       <span className="text-xl">🐄</span>
                       <div>
-                        <h4 className="font-bold text-slate-800 leading-tight">{item.nameTag}</h4>
+                        <h4 className="font-bold text-slate-800 leading-tight">{(isMr && item.nameMr) ? item.nameMr : item.nameTag}</h4>
                         <p className="text-[10px] text-slate-500">{item.breed} • {getGenderLabel(item.gender, t)}</p>
                       </div>
                     </div>
@@ -308,7 +310,7 @@ export const FarmerDashboard = () => {
                     🥛
                   </div>
                   <div>
-                    <h4 className="text-base font-bold text-slate-900">{activeConnection.dairyOwner?.name}</h4>
+                    <h4 className="text-base font-bold text-slate-900">{(isMr && activeConnection.dairyOwner?.nameMr) ? activeConnection.dairyOwner.nameMr : activeConnection.dairyOwner?.name}</h4>
                     <p className="text-xs text-slate-600 font-mono">{t('labels.phone')}: {activeConnection.dairyOwner?.phone}</p>
                   </div>
                 </div>
@@ -353,15 +355,15 @@ export const FarmerDashboard = () => {
                       </div>
                       <div>
                         <div className="flex items-center space-x-2">
-                          <h4 className="font-bold text-slate-800">{item.dairyOwner?.name || t('roles.dairyOwner')}</h4>
+                          <h4 className="font-bold text-slate-800">{(isMr && item.dairyOwner?.nameMr) ? item.dairyOwner.nameMr : item.dairyOwner?.name || t('roles.dairyOwner')}</h4>
                           <span className={`px-1.5 py-0.2 rounded text-[9px] font-semibold uppercase ${
                             item.paymentStatus === 'settled' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
                           }`}>
-                            {getStatusLabel(item.paymentStatus === 'settled' ? 'paid' : 'unpaid', t)}
+                            {getStatusLabel(item.paymentStatus, t)}
                           </span>
                         </div>
                         <p className="text-[10px] text-slate-500 font-mono mt-0.5">
-                          {new Date(item.collectionDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} • {t('labels.fat')}: {item.fatPercentage}% • ₹{item.ratePerLiter}/L
+                          {new Date(item.collectionDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} • {getSessionLabel(item.session, t)} • {getAnimalTypeLabel(item.milkType || 'cow', t)} • {t('labels.fat')}: {item.fatPercentage}% • ₹{item.ratePerLiter}/L
                         </p>
                       </div>
                     </div>

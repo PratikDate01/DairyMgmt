@@ -507,5 +507,27 @@
     "duration": "Duration:",
     "referralHistory": "Referral History",
     "pendingDoctorResponse": "Request pending doctor response."
+  },
+  "milkCollections": {
+    "title": "My Milk Collections",
+    "refreshTooltip": "Refresh Collections",
+    "paymentsLedger": "Payments Ledger",
+    "totalQuantity": "Total Quantity Supplied",
+    "historyTab": "Recorded Collection Log",
+    "summaryTab": "10-Day Billing Summary",
+    "filterSession": "Shift",
+    "allSessions": "All Shifts",
+    "filterStatus": "Payment Status",
+    "allStatuses": "All Statuses",
+    "filterDatePreset": "Date Range",
+    "allDates": "All Recorded Dates",
+    "last10Days": "Last 10 Days",
+    "customRange": "Custom Date Range",
+    "loadingCollections": "Loading collection records...",
+    "noCollectionsFound": "No Milk Collections Recorded Yet",
+    "noCollectionsDesc": "When your connected Dairy Owner records your milk collections, they will appear here in real-time.",
+    "date": "Date",
+    "dairyCenter": "Dairy Unit",
+    "summaryCycleTitle": "My 10-Day Billing Summary"
   }
 }

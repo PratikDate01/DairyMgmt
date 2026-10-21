@@ -39,6 +39,10 @@ const otpSchema = new mongoose.Schema(
     pendingRole: {
       type: String,
       trim: true
+    },
+    pendingMetadata: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {}
     }
   },
   {

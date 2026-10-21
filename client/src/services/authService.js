@@ -16,17 +16,41 @@ export const authService = {
     return data;
   },
 
-  async register(name, identity, role) {
+  async register(name, identity, role, metadata = {}) {
     const response = await fetch(`${API_BASE_URL}/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ name, phone: identity, email: identity, role })
+      body: JSON.stringify({
+        name,
+        phone: identity,
+        email: identity,
+        role,
+        licenseNumber: metadata.licenseNumber || '',
+        specialization: metadata.specialization || '',
+        clinicName: metadata.clinicName || '',
+        nameMr: metadata.nameMr || ''
+      })
     });
     const data = await response.json();
     if (!response.ok) {
       throw new Error(data.message || 'Registration failed');
+    }
+    return data;
+  },
+
+  async googleAuth(credential, role) {
+    const response = await fetch(`${API_BASE_URL}/google`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ credential, role })
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Google authentication failed');
     }
     return data;
   },

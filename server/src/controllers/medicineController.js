@@ -52,10 +52,12 @@ export const createMedicine = async (req, res) => {
       });
     }
 
-    // Auto rule: zero stock implies unavailable
+    // Auto rule: zero stock implies unavailable; positive stock defaults to available
     let finalAvailability = availability;
     if (numericStock === 0) {
       finalAvailability = 'unavailable';
+    } else if (numericStock > 0) {
+      finalAvailability = 'available';
     }
 
     const medicine = await Medicine.create({
@@ -472,9 +474,11 @@ export const updateStock = async (req, res) => {
 
     medicine.stockQuantity = numericStock;
 
-    // Automatic rule: zero stock implies unavailable
+    // Automatic rule: zero stock implies unavailable; adding stock restores availability if active
     if (numericStock === 0) {
       medicine.availability = 'unavailable';
+    } else if (numericStock > 0 && medicine.isActive) {
+      medicine.availability = 'available';
     }
 
     await medicine.save();
@@ -681,21 +685,25 @@ export const processPrescription = async (req, res) => {
 
       termArray.forEach(term => {
         const lowerTerm = term.toLowerCase();
+        const termTokens = lowerTerm.split(/[\s,.-]+/).filter(t => t.length > 2);
         // Find matching medicines in DB
         const matchedDbMeds = dbMedicines.filter(med => {
           const medName = med.name.toLowerCase();
           const generic = (med.genericName || '').toLowerCase();
           const cat = (med.category || '').toLowerCase();
+          const nameTokens = medName.split(/[\s,.-]+/).filter(t => t.length > 2);
+          const hasTokenMatch = termTokens.length > 0 && termTokens.some(tt => nameTokens.some(nt => nt.includes(tt) || tt.includes(nt)));
+
           return medName.includes(lowerTerm) || lowerTerm.includes(medName) ||
                  (generic && (generic.includes(lowerTerm) || lowerTerm.includes(generic))) ||
-                 (cat && cat === lowerTerm);
+                 (cat && cat === lowerTerm) || hasTokenMatch;
         });
 
         if (matchedDbMeds.length > 0) {
           matchedDbMeds.forEach(med => {
             // Avoid duplicate additions
             if (!identifiedItems.some(item => item.medicineId && item.medicineId.toString() === med._id.toString())) {
-              const isAvailable = med.availability === 'available' && med.stockQuantity > 0;
+              const isAvailable = med.isActive && med.stockQuantity > 0 && med.availability !== 'unavailable';
               identifiedItems.push({
                 name: med.name,
                 genericName: med.genericName || '',

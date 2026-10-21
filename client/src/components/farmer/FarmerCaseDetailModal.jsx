@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { getStatusLabel } from '../../i18n/statusMap';
+import { getStatusLabel, getDiseaseLabel } from '../../i18n/statusMap';
 import {
   Stethoscope,
   X,
@@ -294,7 +294,7 @@ export const FarmerCaseDetailModal = ({ requestItem, onClose }) => {
                     />
                   )}
                   <div className="sm:col-span-2 space-y-1 text-slate-700">
-                    <p>{t('farmer:caseDetailsModal.aiCondition', 'AI Suggested Condition:')} <strong className="text-slate-900">{requestItem.aiCondition || requestItem.diseaseScan?.detectedCondition}</strong></p>
+                    <p>{t('farmer:caseDetailsModal.aiCondition', 'AI Suggested Condition:')} <strong className="text-slate-900">{getDiseaseLabel(requestItem.aiCondition || requestItem.diseaseScan?.detectedCondition, t)}</strong></p>
                     <p>{t('farmer:caseDetailsModal.confidence', 'Confidence:')} <strong className="text-blue-700">{requestItem.diseaseScan?.confidence}%</strong></p>
                     <p>{t('farmer:caseDetailsModal.symptoms', 'Reported Symptoms:')} <span>{requestItem.symptoms || 'None'}</span></p>
                   </div>

@@ -1204,6 +1204,17 @@ export const AdminDashboard = () => {
         <SectionCard
           title={t('admin:dashboard.medicinesCatalogOversight', 'Medicine Inventory & Catalog Oversight')}
           subtitle={t('admin:dashboard.medicinesSubtitle', 'System-wide pharmaceutical catalog registered by verified Medical Stores')}
+          action={
+            <button
+              onClick={() => fetchTabData()}
+              disabled={dataLoading}
+              className="px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold shadow-xs flex items-center space-x-1.5 transition"
+              title={t('common:actions.refresh', 'Refresh')}
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${dataLoading ? 'animate-spin' : ''}`} />
+              <span>{t('common:actions.refresh', 'Refresh')}</span>
+            </button>
+          }
         >
           {/* Filters Bar */}
           <div className="mb-4 flex flex-col md:flex-row gap-3 items-center justify-between">
@@ -1280,14 +1291,14 @@ export const AdminDashboard = () => {
                       <td className="px-4 py-3">
                         <span
                           className={`px-2 py-0.5 text-[10px] font-bold rounded-full border ${
-                            m.availability === 'in_stock'
+                            m.availability === 'available' || m.availability === 'in_stock'
                               ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                               : m.availability === 'low_stock'
                               ? 'bg-amber-50 text-amber-700 border-amber-200'
                               : 'bg-red-50 text-red-700 border-red-200'
                           }`}
                         >
-                          {m.availability?.replace('_', ' ').toUpperCase()}
+                          {m.availability === 'available' ? 'AVAILABLE' : m.availability?.replace('_', ' ').toUpperCase()}
                         </span>
                       </td>
                     </tr>

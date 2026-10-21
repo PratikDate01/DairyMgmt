@@ -433,11 +433,12 @@ export const getAdminMedicines = async (req, res) => {
     const query = {};
 
     if (category && category !== 'all') {
-      query.category = category;
+      const cleanCat = category.replace(/_/g, '[_\\s-]');
+      query.category = new RegExp(`^${cleanCat}$`, 'i');
     }
 
     if (availability && availability !== 'all') {
-      query.availability = availability;
+      query.availability = availability.toLowerCase();
     }
 
     if (search && search.trim()) {

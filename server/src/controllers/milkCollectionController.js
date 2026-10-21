@@ -203,7 +203,7 @@ export const getDairyOwnerCollections = async (req, res) => {
     }
 
     const collections = await MilkCollection.find(query)
-      .populate('farmer', '_id name phone')
+      .populate('farmer', '_id name nameMr phone')
       .sort({ collectionDate: -1, createdAt: -1 });
 
     return res.status(200).json({
@@ -253,7 +253,7 @@ export const getFarmerCollections = async (req, res) => {
     }
 
     const collections = await MilkCollection.find(query)
-      .populate('dairyOwner', '_id name phone')
+      .populate('dairyOwner', '_id name nameMr phone')
       .sort({ collectionDate: -1, createdAt: -1 });
 
     return res.status(200).json({
@@ -305,7 +305,7 @@ export const getFarmerCollectionsForDairy = async (req, res) => {
       dairyOwner: dairyOwnerId,
       farmer: farmerId
     })
-      .populate('farmer', '_id name phone')
+      .populate('farmer', '_id name nameMr phone')
       .sort({ collectionDate: -1, createdAt: -1 });
 
     return res.status(200).json({

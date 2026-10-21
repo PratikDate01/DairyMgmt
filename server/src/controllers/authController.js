@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import { OAuth2Client } from 'google-auth-library';
 import User from '../models/User.js';
 import OTP from '../models/OTP.js';
 import { normalizePhone, normalizeIdentity } from '../utils/phoneUtils.js';
@@ -50,6 +51,7 @@ export const checkEmail = async (req, res) => {
       success: true,
       exists: true,
       name: user.name,
+      nameMr: user.nameMr || '',
       roles: roles
     });
   } catch (error) {
@@ -67,7 +69,7 @@ export const checkEmail = async (req, res) => {
  */
 export const register = async (req, res) => {
   try {
-    const { name, phone, email, role } = req.body;
+    const { name, nameMr, phone, email, role, licenseNumber, clinicName, specialization } = req.body;
     const rawInput = phone || email;
 
     if (!name || !rawInput || !role) {
@@ -84,18 +86,59 @@ export const register = async (req, res) => {
       });
     }
 
-    const validRoles = ['farmer', 'dairyOwner', 'medicalProvider', 'veterinarian'];
+    // PART 7 — Strictly prohibit public registration for Admin and Dairy Owner
+    if (role === 'admin' || role === 'dairyOwner') {
+      return res.status(403).json({
+        success: false,
+        message: 'Public registration for this role is restricted. Please contact system administrator.'
+      });
+    }
+
+    const validRoles = ['farmer', 'medicalProvider', 'veterinarian'];
     if (!validRoles.includes(role)) {
-      if (role === 'admin') {
-        return res.status(403).json({
-          success: false,
-          message: 'Admin registration is restricted.'
-        });
-      }
       return res.status(400).json({
         success: false,
         message: 'Invalid user role selected'
       });
+    }
+
+    // PART 9 — Validate Professional Certification details for Veterinarian and Medical Provider
+    const pendingMetadata = {
+      nameMr: nameMr ? String(nameMr).trim() : ''
+    };
+
+    if (role === 'veterinarian') {
+      if (!licenseNumber || String(licenseNumber).trim().length < 3) {
+        return res.status(400).json({
+          success: false,
+          message: 'Veterinary Council registration/license number is required for doctor registration.'
+        });
+      }
+      if (!specialization || String(specialization).trim().length < 2) {
+        return res.status(400).json({
+          success: false,
+          message: 'Professional qualification (e.g. BVSc & AH) is required for doctor registration.'
+        });
+      }
+      pendingMetadata.licenseNumber = String(licenseNumber).trim();
+      pendingMetadata.specialization = String(specialization).trim();
+      pendingMetadata.clinicName = clinicName ? String(clinicName).trim() : 'Veterinary Care Clinic';
+    } else if (role === 'medicalProvider') {
+      if (!licenseNumber || String(licenseNumber).trim().length < 3) {
+        return res.status(400).json({
+          success: false,
+          message: 'Drug license / pharmacy permit number is required for medical store registration.'
+        });
+      }
+      if (!clinicName || String(clinicName).trim().length < 2) {
+        return res.status(400).json({
+          success: false,
+          message: 'Medical store / pharmacy name is required for medical provider registration.'
+        });
+      }
+      pendingMetadata.licenseNumber = String(licenseNumber).trim();
+      pendingMetadata.clinicName = String(clinicName).trim();
+      pendingMetadata.specialization = specialization ? String(specialization).trim() : 'Veterinary Medicine Pharmacy';
     }
 
     const normalizedIdentity = normalizeIdentity(rawInput);
@@ -153,7 +196,8 @@ export const register = async (req, res) => {
       verified: false,
       isRegistration: true,
       pendingName: name.trim(),
-      pendingRole: role
+      pendingRole: role,
+      pendingMetadata
     });
 
     const emailProvider = process.env.EMAIL_PROVIDER;
@@ -461,20 +505,33 @@ export const verifyOTP = async (req, res) => {
 
       const pendingRole = otpRecord.pendingRole || 'farmer';
       const pendingName = otpRecord.pendingName || 'User';
+      const pendingMeta = otpRecord.pendingMetadata || {};
 
       if (existingUser) {
         const currentRoles = existingUser.roles && existingUser.roles.length > 0 ? existingUser.roles : [existingUser.role || 'farmer'];
         existingUser.roles = Array.from(new Set([...currentRoles, pendingRole]));
         existingUser.role = pendingRole;
         if (pendingName) existingUser.name = pendingName;
+        if (pendingMeta.nameMr) existingUser.nameMr = pendingMeta.nameMr;
+        if (pendingMeta.licenseNumber) existingUser.licenseNumber = pendingMeta.licenseNumber;
+        if (pendingMeta.clinicName) existingUser.clinicName = pendingMeta.clinicName;
+        if (pendingMeta.specialization) existingUser.specialization = pendingMeta.specialization;
+        if (['veterinarian', 'medicalProvider'].includes(pendingRole)) {
+          existingUser.verificationStatus = 'pending';
+        }
         user = await existingUser.save();
       } else {
         const userData = {
           name: pendingName,
+          nameMr: pendingMeta.nameMr || '',
           phone: normalizedIdentity,
           role: pendingRole,
           roles: [pendingRole],
-          isActive: true
+          isActive: true,
+          licenseNumber: pendingMeta.licenseNumber || '',
+          clinicName: pendingMeta.clinicName || (pendingRole === 'veterinarian' ? 'Veterinary Care Clinic' : 'Medical Store'),
+          specialization: pendingMeta.specialization || (pendingRole === 'veterinarian' ? 'Large Animal & Cattle Specialist' : 'Veterinary Medicine Dispenser'),
+          verificationStatus: ['veterinarian', 'medicalProvider'].includes(pendingRole) ? 'pending' : 'approved'
         };
         if (isValidEmail(normalizedIdentity)) {
           userData.email = normalizedIdentity;
@@ -543,12 +600,17 @@ export const verifyOTP = async (req, res) => {
       user: {
         id: user._id,
         name: user.name,
+        nameMr: user.nameMr || '',
         phone: user.phone,
         email: user.email,
         role: activeRole,
         activeRole: activeRole,
         roles: userRoles,
-        isActive: user.isActive
+        isActive: user.isActive,
+        licenseNumber: user.licenseNumber || '',
+        clinicName: user.clinicName || '',
+        specialization: user.specialization || '',
+        verificationStatus: user.verificationStatus || 'approved'
       }
     });
 
@@ -590,11 +652,16 @@ export const getMe = async (req, res) => {
       user: {
         id: user._id,
         name: user.name,
+        nameMr: user.nameMr || '',
         phone: user.phone,
         email: user.email,
         role: activeRole,
         activeRole: activeRole,
         roles: userRoles,
+        licenseNumber: user.licenseNumber || '',
+        clinicName: user.clinicName || '',
+        specialization: user.specialization || '',
+        verificationStatus: user.verificationStatus || 'approved',
         isActive: user.isActive
       }
     });
@@ -656,11 +723,16 @@ export const switchRole = async (req, res) => {
       user: {
         id: user._id,
         name: user.name,
+        nameMr: user.nameMr || '',
         phone: user.phone,
         email: user.email,
         role: role,
         activeRole: role,
         roles: userRoles,
+        licenseNumber: user.licenseNumber || '',
+        clinicName: user.clinicName || '',
+        specialization: user.specialization || '',
+        verificationStatus: user.verificationStatus || 'approved',
         isActive: user.isActive
       }
     });
@@ -669,6 +741,180 @@ export const switchRole = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Internal server error while switching role'
+    });
+  }
+};
+
+/**
+ * @route POST /api/auth/google
+ * @desc Authenticate or register a user securely using Google Identity Services ID Token
+ */
+export const googleAuth = async (req, res) => {
+  try {
+    const { credential, role: requestedRole } = req.body;
+
+    if (!credential) {
+      return res.status(400).json({
+        success: false,
+        message: 'Google ID token credential is required'
+      });
+    }
+
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    if (!clientId) {
+      return res.status(500).json({
+        success: false,
+        message: 'Google Sign-In is not configured on the server (missing GOOGLE_CLIENT_ID)'
+      });
+    }
+
+    const client = new OAuth2Client(clientId);
+    let ticket;
+    try {
+      ticket = await client.verifyIdToken({
+        idToken: credential,
+        audience: clientId
+      });
+    } catch (verifyError) {
+      console.error(`Google Token Verification Failed: ${verifyError.message}`);
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid or expired Google authentication token'
+      });
+    }
+
+    const payload = ticket.getPayload();
+    if (!payload || !payload.email || !payload.email_verified) {
+      return res.status(401).json({
+        success: false,
+        message: 'Google account email is not verified or payload is missing'
+      });
+    }
+
+    const googleEmail = payload.email.trim().toLowerCase();
+    const googleName = payload.name ? payload.name.trim() : 'Google User';
+
+    // Find user by email or phone matching email
+    let user = await User.findOne({
+      $or: [
+        { email: googleEmail },
+        { phone: googleEmail }
+      ]
+    });
+
+    if (user) {
+      // Existing user: preserve active roles and normalized roles array
+      if (user.isActive !== true) {
+        return res.status(403).json({
+          success: false,
+          message: 'Your account is inactive. Please contact the administrator.'
+        });
+      }
+
+      // If email wasn't set, update safely
+      if (!user.email) {
+        user.email = googleEmail;
+      }
+      user.isVerified = true;
+      await user.save();
+
+      const userRoles = user.roles && user.roles.length > 0 ? user.roles : [user.role || 'farmer'];
+      const activeRole = requestedRole && userRoles.includes(requestedRole) ? requestedRole : (user.role || userRoles[0]);
+
+      const jwtSecret = process.env.JWT_SECRET || 'dairy_medical_system_super_secret_jwt_key_2026';
+      const jwtExpiresIn = process.env.JWT_EXPIRES_IN || '7d';
+
+      const token = jwt.sign(
+        {
+          userId: user._id.toString(),
+          role: activeRole,
+          activeRole: activeRole,
+          roles: userRoles
+        },
+        jwtSecret,
+        { expiresIn: jwtExpiresIn }
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: 'Logged in successfully with Google',
+        token,
+        user: {
+          id: user._id,
+          name: user.name,
+          nameMr: user.nameMr || '',
+          phone: user.phone,
+          email: user.email,
+          role: activeRole,
+          activeRole: activeRole,
+          roles: userRoles,
+          licenseNumber: user.licenseNumber || '',
+          clinicName: user.clinicName || '',
+          specialization: user.specialization || '',
+          verificationStatus: user.verificationStatus || 'approved',
+          isActive: user.isActive
+        }
+      });
+    } else {
+      // New user registration via Google:
+      // Strictly enforce public registration policy: only farmer, veterinarian, medicalProvider
+      const allowedRoles = ['farmer', 'veterinarian', 'medicalProvider'];
+      let assignedRole = 'farmer';
+      if (requestedRole && allowedRoles.includes(requestedRole)) {
+        assignedRole = requestedRole;
+      }
+
+      user = await User.create({
+        name: googleName,
+        email: googleEmail,
+        phone: googleEmail,
+        role: assignedRole,
+        roles: [assignedRole],
+        isVerified: true,
+        isActive: true,
+        verificationStatus: (assignedRole === 'veterinarian' || assignedRole === 'medicalProvider') ? 'pending' : 'approved'
+      });
+
+      const jwtSecret = process.env.JWT_SECRET || 'dairy_medical_system_super_secret_jwt_key_2026';
+      const jwtExpiresIn = process.env.JWT_EXPIRES_IN || '7d';
+
+      const token = jwt.sign(
+        {
+          userId: user._id.toString(),
+          role: assignedRole,
+          activeRole: assignedRole,
+          roles: [assignedRole]
+        },
+        jwtSecret,
+        { expiresIn: jwtExpiresIn }
+      );
+
+      return res.status(201).json({
+        success: true,
+        message: 'Account created and logged in with Google',
+        token,
+        user: {
+          id: user._id,
+          name: user.name,
+          nameMr: user.nameMr || '',
+          phone: user.phone,
+          email: user.email,
+          role: assignedRole,
+          activeRole: assignedRole,
+          roles: [assignedRole],
+          licenseNumber: user.licenseNumber || '',
+          clinicName: user.clinicName || '',
+          specialization: user.specialization || '',
+          verificationStatus: user.verificationStatus || 'approved',
+          isActive: user.isActive
+        }
+      });
+    }
+  } catch (error) {
+    console.error(`Google Auth Error: ${error.message}`);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error during Google authentication'
     });
   }
 };
