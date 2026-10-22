@@ -760,6 +760,69 @@ All buttons declare explicit `type="button"` preventing accidental form submissi
 - **Client Regression Tests (`npm test` in `client/`)**: 19/19 tests passing (`statusMap.test.js` & `navigation.test.js`).
 - **Client Production Build (`npm run build`)**: Vite production bundle built cleanly in 1.09s with zero errors.
 
+---
+
+## 20. Phase 32 — Dairy Owner Verification, 50MB Payload Handling & Genuine Pixel OCR Prescription Scanner
+
+### 1. Dairy Owner Registration & Professional Verification Workflow
+- **Public Registration Integration (`LoginPage.jsx`)**:
+  - Restored `Dairy Owner` to the public registration selector alongside Farmer, Veterinarian, and Medical Store.
+  - Implemented specific validation rules and input fields: `dairyName` (Dairy Center / Cooperative Name), `dairyLicenseNumber` (FSSAI / Milk Cooperative Registration No), `dailyCapacityLiters`, and verification document / certificate uploads.
+  - Added responsive CSS grid (`grid-cols-2 lg:grid-cols-4`) with `[overflow-wrap:anywhere] break-words whitespace-normal` to eliminate label clipping and horizontal scroll across all device viewports (320px–1024px+).
+- **Server-Side Authorization & Metadata Storage (`authController.js`)**:
+  - Enforced verification requirements for `dairyOwner` during registration; stores verification metadata securely in `pendingMetadata` during OTP validation and attaches `verificationStatus: 'pending'` upon account creation.
+- **Admin Verification Oversight (`adminController.js`, `AdminDashboard.jsx`)**:
+  - Extended admin verification tabs to filter, review certificates, and approve/reject Dairy Owner accounts alongside Veterinarians and Medical Stores.
+
+### 2. Express Payload Limits & Robust Error Handling (HTTP 413 Fix)
+- **Root Cause**:
+  - Express defaults `express.json()` and `express.urlencoded()` to a strict **100 KB** limit.
+  - Uploading cattle photographs (`/api/cattle`) or prescription documents (`/api/medicines/process-prescription`) in base64 exceeds 100 KB (often 1 MB – 15 MB), causing `body-parser` to throw `PayloadTooLargeError: request entity too large` (HTTP 413).
+  - The default Express handler emitted an HTML error page (`<!DOCTYPE html>...`), which failed client JSON deserialization with `SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON`.
+- **Backend Fix (`server/src/app.js`)**:
+  - Configured `app.use(express.json({ limit: '50mb' }))` and `app.use(express.urlencoded({ extended: true, limit: '50mb' }))`.
+  - Added centralized error-handling middleware intercepting `entity.too.large` and JSON parse errors to always respond with valid JSON `{ success: false, message: '...' }`.
+- **Client-Side Resilient Parsing (`cattleService.js`, `medicineService.js`)**:
+  - Wrapped `response.json()` in try/catch blocks with informative fallback error messages to prevent uncaught token exceptions on non-JSON network responses.
+
+### 3. Genuine Image-to-Text OCR Extraction (`prescriptionOcrService.js`)
+- **Root Cause of Previous Flawed Implementation**:
+  - The previous `processPrescription` controller did not read image bytes or pixels; it extracted query terms from the uploaded `fileName` string (e.g. `Amoxicillin.jpg`). An identical image named `test123.png` returned zero results.
+- **Selected OCR Engine**:
+  - `Tesseract.js` (v5.x), a pure JavaScript/WebAssembly OCR engine running locally on Node.js without requiring host C++ binaries or external cloud API keys.
+  - Initialized with bilingual language models (`eng` + `mar`).
+- **Image Validation via Magic Bytes**:
+  - Reads buffer headers directly to verify genuine raster images: JPEG (`FF D8 FF`), PNG (`89 50 4E 47`), WEBP (`RIFF...WEBP`), and BMP (`42 4D`).
+  - Rejects spoofed extensions, empty buffers, and files exceeding 25 MB before OCR processing.
+- **Structured Prescription Candidate Parsing**:
+  - Filters clinic boilerplate headers (doctor credentials, clinic names, registration numbers, dates, patient demographics).
+  - Extracts structured items: medicine candidate name, strength (`100mg`, `10ml`), dosage instructions (`1 tube`, `2 tabs`), route (`IM`, `IV`, `Topical`), frequency (`OD`, `BD`, `twice daily`), and duration (`for 5 days`).
+- **Inventory Matching Engine**:
+  - **Exact Match**: Compares candidate names against store catalog `name` and `genericName`.
+  - **Multi-Token Matching**: Matches compound veterinary formulations.
+  - **Controlled Fuzzy Levenshtein Distance**: Corrects OCR character misreads (e.g., `Ointrnent` $\rightarrow$ `Ointment`, `Melox1cam` $\rightarrow$ `Meloxicam`) with a strict $\ge 78\%$ similarity threshold, preventing false matches against unrelated drugs.
+  - **Unmatched Classification**: Clearly separates items missing from the store catalog.
+
+### 4. Redesigned Scanning Results UI (`client/src/pages/farmer/Medicines.jsx`)
+- **Section A: Uploaded Prescription Reference**:
+  - Displays prescription thumbnail preview, file size, OCR status badge, and clear notice that the filename is for reference only.
+- **Section B: Extracted Text from Image Pixels & Manual Correction**:
+  - Displays raw OCR text and confidence percentage.
+  - Provides an **"Edit / Correct OCR Text"** interface with a **"Re-match with Inventory"** button, allowing farmers to adjust handwriting misreads without re-uploading.
+- **Section C: Detected Medicines & Inventory Matches**:
+  - Shows extracted candidate name, strength, dosage, route, match status badge (`Exact Match` vs `Possible Match`), matched store product details, unit price, stock availability, and a direct **"Request Medicine"** modal trigger.
+- **Section D: Unmatched Medicines & Manual Inventory Search**:
+  - Clear warning cards for unstocked items, equipped with an interactive **"Search Store Inventory Manually"** catalog search drawer to browse and request alternative products.
+- **Section E: State Machine**:
+  - Explicit visual states for `idle`, `uploading`, `scanning` (with animated OCR progress banner), `matching`, `success`, `no-text-found` (with immediate manual entry fallback), `unsupported-file`, and `failure`.
+
+### 5. Phase 32 Verification Status
+- **Backend OCR & Regression Test Suite (`npm test` in `server/`)**: 17/17 tests passing (`prescriptionOcr.test.js` & `regression.test.js`).
+- **Client Test Suite (`npm test` in `client/`)**: 19/19 tests passing (`navigation.test.js` & `statusMap.test.js`).
+- **Client Production Build (`npm run build` in `client/`)**: Vite bundle compiled cleanly in 1.15s with zero errors.
+- **Git Push**: Committed and pushed to `origin/main` on GitHub (`https://github.com/PratikDate01/DairyMgmt.git`).
+
+
 
 
 
