@@ -153,9 +153,14 @@ export const medicineService = {
       headers: getHeaders(token),
       body: JSON.stringify(payload)
     });
-    const data = await response.json();
+    let data;
+    try {
+      data = await response.json();
+    } catch {
+      throw new Error(`Server returned status ${response.status} (${response.statusText || 'Error processing prescription'})`);
+    }
     if (!response.ok) {
-      throw new Error(data.message || 'Failed to process prescription.');
+      throw new Error(data?.message || 'Failed to process prescription.');
     }
     return data;
   }

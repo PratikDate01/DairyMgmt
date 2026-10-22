@@ -53,6 +53,7 @@
     "professionalEntity": "Professional / Entity",
     "specializationClinic": "Specialization / Clinic",
     "licenseNumber": "License Number",
+    "dairyLicenseLabel": "Dairy / FSSAI License Number",
     "adminNotes": "Admin Notes",
     "notRecorded": "Not recorded",
     "none": "None",

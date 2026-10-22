@@ -340,7 +340,7 @@ export const AdminDashboard = () => {
   const navigationTabs = [
     { id: 'overview', label: t('admin:dashboard.tabs.overview', 'Overview & KPIs'), icon: BarChart3 },
     { id: 'users', label: t('admin:dashboard.tabs.users', 'User Directory'), icon: Users, badge: (stats?.users?.totalRegisteredUsers ?? stats?.users?.totalUsers) },
-    { id: 'verifications', label: t('admin:dashboard.tabs.verifications', 'Verifications'), icon: ShieldCheck, badge: (stats?.users?.pendingVetVerifications || 0) + (stats?.users?.pendingStoreVerifications || 0) },
+    { id: 'verifications', label: t('admin:dashboard.tabs.verifications', 'Verifications'), icon: ShieldCheck, badge: (stats?.users?.pendingVetVerifications || 0) + (stats?.users?.pendingStoreVerifications || 0) + (stats?.users?.pendingDairyVerifications || 0) },
     { id: 'cattle', label: t('admin:dashboard.tabs.cattle', 'Cattle Records'), icon: HeartPulse, badge: stats?.operations?.totalCattle },
     { id: 'vet-requests', label: t('admin:dashboard.tabs.vetRequests', 'Vet Requests'), icon: Activity, badge: stats?.operations?.activeVetRequests },
     { id: 'medicines', label: t('admin:dashboard.tabs.medicines', 'Medicines'), icon: Pill, badge: stats?.operations?.totalMedicines },
@@ -471,8 +471,8 @@ export const AdminDashboard = () => {
                 title={t('admin:dashboard.dairyOwnersStat', 'Dairy Owners')}
                 value={statsLoading ? '...' : `${stats?.users?.totalDairyOwners || 0}`}
                 icon={Building2}
-                badgeText="Dairies"
-                badgeType="blue"
+                badgeText={`${stats?.users?.pendingDairyVerifications || 0} Pending`}
+                badgeType={stats?.users?.pendingDairyVerifications ? 'amber' : 'neutral'}
               />
               <StatCard
                 title={t('admin:dashboard.veterinariansStat', 'Veterinarians')}
@@ -572,14 +572,14 @@ export const AdminDashboard = () => {
           </div>
 
           {/* Verification Tasks Alert Box */}
-          {((stats?.users?.pendingVetVerifications || 0) > 0 || (stats?.users?.pendingStoreVerifications || 0) > 0) && (
+          {((stats?.users?.pendingVetVerifications || 0) > 0 || (stats?.users?.pendingStoreVerifications || 0) > 0 || (stats?.users?.pendingDairyVerifications || 0) > 0) && (
             <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <ShieldAlert className="w-6 h-6 text-amber-600 shrink-0" />
                 <div>
                   <h4 className="text-sm font-bold text-amber-900">{t('admin:dashboard.pendingProfessionalVerifications', 'Pending Professional Verifications')}</h4>
                   <p className="text-xs text-amber-800">
-                    There are {stats?.users?.pendingVetVerifications || 0} veterinarians and {stats?.users?.pendingStoreVerifications || 0} medical stores awaiting license review.
+                    There are {stats?.users?.pendingVetVerifications || 0} veterinarians, {stats?.users?.pendingStoreVerifications || 0} medical stores, and {stats?.users?.pendingDairyVerifications || 0} dairy owners awaiting license review.
                   </p>
                 </div>
               </div>
@@ -796,7 +796,7 @@ export const AdminDashboard = () => {
                           </span>
                         </td>
                         <td className="px-4 py-3">
-                          {rolesArray.some(r => r === 'veterinarian' || r === 'medicalProvider') ? (
+                          {rolesArray.some(r => r === 'veterinarian' || r === 'medicalProvider' || r === 'dairyOwner') ? (
                             <span
                               className={`px-2 py-0.5 text-[10px] font-bold rounded-full border ${
                                 u.verificationStatus === 'approved'
@@ -869,6 +869,16 @@ export const AdminDashboard = () => {
               >
                 {t('admin:dashboard.medicalStores', 'Medical Stores')}
               </button>
+              <button
+                onClick={() => setVerificationRoleFilter('dairyOwner')}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition ${
+                  verificationRoleFilter === 'dairyOwner'
+                    ? 'bg-slate-900 text-white'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                {t('roles.dairyOwner', 'Dairy Owners')}
+              </button>
             </div>
 
             {/* Status Filter */}
@@ -896,7 +906,7 @@ export const AdminDashboard = () => {
           ) : verificationsList.length === 0 ? (
             <EmptyState
               title={t('admin:dashboard.noVerificationsFound', 'No Verifications Matching Criteria')}
-              description={`No ${verificationRoleFilter === 'veterinarian' ? 'veterinarian' : 'medical store'} records found for the selected verification status.`}
+              description={`No ${verificationRoleFilter === 'veterinarian' ? 'veterinarian' : verificationRoleFilter === 'dairyOwner' ? 'dairy owner' : 'medical store'} records found for the selected verification status.`}
               icon={ShieldCheck}
             />
           ) : (
@@ -1654,10 +1664,18 @@ export const AdminDashboard = () => {
               </div>
 
               <div>
-                <label className="block text-slate-500 font-semibold mb-1">{t('admin:dashboard.medVetLicenseNumber', 'Medical / Veterinary License Number')}</label>
+                <label className="block text-slate-500 font-semibold mb-1">
+                  {verificationModal.user?.role === 'dairyOwner' || (verificationModal.user?.roles && verificationModal.user.roles.includes('dairyOwner'))
+                    ? t('admin:dashboard.dairyLicenseLabel', 'Dairy / FSSAI License Number')
+                    : t('admin:dashboard.medVetLicenseNumber', 'Medical / Veterinary License Number')}
+                </label>
                 <input
                   type="text"
-                  placeholder={t('admin:dashboard.licensePlaceholder', 'e.g. VET-MH-2024-8841')}
+                  placeholder={
+                    verificationModal.user?.role === 'dairyOwner' || (verificationModal.user?.roles && verificationModal.user.roles.includes('dairyOwner'))
+                      ? 'e.g. FSSAI-21524045000123'
+                      : t('admin:dashboard.licensePlaceholder', 'e.g. VET-MH-2024-8841')
+                  }
                   value={verificationModal.licenseNumber}
                   onChange={(e) => setVerificationModal(prev => ({ ...prev, licenseNumber: e.target.value }))}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none"

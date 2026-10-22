@@ -1,5 +1,18 @@
 const API_BASE_URL = 'http://localhost:5000/api/cattle';
 
+const parseResponse = async (response, fallbackMsg) => {
+  let data;
+  try {
+    data = await response.json();
+  } catch {
+    throw new Error(`Server returned status ${response.status} (${response.statusText || fallbackMsg})`);
+  }
+  if (!response.ok) {
+    throw new Error(data?.message || fallbackMsg);
+  }
+  return data;
+};
+
 export const cattleService = {
   async getFarmerCattle(token, farmerId = '') {
     const url = farmerId ? `${API_BASE_URL}?farmerId=${farmerId}` : API_BASE_URL;
@@ -10,11 +23,7 @@ export const cattleService = {
         'Authorization': `Bearer ${token}`
       }
     });
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.message || 'Failed to fetch cattle records');
-    }
-    return data;
+    return parseResponse(response, 'Failed to fetch cattle records');
   },
 
   async getCattleById(token, id) {
@@ -25,10 +34,7 @@ export const cattleService = {
         'Authorization': `Bearer ${token}`
       }
     });
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.message || 'Failed to fetch cattle details');
-    }
+    const data = await parseResponse(response, 'Failed to fetch cattle details');
     return data.cattle;
   },
 
@@ -41,11 +47,7 @@ export const cattleService = {
       },
       body: JSON.stringify(cattleData)
     });
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.message || 'Failed to register cattle record');
-    }
-    return data;
+    return parseResponse(response, 'Failed to register cattle record');
   },
 
   async updateCattle(token, id, cattleData) {
@@ -57,11 +59,7 @@ export const cattleService = {
       },
       body: JSON.stringify(cattleData)
     });
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.message || 'Failed to update cattle record');
-    }
-    return data;
+    return parseResponse(response, 'Failed to update cattle record');
   },
 
   async deleteCattle(token, id) {
@@ -72,10 +70,6 @@ export const cattleService = {
         'Authorization': `Bearer ${token}`
       }
     });
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.message || 'Failed to delete cattle record');
-    }
-    return data;
+    return parseResponse(response, 'Failed to delete cattle record');
   }
 };

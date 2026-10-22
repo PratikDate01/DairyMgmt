@@ -13,7 +13,13 @@
     "viewFarmers": "Manage Farmers",
     "viewReports": "Reports & Ledger",
     "recentCollections": "Recent Shift Collections",
-    "pendingRequestsNotice": "{{count}} pending farmer connection requests awaiting approval."
+    "pendingRequestsNotice": "{{count}} pending farmer connection requests awaiting approval.",
+    "verificationPendingTitle": "Dairy Account Verification In Progress",
+    "verificationPendingDesc": "Your dairy registration credentials (License: {{license}}) are awaiting admin review and approval. You may manage records while verification is finalized.",
+    "verificationRejectedTitle": "Dairy Account Verification Rejected",
+    "verificationRejectedDesc": "Your dairy registration could not be verified by the administrator. Please update your license details or contact support.",
+    "verificationRejectedReason": "Admin Notes: {{notes}}",
+    "verifiedDairyNotice": "Verified Dairy Enterprise — License: {{license}} ({{center}})"
   },
   "collection": {
     "title": "Milk Collection Intake",

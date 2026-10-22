@@ -349,16 +349,16 @@ export const LoginPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-x-hidden">
+      <div className={`w-full ${mode === 'register' ? 'max-w-md sm:max-w-lg lg:max-w-xl' : 'max-w-md'} bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6 md:p-8 transition-all box-border mx-auto`}>
         
         {/* Top bar with Language Switcher */}
-        <div className="flex justify-end mb-2">
+        <div className="flex justify-end mb-3 w-full box-border">
           <LanguageSwitcher />
         </div>
 
         {/* Brand Header */}
-        <div className="text-center mb-6">
+        <div className="text-center mb-6 w-full box-border">
           <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl font-bold shadow-xs">
             🐄
           </div>
@@ -368,7 +368,7 @@ export const LoginPage = () => {
 
         {/* Mode Switcher Tabs (Only visible on Step 1) */}
         {step === 1 && (
-          <div className="grid grid-cols-2 p-1 bg-slate-100 rounded-xl mb-6 text-xs font-semibold">
+          <div className="grid grid-cols-2 p-1 bg-slate-100 rounded-xl mb-6 text-xs font-semibold w-full box-border">
             <button
               type="button"
               onClick={() => {
@@ -376,14 +376,14 @@ export const LoginPage = () => {
                 setError('');
                 setSuccessMsg('');
               }}
-              className={`py-2 px-3 rounded-lg flex items-center justify-center space-x-1.5 transition ${
+              className={`min-w-0 py-2 px-2 sm:px-3 rounded-lg flex items-center justify-center space-x-1.5 transition text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
                 mode === 'login'
                   ? 'bg-white text-blue-600 shadow-xs font-bold'
                   : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              <LogIn className="w-3.5 h-3.5" />
-              <span>{t('auth:tabLogin')}</span>
+              <LogIn className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">{t('auth:tabLogin')}</span>
             </button>
             <button
               type="button"
@@ -392,14 +392,14 @@ export const LoginPage = () => {
                 setError('');
                 setSuccessMsg('');
               }}
-              className={`py-2 px-3 rounded-lg flex items-center justify-center space-x-1.5 transition ${
+              className={`min-w-0 py-2 px-2 sm:px-3 rounded-lg flex items-center justify-center space-x-1.5 transition text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
                 mode === 'register'
                   ? 'bg-white text-blue-600 shadow-xs font-bold'
                   : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              <UserPlus className="w-3.5 h-3.5" />
-              <span>{t('auth:tabRegister')}</span>
+              <UserPlus className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">{t('auth:tabRegister')}</span>
             </button>
           </div>
         )}
@@ -565,79 +565,142 @@ export const LoginPage = () => {
             </form>
           ) : (
             /* REGISTER STEP 1 */
-            <form onSubmit={handleRegister} className="space-y-4">
-              <div>
+            <form onSubmit={handleRegister} className="space-y-4 w-full box-border">
+              <div className="w-full box-border">
                 <label htmlFor="reg-name" className="block text-xs font-semibold text-slate-700 mb-1">
                   {t('auth:fullName')}
                 </label>
-                <div className="relative">
+                <div className="relative w-full box-border">
                   <input
                     id="reg-name"
                     type="text"
                     placeholder={t('auth:fullNamePlaceholder')}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-white border border-slate-300 rounded-xl text-slate-900 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition"
+                    className="w-full box-border pl-10 pr-4 py-2 bg-white border border-slate-300 rounded-xl text-slate-900 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition"
                     required
                   />
-                  <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5" />
+                  <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5 shrink-0" />
                 </div>
               </div>
 
-              <div>
+              <div className="w-full box-border">
                 <label htmlFor="reg-identity" className="block text-xs font-semibold text-slate-700 mb-1">
                   {t('auth:emailAddress')} / {t('auth:mobileNumber')}
                 </label>
-                <div className="relative">
+                <div className="relative w-full box-border">
                   <input
                     id="reg-identity"
                     type="text"
                     placeholder={t('auth:identityPlaceholder')}
                     value={identity}
                     onChange={(e) => setIdentity(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-white border border-slate-300 rounded-xl text-slate-900 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition"
+                    className="w-full box-border pl-10 pr-4 py-2 bg-white border border-slate-300 rounded-xl text-slate-900 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition"
                     required
                   />
-                  <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5" />
+                  <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5 shrink-0" />
                 </div>
-                <p className="text-[11px] text-slate-500 mt-1">{t('auth:identityHelp')}</p>
+                <p className="text-[11px] text-slate-500 mt-1 leading-normal">{t('auth:identityHelp')}</p>
               </div>
 
-              <div>
+              <div className="w-full box-border">
                 <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                   {t('auth:selectRoleToRegister')}
                 </label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 w-full box-border">
                   {Object.entries(roleLabels)
-                    .filter(([key]) => key !== 'admin' && key !== 'dairyOwner')
-                    .map(([key, item]) => (
-                      <button
-                        key={key}
-                        type="button"
-                        onClick={() => setSelectedRole(key)}
-                        className={`p-2.5 rounded-xl border text-left transition flex items-center space-x-2 ${
-                          selectedRole === key
-                            ? 'border-blue-600 bg-blue-50/70 text-blue-900 font-bold'
-                            : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-                        }`}
-                      >
-                        <span className="text-lg">{item.icon}</span>
-                        <div>
-                          <div className="text-xs font-bold leading-tight">{item.label}</div>
-                        </div>
-                      </button>
-                    ))}
+                    .filter(([key]) => key !== 'admin')
+                    .map(([key, item]) => {
+                      const isSelected = selectedRole === key;
+                      return (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() => setSelectedRole(key)}
+                          className={`
+                            min-w-0 w-full box-border
+                            min-h-[64px] sm:min-h-[72px] px-2 py-2.5
+                            flex flex-col items-center justify-center gap-1
+                            rounded-xl border text-center
+                            transition-colors select-none
+                            focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1
+                            ${isSelected
+                              ? 'border-blue-500 bg-blue-50 text-blue-700 font-bold shadow-xs'
+                              : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300'
+                            }
+                          `}
+                        >
+                          <span className="shrink-0 text-xl sm:text-2xl leading-none" aria-hidden="true">
+                            {item.icon}
+                          </span>
+                          <span className="min-w-0 max-w-full text-xs sm:text-sm font-medium leading-tight whitespace-normal [overflow-wrap:anywhere] break-words">
+                            {item.label}
+                          </span>
+                        </button>
+                      );
+                    })}
                 </div>
               </div>
 
+              {/* Dairy Business Verification for Dairy Owners */}
+              {selectedRole === 'dairyOwner' && (
+                <div className="w-full box-border p-3.5 bg-blue-50/70 border border-blue-200 rounded-xl space-y-3">
+                  <div className="flex items-center space-x-2 text-blue-900 font-bold text-xs">
+                    <ShieldCheck className="w-4 h-4 text-blue-700 shrink-0" />
+                    <span className="leading-tight">{t('auth:dairyCredentialsTitle', 'Dairy Business & License Verification')}</span>
+                  </div>
+                  <div className="w-full box-border">
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                      {t('auth:dairyLicenseNumber', 'Dairy Registration / FSSAI License Number')} *
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. FSSAI-21524045000123 / COOP-MH-452"
+                      value={licenseNumber}
+                      onChange={(e) => setLicenseNumber(e.target.value)}
+                      className="w-full box-border px-3 py-2 bg-white border border-blue-300 rounded-lg text-slate-900 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 outline-none transition"
+                      required
+                    />
+                  </div>
+                  <div className="w-full box-border">
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                      {t('auth:dairyCenterName', 'Dairy Plant / Milk Collection Center Name')} *
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Anand Dairy & Milk Collection Center"
+                      value={clinicName}
+                      onChange={(e) => setClinicName(e.target.value)}
+                      className="w-full box-border px-3 py-2 bg-white border border-blue-300 rounded-lg text-slate-900 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 outline-none transition"
+                      required
+                    />
+                  </div>
+                  <div className="w-full box-border">
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                      {t('auth:dairyOperationType', 'Operation Type / Chilling Capacity')}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Cooperative Milk Chilling Center (2000L/day)"
+                      value={specialization}
+                      onChange={(e) => setSpecialization(e.target.value)}
+                      className="w-full box-border px-3 py-2 bg-white border border-blue-300 rounded-lg text-slate-900 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 outline-none transition"
+                    />
+                  </div>
+                  <p className="text-[10px] text-blue-800 italic leading-normal">
+                    {t('auth:dairyVerificationHelp', 'Your dairy credentials and license will be verified by the admin before full approval.')}
+                  </p>
+                </div>
+              )}
+
               {/* Professional Certification for Veterinarians */}
               {selectedRole === 'veterinarian' && (
-                <div className="p-3.5 bg-purple-50/70 border border-purple-200 rounded-xl space-y-3">
+                <div className="w-full box-border p-3.5 bg-purple-50/70 border border-purple-200 rounded-xl space-y-3">
                   <div className="flex items-center space-x-2 text-purple-900 font-bold text-xs">
-                    <ShieldCheck className="w-4 h-4 text-purple-700" />
-                    <span>{t('auth:veterinaryCredentialsTitle', 'Veterinary Professional Verification')}</span>
+                    <ShieldCheck className="w-4 h-4 text-purple-700 shrink-0" />
+                    <span className="leading-tight">{t('auth:veterinaryCredentialsTitle', 'Veterinary Professional Verification')}</span>
                   </div>
-                  <div>
+                  <div className="w-full box-border">
                     <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                       {t('auth:vetLicenseNumber', 'Veterinary Registration / License Number')} *
                     </label>
@@ -646,11 +709,11 @@ export const LoginPage = () => {
                       placeholder="e.g. VCI/MSVC/2021/04589"
                       value={licenseNumber}
                       onChange={(e) => setLicenseNumber(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-white border border-purple-300 rounded-lg text-slate-900 text-xs focus:ring-2 focus:ring-purple-500 outline-none"
+                      className="w-full box-border px-3 py-2 bg-white border border-purple-300 rounded-lg text-slate-900 text-xs sm:text-sm focus:ring-2 focus:ring-purple-500 outline-none transition"
                       required
                     />
                   </div>
-                  <div>
+                  <div className="w-full box-border">
                     <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                       {t('auth:vetSpecialization', 'Specialization & Qualification')} *
                     </label>
@@ -659,11 +722,11 @@ export const LoginPage = () => {
                       placeholder="e.g. B.V.Sc & A.H., M.V.Sc (Cattle Surgery)"
                       value={specialization}
                       onChange={(e) => setSpecialization(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-white border border-purple-300 rounded-lg text-slate-900 text-xs focus:ring-2 focus:ring-purple-500 outline-none"
+                      className="w-full box-border px-3 py-2 bg-white border border-purple-300 rounded-lg text-slate-900 text-xs sm:text-sm focus:ring-2 focus:ring-purple-500 outline-none transition"
                       required
                     />
                   </div>
-                  <p className="text-[10px] text-purple-800 italic">
+                  <p className="text-[10px] text-purple-800 italic leading-normal">
                     {t('auth:vetVerificationHelp', 'Your credentials will be verified by the admin before patient referrals are routed.')}
                   </p>
                 </div>
@@ -671,12 +734,12 @@ export const LoginPage = () => {
 
               {/* Medical Store Verification for Medical Providers */}
               {selectedRole === 'medicalProvider' && (
-                <div className="p-3.5 bg-blue-50/70 border border-blue-200 rounded-xl space-y-3">
+                <div className="w-full box-border p-3.5 bg-blue-50/70 border border-blue-200 rounded-xl space-y-3">
                   <div className="flex items-center space-x-2 text-blue-900 font-bold text-xs">
-                    <ShieldCheck className="w-4 h-4 text-blue-700" />
-                    <span>{t('auth:medicalStoreCredentialsTitle', 'Medical Store Business Verification')}</span>
+                    <ShieldCheck className="w-4 h-4 text-blue-700 shrink-0" />
+                    <span className="leading-tight">{t('auth:medicalStoreCredentialsTitle', 'Medical Store Business Verification')}</span>
                   </div>
-                  <div>
+                  <div className="w-full box-border">
                     <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                       {t('auth:drugLicenseNumber', 'Drug License / Pharmacy Registration Number')} *
                     </label>
@@ -685,11 +748,11 @@ export const LoginPage = () => {
                       placeholder="e.g. MH-PUN-20B-184920"
                       value={licenseNumber}
                       onChange={(e) => setLicenseNumber(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-white border border-blue-300 rounded-lg text-slate-900 text-xs focus:ring-2 focus:ring-blue-500 outline-none"
+                      className="w-full box-border px-3 py-2 bg-white border border-blue-300 rounded-lg text-slate-900 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 outline-none transition"
                       required
                     />
                   </div>
-                  <div>
+                  <div className="w-full box-border">
                     <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                       {t('auth:medicalStoreName', 'Pharmacy / Clinic Business Name')} *
                     </label>
@@ -698,11 +761,11 @@ export const LoginPage = () => {
                       placeholder="e.g. Kisan Veterinary Medical & Agro"
                       value={clinicName}
                       onChange={(e) => setClinicName(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-white border border-blue-300 rounded-lg text-slate-900 text-xs focus:ring-2 focus:ring-blue-500 outline-none"
+                      className="w-full box-border px-3 py-2 bg-white border border-blue-300 rounded-lg text-slate-900 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 outline-none transition"
                       required
                     />
                   </div>
-                  <p className="text-[10px] text-blue-800 italic">
+                  <p className="text-[10px] text-blue-800 italic leading-normal">
                     {t('auth:storeVerificationHelp', 'Pharmacy license is required for medicine fulfillment verification by the system admin.')}
                   </p>
                 </div>
@@ -711,13 +774,13 @@ export const LoginPage = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl shadow-xs transition disabled:opacity-50 flex justify-center items-center space-x-2"
+                className="w-full box-border py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl shadow-xs transition disabled:opacity-50 flex justify-center items-center space-x-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1"
               >
-                <UserPlus className="w-4 h-4" />
-                <span>{loading ? t('auth:processing') : t('auth:registerAndRequestOtp')}</span>
+                <UserPlus className="w-4 h-4 shrink-0" />
+                <span className="truncate">{loading ? t('auth:processing') : t('auth:registerAndRequestOtp')}</span>
               </button>
 
-              <div className="pt-2 text-center border-t border-slate-100">
+              <div className="pt-2 text-center border-t border-slate-100 w-full box-border">
                 <button
                   type="button"
                   onClick={() => {

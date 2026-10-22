@@ -18,17 +18,17 @@ test('Server Schema & Security Regression Suite', async (t) => {
     assert.ok(schema.path('nameMr'), 'Cattle model should have nameMr path');
   });
 
-  await t.test('3. Public registration rejects admin and dairyOwner roles', () => {
-    const prohibitedRoles = ['admin', 'dairyOwner'];
-    const allowedRoles = ['farmer', 'veterinarian', 'medicalProvider'];
+  await t.test('3. Public registration rejects admin and allows dairyOwner role', () => {
+    const prohibitedRoles = ['admin'];
+    const allowedRoles = ['farmer', 'dairyOwner', 'veterinarian', 'medicalProvider'];
 
     for (const role of prohibitedRoles) {
-      const isProhibited = role === 'admin' || role === 'dairyOwner';
+      const isProhibited = role === 'admin';
       assert.equal(isProhibited, true, `Role ${role} must be rejected on public registration`);
     }
 
     for (const role of allowedRoles) {
-      const isProhibited = role === 'admin' || role === 'dairyOwner';
+      const isProhibited = role === 'admin';
       assert.equal(isProhibited, false, `Role ${role} must be allowed on public registration`);
     }
   });

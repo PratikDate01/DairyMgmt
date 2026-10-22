@@ -161,6 +161,64 @@ export const DairyOwnerDashboard = () => {
         }
       />
 
+      {/* Verification Status Banner */}
+      {user?.verificationStatus === 'pending' && (
+        <div className="p-4 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="flex items-center space-x-3">
+            <Clock className="w-5 h-5 text-amber-600 shrink-0" />
+            <div>
+              <span className="font-bold block text-sm text-amber-900">
+                {t('dairyOwner:dashboard.verificationPendingTitle', 'Dairy Account Verification In Progress')}
+              </span>
+              <p className="text-amber-800 mt-0.5">
+                {t('dairyOwner:dashboard.verificationPendingDesc', 'Your dairy registration credentials (License: {{license}}) are awaiting admin review and approval. You may manage records while verification is finalized.', { license: user?.licenseNumber || 'Under Review' })}
+              </p>
+            </div>
+          </div>
+          <span className="px-2.5 py-1 bg-amber-100 text-amber-800 rounded-lg font-bold border border-amber-300 uppercase tracking-wider text-[10px] self-start sm:self-auto">
+            {t('common:status.pending', 'Pending Review')}
+          </span>
+        </div>
+      )}
+
+      {user?.verificationStatus === 'rejected' && (
+        <div className="p-4 bg-red-50 border border-red-200 text-red-900 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="flex items-center space-x-3">
+            <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
+            <div>
+              <span className="font-bold block text-sm text-red-900">
+                {t('dairyOwner:dashboard.verificationRejectedTitle', 'Dairy Account Verification Rejected')}
+              </span>
+              <p className="text-red-800 mt-0.5">
+                {user?.verificationNotes
+                  ? t('dairyOwner:dashboard.verificationRejectedReason', 'Admin Notes: {{notes}}', { notes: user.verificationNotes })
+                  : t('dairyOwner:dashboard.verificationRejectedDesc', 'Your dairy registration could not be verified by the administrator. Please update your license details or contact support.')}
+              </p>
+            </div>
+          </div>
+          <span className="px-2.5 py-1 bg-red-100 text-red-800 rounded-lg font-bold border border-red-300 uppercase tracking-wider text-[10px] self-start sm:self-auto">
+            {t('common:status.rejected', 'Rejected')}
+          </span>
+        </div>
+      )}
+
+      {user?.verificationStatus === 'approved' && user?.licenseNumber && (
+        <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl flex items-center justify-between text-xs">
+          <div className="flex items-center space-x-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span className="font-semibold">
+              {t('dairyOwner:dashboard.verifiedDairyNotice', 'Verified Dairy Enterprise — License: {{license}} ({{center}})', {
+                license: user.licenseNumber,
+                center: user.clinicName || 'Collection Center'
+              })}
+            </span>
+          </div>
+          <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-md font-bold text-[10px] uppercase border border-emerald-300">
+            {t('common:status.verified', 'Verified')}
+          </span>
+        </div>
+      )}
+
       {error && (
         <div className="p-4 bg-red-50 border border-red-200 text-red-700 text-xs sm:text-sm rounded-lg flex items-center justify-between">
           <div className="flex items-center space-x-2">

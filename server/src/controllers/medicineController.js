@@ -1,5 +1,11 @@
 import mongoose from 'mongoose';
 import Medicine from '../models/Medicine.js';
+import {
+  parseAndValidateBase64Image,
+  extractTextFromImage,
+  parsePrescriptionLines,
+  matchCandidatesToInventory
+} from '../services/prescriptionOcrService.js';
 
 // Centralized low stock threshold constant
 export const LOW_STOCK_THRESHOLD = 10;
@@ -614,142 +620,144 @@ export const deactivateMedicine = async (req, res) => {
 
 /**
  * @route POST /api/medicines/process-prescription
- * @desc Upload and process prescription to extract medicine names and match with DB catalog
- * @access Private (Farmer, Admin)
+ * @desc Upload and process prescription to extract medicine names via real OCR and match with DB catalog
+ * @access Private (Farmer, Medical Provider, Admin)
  */
 export const processPrescription = async (req, res) => {
   try {
     const {
       prescriptionData,
-      fileName = 'Prescription.jpg',
+      correctedText,
+      fileName = 'prescription.jpg',
       fileType = 'image/jpeg',
-      prescribedMedicinesText = '',
-      medicineNames = []
+      prescribedMedicinesText = ''
     } = req.body;
-
-    if (!prescriptionData) {
-      return res.status(400).json({
-        success: false,
-        message: 'Prescription document (file/image) is required for processing.'
-      });
-    }
 
     // Fetch all active medicines from database
     const dbMedicines = await Medicine.find({ isActive: true })
-      .populate('medicalProvider', '_id name phone');
+      .populate('medicalProvider', '_id name phone address');
 
-    // Collect query terms from user input, filename, or prescribed list
-    const candidateTerms = new Set();
+    let ocrText = '';
+    let ocrConfidence = 0;
+    let isManuallyCorrected = false;
 
-    if (Array.isArray(medicineNames) && medicineNames.length > 0) {
-      medicineNames.forEach(n => {
-        if (n && typeof n === 'string' && n.trim().length > 1) {
-          candidateTerms.add(n.trim());
-        }
-      });
-    }
-
-    if (prescribedMedicinesText && typeof prescribedMedicinesText === 'string') {
-      prescribedMedicinesText
-        .split(/[,;\n\r]+/)
-        .map(s => s.trim())
-        .filter(s => s.length > 1)
-        .forEach(s => candidateTerms.add(s));
-    }
-
-    // Check fileName for potential medicine names (e.g. "Amoxicillin_prescription.pdf" or "Oxytetracycline.png")
-    if (fileName && typeof fileName === 'string') {
-      const nameWithoutExt = fileName.replace(/\.[^/.]+$/, '');
-      const parts = nameWithoutExt.split(/[-_.\s]+/);
-      const ignoredWords = new Set([
-        'prescription', 'rx', 'doc', 'doctor', 'vet', 'medical', 'scan', 'image',
-        'img', 'file', 'photo', 'camera', 'upload', 'pdf', 'jpg', 'jpeg', 'png',
-        'report', 'paper', 'note', 'cattle', 'cow', 'buffalo', 'patient', 'dated',
-        'whatsapp', 'screenshot'
-      ]);
-
-      parts.forEach(part => {
-        const cleanPart = part.trim();
-        if (cleanPart.length > 2 && !ignoredWords.has(cleanPart.toLowerCase()) && !/^\d+$/.test(cleanPart)) {
-          candidateTerms.add(cleanPart);
-        }
-      });
-    }
-
-    let identifiedItems = [];
-    let matchingMedicines = [];
-
-    // If specific candidate terms were identified, filter strictly against them
-    if (candidateTerms.size > 0) {
-      const termArray = Array.from(candidateTerms);
-
-      termArray.forEach(term => {
-        const lowerTerm = term.toLowerCase();
-        const termTokens = lowerTerm.split(/[\s,.-]+/).filter(t => t.length > 2);
-        // Find matching medicines in DB
-        const matchedDbMeds = dbMedicines.filter(med => {
-          const medName = med.name.toLowerCase();
-          const generic = (med.genericName || '').toLowerCase();
-          const cat = (med.category || '').toLowerCase();
-          const nameTokens = medName.split(/[\s,.-]+/).filter(t => t.length > 2);
-          const hasTokenMatch = termTokens.length > 0 && termTokens.some(tt => nameTokens.some(nt => nt.includes(tt) || tt.includes(nt)));
-
-          return medName.includes(lowerTerm) || lowerTerm.includes(medName) ||
-                 (generic && (generic.includes(lowerTerm) || lowerTerm.includes(generic))) ||
-                 (cat && cat === lowerTerm) || hasTokenMatch;
-        });
-
-        if (matchedDbMeds.length > 0) {
-          matchedDbMeds.forEach(med => {
-            // Avoid duplicate additions
-            if (!identifiedItems.some(item => item.medicineId && item.medicineId.toString() === med._id.toString())) {
-              const isAvailable = med.isActive && med.stockQuantity > 0 && med.availability !== 'unavailable';
-              identifiedItems.push({
-                name: med.name,
-                genericName: med.genericName || '',
-                category: med.category,
-                status: isAvailable ? 'Available' : 'Out of Stock',
-                available: isAvailable,
-                medicineId: med._id
-              });
-
-              if (isAvailable && !matchingMedicines.some(m => m._id.toString() === med._id.toString())) {
-                matchingMedicines.push(med);
-              }
-            }
-          });
-        } else {
-          // Prescribed medicine not found in catalog inventory
-          identifiedItems.push({
-            name: term,
-            genericName: '',
-            category: 'Prescribed Medicine',
-            status: 'Not Currently in Stock',
-            available: false
-          });
-        }
-      });
+    // Case 1: Farmer provided corrected text directly (manual edit flow)
+    if (correctedText && typeof correctedText === 'string' && correctedText.trim().length > 0) {
+      ocrText = correctedText.trim();
+      isManuallyCorrected = true;
     } else {
-      // If no medicine keywords were detected in input or filename, do NOT return all medicines.
-      identifiedItems = [];
-      matchingMedicines = [];
+      // Case 2: Process uploaded image file via OCR
+      if (!prescriptionData) {
+        return res.status(400).json({
+          success: false,
+          message: 'Prescription document (image data) is required for processing.'
+        });
+      }
+
+      // Decode and validate image buffer using magic bytes
+      let imageBuffer;
+      try {
+        const validated = parseAndValidateBase64Image(prescriptionData);
+        imageBuffer = validated.buffer;
+      } catch (valErr) {
+        return res.status(400).json({
+          success: false,
+          message: valErr.message || 'Invalid prescription image format.'
+        });
+      }
+
+      // Run genuine Tesseract OCR on image pixels
+      const ocrResult = await extractTextFromImage(imageBuffer);
+      ocrText = ocrResult.rawText || '';
+      ocrConfidence = ocrResult.confidence || 0;
     }
+
+    // If manual extra notes / prescribed text was provided alongside OCR, append it
+    let combinedText = ocrText;
+    if (prescribedMedicinesText && typeof prescribedMedicinesText === 'string') {
+      const extraTrimmed = prescribedMedicinesText.trim();
+      if (extraTrimmed.length > 0 && !combinedText.toLowerCase().includes(extraTrimmed.toLowerCase())) {
+        combinedText = combinedText ? `${combinedText}\n${extraTrimmed}` : extraTrimmed;
+      }
+    }
+
+    // Check if any readable text was extracted
+    if (!combinedText || combinedText.trim().length === 0) {
+      return res.status(200).json({
+        success: true,
+        ocrText: '',
+        ocrConfidence: 0,
+        originalFileName: fileName,
+        detectedMedicines: [],
+        matchingMedicines: [],
+        unmatchedMedicines: [],
+        extractedMedicines: [],
+        message: 'No readable text could be extracted from this image. Please upload a clear, well-lit photo or enter medicine names manually.'
+      });
+    }
+
+    // Parse structured candidates from text
+    const candidates = parsePrescriptionLines(combinedText);
+
+    // If lines weren't parsed into standard candidates (e.g. single line / comma separated), extract comma/newline tokens
+    if (candidates.length === 0 && combinedText.trim().length > 0) {
+      const fallbackTokens = combinedText
+        .split(/[,;\n\r]+/)
+        .map(t => t.trim())
+        .filter(t => t.length > 2);
+
+      fallbackTokens.forEach(t => {
+        candidates.push({
+          rawLine: t,
+          candidateName: t,
+          strength: '',
+          dosage: '',
+          route: '',
+          frequency: '',
+          duration: ''
+        });
+      });
+    }
+
+    // Match candidates against MongoDB inventory
+    const matchResults = matchCandidatesToInventory(candidates, dbMedicines);
+
+    // Format legacy extractedMedicines for backward compatibility with existing modals
+    const legacyExtracted = matchResults.detectedMedicines.map(item => ({
+      name: item.candidateName,
+      genericName: item.matchedMedicine?.genericName || '',
+      category: item.matchedMedicine?.category || 'Prescribed Medicine',
+      status: item.matchedMedicine?.isAvailable ? 'Available' : (item.matchedMedicine ? 'Out of Stock' : 'Not Currently in Stock'),
+      available: !!item.matchedMedicine?.isAvailable,
+      medicineId: item.matchedMedicine?._id || null,
+      strength: item.strength,
+      dosage: item.dosage,
+      frequency: item.frequency,
+      duration: item.duration,
+      matchStatus: item.matchStatus,
+      confidence: item.confidence
+    }));
 
     return res.status(200).json({
       success: true,
-      message: matchingMedicines.length > 0
-        ? `Found ${matchingMedicines.length} in-stock product(s) matching your prescription.`
-        : 'Prescription processed. No matching in-stock medicines were found for the prescribed items.',
-      fileName,
+      message: matchResults.matchingMedicines.length > 0
+        ? `Prescription analyzed: found ${matchResults.matchingMedicines.length} in-stock medicine(s) in catalog.`
+        : 'Prescription analyzed. No in-stock catalog matches found for the detected items.',
+      originalFileName: fileName,
       fileType,
-      extractedMedicines: identifiedItems,
-      matchingMedicines
+      ocrText,
+      ocrConfidence,
+      isManuallyCorrected,
+      detectedMedicines: matchResults.detectedMedicines,
+      matchingMedicines: matchResults.matchingMedicines,
+      unmatchedMedicines: matchResults.unmatchedMedicines,
+      extractedMedicines: legacyExtracted
     });
   } catch (error) {
     console.error(`Process Prescription Error: ${error.message}`);
     return res.status(500).json({
       success: false,
-      message: 'Failed to process prescription. ' + error.message
+      message: 'Failed to process prescription image: ' + error.message
     });
   }
 };

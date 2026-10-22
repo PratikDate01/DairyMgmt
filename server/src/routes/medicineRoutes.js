@@ -20,8 +20,8 @@ const router = express.Router();
 // Protect all medicine routes with authMiddleware
 router.use(authMiddleware);
 
-// Process Prescription Search (Farmer, Admin)
-router.post('/process-prescription', requireRole('farmer', 'admin'), processPrescription);
+// Process Prescription Search (Farmer, Medical Provider, Admin)
+router.post('/process-prescription', requireRole('farmer', 'medicalProvider', 'admin'), processPrescription);
 
 // 1. Create Medicine (Medical Provider and Admin)
 router.post('/', requireRole('medicalProvider', 'admin'), createMedicine);

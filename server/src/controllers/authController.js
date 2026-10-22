@@ -86,15 +86,15 @@ export const register = async (req, res) => {
       });
     }
 
-    // PART 7 — Strictly prohibit public registration for Admin and Dairy Owner
-    if (role === 'admin' || role === 'dairyOwner') {
+    // PART 7 — Strictly prohibit public registration for Admin only
+    if (role === 'admin') {
       return res.status(403).json({
         success: false,
-        message: 'Public registration for this role is restricted. Please contact system administrator.'
+        message: 'Public registration for admin role is restricted. Please contact system administrator.'
       });
     }
 
-    const validRoles = ['farmer', 'medicalProvider', 'veterinarian'];
+    const validRoles = ['farmer', 'dairyOwner', 'medicalProvider', 'veterinarian'];
     if (!validRoles.includes(role)) {
       return res.status(400).json({
         success: false,
@@ -102,7 +102,7 @@ export const register = async (req, res) => {
       });
     }
 
-    // PART 9 — Validate Professional Certification details for Veterinarian and Medical Provider
+    // PART 9 — Validate Professional / Business Certification details for Veterinarian, Medical Provider, and Dairy Owner
     const pendingMetadata = {
       nameMr: nameMr ? String(nameMr).trim() : ''
     };
@@ -139,6 +139,22 @@ export const register = async (req, res) => {
       pendingMetadata.licenseNumber = String(licenseNumber).trim();
       pendingMetadata.clinicName = String(clinicName).trim();
       pendingMetadata.specialization = specialization ? String(specialization).trim() : 'Veterinary Medicine Pharmacy';
+    } else if (role === 'dairyOwner') {
+      if (!licenseNumber || String(licenseNumber).trim().length < 3) {
+        return res.status(400).json({
+          success: false,
+          message: 'Dairy license / FSSAI registration number is required for dairy owner registration.'
+        });
+      }
+      if (!clinicName || String(clinicName).trim().length < 2) {
+        return res.status(400).json({
+          success: false,
+          message: 'Dairy center / enterprise name is required for dairy owner registration.'
+        });
+      }
+      pendingMetadata.licenseNumber = String(licenseNumber).trim();
+      pendingMetadata.clinicName = String(clinicName).trim();
+      pendingMetadata.specialization = specialization ? String(specialization).trim() : 'Milk Collection & Chilling Center';
     }
 
     const normalizedIdentity = normalizeIdentity(rawInput);
@@ -516,7 +532,7 @@ export const verifyOTP = async (req, res) => {
         if (pendingMeta.licenseNumber) existingUser.licenseNumber = pendingMeta.licenseNumber;
         if (pendingMeta.clinicName) existingUser.clinicName = pendingMeta.clinicName;
         if (pendingMeta.specialization) existingUser.specialization = pendingMeta.specialization;
-        if (['veterinarian', 'medicalProvider'].includes(pendingRole)) {
+        if (['veterinarian', 'medicalProvider', 'dairyOwner'].includes(pendingRole)) {
           existingUser.verificationStatus = 'pending';
         }
         user = await existingUser.save();
@@ -529,9 +545,9 @@ export const verifyOTP = async (req, res) => {
           roles: [pendingRole],
           isActive: true,
           licenseNumber: pendingMeta.licenseNumber || '',
-          clinicName: pendingMeta.clinicName || (pendingRole === 'veterinarian' ? 'Veterinary Care Clinic' : 'Medical Store'),
-          specialization: pendingMeta.specialization || (pendingRole === 'veterinarian' ? 'Large Animal & Cattle Specialist' : 'Veterinary Medicine Dispenser'),
-          verificationStatus: ['veterinarian', 'medicalProvider'].includes(pendingRole) ? 'pending' : 'approved'
+          clinicName: pendingMeta.clinicName || (pendingRole === 'veterinarian' ? 'Veterinary Care Clinic' : pendingRole === 'dairyOwner' ? 'Dairy Collection Center' : 'Medical Store'),
+          specialization: pendingMeta.specialization || (pendingRole === 'veterinarian' ? 'Large Animal & Cattle Specialist' : pendingRole === 'dairyOwner' ? 'Milk Collection & Chilling Center' : 'Veterinary Medicine Dispenser'),
+          verificationStatus: ['veterinarian', 'medicalProvider', 'dairyOwner'].includes(pendingRole) ? 'pending' : 'approved'
         };
         if (isValidEmail(normalizedIdentity)) {
           userData.email = normalizedIdentity;
@@ -857,8 +873,8 @@ export const googleAuth = async (req, res) => {
       });
     } else {
       // New user registration via Google:
-      // Strictly enforce public registration policy: only farmer, veterinarian, medicalProvider
-      const allowedRoles = ['farmer', 'veterinarian', 'medicalProvider'];
+      // Strictly enforce public registration policy: farmer, dairyOwner, veterinarian, medicalProvider
+      const allowedRoles = ['farmer', 'dairyOwner', 'veterinarian', 'medicalProvider'];
       let assignedRole = 'farmer';
       if (requestedRole && allowedRoles.includes(requestedRole)) {
         assignedRole = requestedRole;
@@ -872,7 +888,7 @@ export const googleAuth = async (req, res) => {
         roles: [assignedRole],
         isVerified: true,
         isActive: true,
-        verificationStatus: (assignedRole === 'veterinarian' || assignedRole === 'medicalProvider') ? 'pending' : 'approved'
+        verificationStatus: ['veterinarian', 'medicalProvider', 'dairyOwner'].includes(assignedRole) ? 'pending' : 'approved'
       });
 
       const jwtSecret = process.env.JWT_SECRET || 'dairy_medical_system_super_secret_jwt_key_2026';

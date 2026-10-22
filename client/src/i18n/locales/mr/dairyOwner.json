@@ -13,7 +13,13 @@
     "viewFarmers": "शेतकरी व्यवस्थापन",
     "viewReports": "अहवाल व लेजर",
     "recentCollections": "सध्याच्या सत्रातील नोंदी",
-    "pendingRequestsNotice": "{{count}} शेतकरी जोडणी विनंत्या मंजुरीसाठी प्रलंबित आहेत."
+    "pendingRequestsNotice": "{{count}} शेतकरी जोडणी विनंत्या मंजुरीसाठी प्रलंबित आहेत.",
+    "verificationPendingTitle": "डेअरी खाते पडताळणी सुरू आहे",
+    "verificationPendingDesc": "तुमची डेअरी नोंदणी प्रमाणपत्रे (परवाना: {{license}}) प्रशासकीय पडताळणी आणि मंजुरीसाठी प्रलंबित आहेत. पडताळणी पूर्ण होईपर्यंत तुम्ही कामकाज पाहू शकता.",
+    "verificationRejectedTitle": "डेअरी खाते पडताळणी नाकारली",
+    "verificationRejectedDesc": "तुमची डेअरी नोंदणी प्रशासकाद्वारे पडताळली जाऊ शकली नाही. कृपया परवान्याचे तपशील अद्ययावत करा किंवा संपर्कात राहा.",
+    "verificationRejectedReason": "प्रशासक शेरा: {{notes}}",
+    "verifiedDairyNotice": "पडताळणीकृत डेअरी — परवाना: {{license}} ({{center}})"
   },
   "collection": {
     "title": "दूध संकलन नोंद",

@@ -24,6 +24,7 @@ export const getAdminOverviewStats = async (req, res) => {
       totalAdmins,
       pendingVetVerifications,
       pendingStoreVerifications,
+      pendingDairyVerifications,
       totalCattle,
       activeVetRequests,
       totalVetRequests,
@@ -56,6 +57,10 @@ export const getAdminOverviewStats = async (req, res) => {
       }),
       User.countDocuments({
         $or: [{ role: 'medicalProvider' }, { roles: 'medicalProvider' }],
+        verificationStatus: 'pending'
+      }),
+      User.countDocuments({
+        $or: [{ role: 'dairyOwner' }, { roles: 'dairyOwner' }],
         verificationStatus: 'pending'
       }),
       Cattle.countDocuments(),
@@ -140,7 +145,8 @@ export const getAdminOverviewStats = async (req, res) => {
           totalMedicalStores,
           totalAdmins,
           pendingVetVerifications,
-          pendingStoreVerifications
+          pendingStoreVerifications,
+          pendingDairyVerifications
         },
         operations: {
           totalCattle,
